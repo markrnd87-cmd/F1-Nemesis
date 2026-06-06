@@ -13,6 +13,22 @@ echo "== F1 honesty audit =="
 # 1. The library must build.
 lake build
 
+# 1b. Coverage check: EVERY non-private theorem/lemma in the proof layer must be `#print axioms`-ed
+#     in scripts/audit_axioms.lean. This makes the audit's "every theorem" invariant self-enforcing:
+#     a newly added (or renamed) theorem that is not audited fails CI, so coverage cannot silently
+#     drift and a `sorry` cannot hide in an un-audited leaf lemma.
+declared="$(grep -rhoE '^(theorem|lemma) [A-Za-z_][A-Za-z0-9_'"'"']*' F1Square.lean F1Square/ \
+  | sed -E 's/^(theorem|lemma) //' | sort -u)"
+audited="$(grep -oE '#print axioms [A-Za-z0-9_.]+' scripts/audit_axioms.lean \
+  | sed -E 's/#print axioms //; s/^.*\.//' | sort -u)"
+missing="$(comm -23 <(echo "$declared") <(echo "$audited"))"
+if [ -n "$missing" ]; then
+  echo "FAIL: these proof-layer theorems/lemmas are not audited in scripts/audit_axioms.lean:" >&2
+  echo "$missing" >&2
+  exit 1
+fi
+echo "coverage: all $(echo "$declared" | wc -l | tr -d ' ') non-private proof-layer theorems are audited."
+
 # 2. Axiom audit over every proof-layer theorem.
 out="$(lake env lean scripts/audit_axioms.lean)"
 echo "$out"

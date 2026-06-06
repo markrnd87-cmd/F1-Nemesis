@@ -4,6 +4,56 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), starting at `v0.0.1`.
 
+## [0.9.0] - 2026-06-06
+
+### Added — the general exponential `exp(q)` on the rational interval `[0,1]` (pure Lean 4, no Mathlib, no `sorry`, choice-free)
+- `F1Square/Analysis/ExpGen.lean` — **`exp(q) = Σ qⁱ/i!` for rational `q ∈ [0,1]`, as a constructive
+  real**, with a rigorous rational error bound. This continues the transcendentals arc opened by
+  `e = exp(1)` (v0.8.0) and reuses its machinery almost verbatim — the only genuinely new input is
+  **termwise domination**: for `q ∈ [0,1]` every power `qⁱ ≤ 1`, so each term `qⁱ/i! ≤ 1/i!`.
+- **Rational powers from scratch** `qpow` (core has no `q^i`), with `qpow_le_one` (`q ∈ [0,1] ⇒ qⁱ ≤ 1`),
+  `qpow_nonneg`, `qpow_den_pos`.
+- **The domination bridge** `expTerm_le` (`qⁱ/i! ≤ 1/i!`) and `expdiff_dom` (the `exp(q)` partial-sum
+  gaps are dominated termwise by those of `e`), giving the rigorous error bound `expdiff_bound`: for
+  `a ≤ b`, `S_q(b) − S_q(a) ≤ 2/(a+1)!` — the *same* rational tail bound as `e`, no new tail analysis.
+  The reindex `n ↦ S_q(n+1)` reuses `efct_reindex` verbatim, so `expSeq q` is regular
+  (`expSeq_regular`) and `Rexp q` is a genuine constructive real.
+- **Correctness anchors**: `Rexp_zero` (`exp 0 ≈ 1`), `Rexp_one_pos` (`exp 1 > 0`), and
+  `Rexp_one_eq_e` (`exp 1 ≈ e` — the general construction specializes to v0.8.0's Euler number, a
+  genuine regression anchor).
+- `F1Square/Analysis/QOrder.lean` gains `Qeq_trans` (ℚ value-equality is an equivalence — the
+  cross-multiplied identities are linear-combined and cancelled via `b.den > 0`), reusable infrastructure.
+- `scripts/audit_axioms.lean` extended; the honesty gate stays green (every theorem
+  `⊆ {propext, Classical.choice, Quot.sound}`; in fact choice-free; no `sorry`/`native_decide`/stray axiom).
+  `F1Square.lean` gains a v0.9.0 `example`.
+
+### Hardened (peer-review readiness)
+- **Self-enforcing audit coverage.** `scripts/honesty_audit.sh` now mechanically checks that *every*
+  non-private proof-layer `theorem`/`lemma` (248 of them) is `#print axioms`-audited in
+  `audit_axioms.lean`, and fails CI otherwise. Previously the audit list was hand-maintained and ~30
+  declarations (4 of them un-reachable leaf `rfl`-lemmas) were unlisted; all are now audited and the
+  "every theorem is checked" invariant can no longer silently drift.
+- **Honest prose pass.** Tightened documentation wording so sub-result status is unambiguous: T1 is
+  scoped to "point-set level, surface unbuilt" (no longer "the 2D surface exists"); the §2.3
+  shift-length finding leads with its *vacuity* (it equals RH, not a step toward it); the §9.1 lift is
+  labelled as re-verification on genuine product surfaces `C × C` (not the unbuilt `𝕊`); the
+  characteristic-1 status block distinguishes Lean kernel-checked (R1–R6, R9–R16) from
+  numerically-checked (R7/R8). Stale `v0.0.1` publishing/citation instructions in `README.md` updated.
+
+### Changed
+- `docs/` roadmap re-paced within the transcendentals arc: v0.9.0 delivers `exp(q)` on `[0,1]`; the
+  everywhere-defined `exp` on ℝ (via the halving/squaring identity `exp x = exp(x/2ᵏ)^{2ᵏ}`), `cos`/`sin`
+  (alternating series with the even/odd sandwich remainder — genuinely new machinery), and `log`
+  (positivity-as-data + the artanh series) follow in v0.10.0+.
+
+### Note
+- RH remains **open** (June 2026), and no construction of the 𝔽₁-square exists (fresh mid-2026
+  synthesis: the Feb-2026 Connes–Consani *On the Jacobian of Spec ℤ̄* [arXiv:2602.15941] is a
+  Jacobian/adele-class-space construction — a monoidal extension of the Picard group of the arithmetic
+  curve — **not** the square and **not** an intrinsic intersection theory; nothing newer on that axis
+  was found). The transcendentals make more of the analytic half *statable and checkable*, never
+  proven — proving `λₙ ≥ 0 ∀n` / the Hodge index on 𝕊 is RH.
+
 ## [0.8.0] - 2026-06-06
 
 ### Added — the first transcendental: Euler's number `e` via the exponential series (pure Lean 4, no Mathlib, no `sorry`)

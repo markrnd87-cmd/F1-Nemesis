@@ -2,8 +2,11 @@
 
 ### Tropical content-addressing, the cycle spectrum, and a decidable representation-vs-property theorem
 
-**Status.** Unlike a frontier map, every result here is **complete and verified**, and the artifact
-contains **no open questions**. It formalizes a stack of characteristic-1 (idempotent / max-plus,
+**Status.** Unlike a frontier map, every result here is **finite/decidable and checked** — most are
+**mechanized as Lean 4 kernel-checked theorems** (R1–R6, R9–R16; see §10), and the two limit
+statements (R7 zero-temperature, R8 prime-orbit asymptotic) are **checked numerically** over finite
+approximants (only those approximants are mechanizable). None bears on the open RH crux. It formalizes
+a stack of characteristic-1 (idempotent / max-plus,
 "tropical") objects built and re-verified end-to-end: an idempotent canonical form (a *tropical
 content-address* κ), a *cycle-mean spectrum* (the characteristic-1 analogue of eigenvalues), the
 *prime-cycle Euler product* (verified to factor the dynamical zeta), the *zero-temperature bridge*
@@ -367,10 +370,13 @@ characteristic-1 square over `𝔽₁`** — the 2D analogue of the 1D curve thi
 lift is the next genuine construction toward the object, and it is where the verified
 characteristic-1 machinery points.
 
-### 9.1 The lift, executed: intersection-positivity on the surface forces the spectral bound
+### 9.1 The mechanism, re-verified on genuine product surfaces (the lift target, not yet `𝕊`)
 
-Pushing the R13 lift from the tropical plane to the surface, the positivity-structure transfers
-and — in the configuration Weil's proof actually uses — *does the work*. Verified in two steps.
+Pushing the R13 lift from the tropical plane to a **genuine product surface `C × C` over a field** (the
+classical Weil setting, *not* the 𝔽₁ square), the positivity-structure transfers and — in the
+configuration Weil's proof actually uses — *does the work*. This re-verifies the mechanism on the
+classical object; transporting it to the unbuilt 𝔽₁ square `𝕊` is exactly what remains open. Shown in
+two steps.
 
 **Step 1 — the Hodge signature transfers to the product surface and survives the arithmetic
 classes.** On the Néron–Severi lattice of a product surface `C_m × C_n` with basis `{F_h, F_v}`
@@ -607,7 +613,34 @@ pipeline that completeness (§15) provides: a series is a regular sequence of it
   partial sums are rational, no real-number limit is needed here; completeness is what handles
   genuinely real arguments (the v0.9.0 general `exp`).
 
-The v0.9.0+ transcendentals arc: the general `exp(q)` on `[0,1]` (the `e`-bound dominates each term
-since `|q^i/i!| ≤ 1/i!`), `cos`/`sin` via alternating series (error ≤ first omitted term), and `log`.
-All v0.8.0 additions are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), axiom-audited. RH
-remains open; no 𝔽₁-square construction exists (fresh mid-2026 synthesis).
+The v0.9.0 continuation delivers the general `exp(q)` (see §17). All v0.8.0 additions are kernel-checked,
+pure Lean 4 (no Mathlib, no `sorry`), axiom-audited.
+
+## 17. v0.9.0 — the general exponential `exp(q)` on `[0,1]`
+
+**v0.9.0** delivers the next transcendental: the general exponential `exp(q) = Σ qⁱ/i!` for a rational
+argument `q ∈ [0,1]`, as a constructive real (`ExpGen.lean`). The design point is *maximal reuse* of the
+`e = exp(1)` machinery — the only genuinely new ingredient is **termwise domination**.
+
+- **Rational powers from scratch.** `qpow q i = qⁱ` (core has no `q^i`), with `qpow_den_pos`,
+  `qpow_nonneg`, and the key bound `qpow_le_one`: for `q ∈ [0,1]`, every power `qⁱ ≤ 1` (induction via
+  the ℚ product-monotonicity `Qmul_le_mul`).
+- **The domination bridge.** Since `qⁱ ≤ 1`, each series term satisfies `qⁱ/i! ≤ 1/i!` (`expTerm_le`).
+  Hence the `exp(q)` partial-sum gaps are dominated *termwise* by those of `e` (`expdiff_dom`, a one-step
+  induction regrouping `(s + t) − base = (s − base) + t`). Chaining with the v0.8.0 bound `ediff_bound`
+  gives the **rigorous rational error bound** `expdiff_bound`: for `a ≤ b`,
+  `S_q(b) − S_q(a) ≤ 2/(a+1)!` — the *same* tail bound as `e`, with no new tail analysis.
+- **`exp(q)` as a constructive real.** The reindex `n ↦ S_q(n+1)` reuses `efct_reindex` verbatim, so the
+  reindexed partial sums are regular (`expSeq_regular`) and `Rexp q` is a genuine `Real`. Correctness is
+  anchored by `Rexp_zero` (`exp 0 ≈ 1`, exercising `qpow` at the degenerate point where every power past
+  `q⁰` vanishes) and `Rexp_one_pos` (`exp 1 > 0`, witnessed at index 0).
+- **Supporting infrastructure.** `Qeq_trans` (ℚ value-equality is an equivalence) was added to the order
+  library — the cross-multiplied identities are linear-combined and cancelled via `b.den > 0`.
+
+The v0.10.0+ arc continues: the everywhere-defined `exp` on ℝ (via the halving/squaring identity
+`exp x = exp(x/2ᵏ)^{2ᵏ}`, reusing this `[0,1]` brick and ℝ multiplication), `cos`/`sin` via alternating
+series (the even/odd sandwich remainder — genuinely new machinery, so its own brick), and `log`
+(positivity-as-data + the artanh series). All v0.9.0 additions are kernel-checked, pure Lean 4 (no
+Mathlib, no `sorry`), axiom-audited and choice-free. RH remains open (June 2026); no 𝔽₁-square
+construction exists — the Feb-2026 Connes–Consani *On the Jacobian of Spec ℤ̄* (arXiv:2602.15941) is a
+Jacobian/adele-class-space construction, not the square nor an intrinsic intersection theory.

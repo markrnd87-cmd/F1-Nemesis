@@ -325,7 +325,9 @@ positivity**.
 **The honest frame.** The mathematics here is the work of others, credited above; what this document
 contributes is the precise single-object assembly (the missing object, its three obstructions, the
 four equivalent solution routes), a verified computational handle (`λₙ` and its decomposition), and
-two completed iterations (§8.1–8.2) that **converge** the whole problem to one named target.
+two completed iterations (§8.1–8.2) that **converge** the whole problem to one named target. (To be
+explicit: converging RH to the Hodge index on `𝕊` is a *reformulation*, not partial progress — `𝕊` is
+unconstructed and that Hodge index *is* RH, of comparable difficulty to the original.)
 
 **Bottom line of the map.** The missing object over ℚ is — as sharply as it can now be stated — the
 **arithmetic surface `Spec ℤ ×_{𝔽₁} Spec ℤ` equipped with a Hodge index theorem** for its

@@ -27,7 +27,7 @@ negative-definiteness *is* RH.
 | path | what it is |
 |---|---|
 | [`F1Square.lean`](F1Square.lean) | Lean 4 formalization of the target object and its intersection theory (`UOR.Bridge.F1Square`), with the honest status of each result and a `F1SquareStatus` roll-up, now imports the proof layer and carries an elaboration-checked `example` tying each established field to a genuine theorem. |
-| [`F1Square/`](F1Square/) | The **genuine-proof layer** — real Lean 4 theorems (no Mathlib, no `sorry`): the function-field Hodge mechanism (`Mechanism`, `Template`), the characteristic-1 base (`CharOne`), exact Bowen–Lanford counts (`CycleCounts`), the mechanism bridge + §2.3 control (`Bridge`), the crux stated faithfully (`Crux`), the tropical κ/spectrum stack incl. the κ⊥spectrum counterexample (`Tropical/`), and the analysis substrate — exact ℚ (a verified ordered field), a reflective ℤ ring normalizer with a from-scratch `ring` tactic (`ring_uor`), constructive ℝ as Bishop regular sequences and ℂ = ℝ×ℝ — both **commutative rings up to `≈`** (multiplication well-defined on the setoid, with associativity and distributivity, via a linear-bound criterion built on the generalized Archimedean lemma), ℝ is **Cauchy complete** (every regular sequence of reals converges to its diagonal limit, choice-free), and the first **transcendental** — Euler's number `e = Σ 1/i!` — is constructed via the exponential series with a rigorous rational error bound (`Analysis/`). |
+| [`F1Square/`](F1Square/) | The **genuine-proof layer** — real Lean 4 theorems (no Mathlib, no `sorry`): the function-field Hodge mechanism (`Mechanism`, `Template`), the characteristic-1 base (`CharOne`), exact Bowen–Lanford counts (`CycleCounts`), the mechanism bridge + §2.3 control (`Bridge`), the crux stated faithfully (`Crux`), the tropical κ/spectrum stack incl. the κ⊥spectrum counterexample (`Tropical/`), and the analysis substrate — exact ℚ (a verified ordered field), a reflective ℤ ring normalizer with a from-scratch `ring` tactic (`ring_uor`), constructive ℝ as Bishop regular sequences and ℂ = ℝ×ℝ — both **commutative rings up to `≈`** (multiplication well-defined on the setoid, with associativity and distributivity, via a linear-bound criterion built on the generalized Archimedean lemma), ℝ is **Cauchy complete** (every regular sequence of reals converges to its diagonal limit, choice-free), and the **transcendentals arc** is under construction — Euler's number `e = Σ 1/i!` and the general exponential `exp(q) = Σ qⁱ/i!` on the rational interval `[0,1]`, both built via the exponential series with a rigorous rational error bound (the `exp(q)` bound reuses `e`'s tail bound by termwise domination, `qⁱ/i! ≤ 1/i!`) (`Analysis/`). |
 | [`scripts/honesty_audit.sh`](scripts/honesty_audit.sh) | The mechanized-honesty gate (run in CI): `#print axioms` over every proof-layer theorem must show only `{propext, Classical.choice, Quot.sound}` — no `sorry`, no `native_decide`, no stray axioms. |
 | [`docs/f1_square_intersection_theory.md`](docs/f1_square_intersection_theory.md) | Precise specification of the target object (§1), the candidate-construction gap table (§2), the named obstructions (§3), and the T1–T5 verification ladder (§4). |
 | [`docs/missing_object_over_Q.md`](docs/missing_object_over_Q.md) | The four equivalent solution routes and the `λₙ` / Hodge-index convergence map. |
@@ -83,15 +83,15 @@ and a tagged GitHub release triggers a DOI. The remaining, account-gated steps f
 
 1. Confirm the `repository-code` URL in `CITATION.cff` matches the published GitHub repo.
 2. Enable the repository in the Zenodo ↔ GitHub integration.
-3. Tag and publish the release: `git tag -a v0.0.1 -m "v0.0.1" && git push --tags`, then create the
-   GitHub release for `v0.0.1`.
+3. Tag and publish the current release: `git tag -a v0.9.0 -m "v0.9.0" && git push --tags`, then
+   create the GitHub release for that tag (substitute the version being released).
 4. After Zenodo mints the DOI, add a `doi:` field (the concept DOI) to `CITATION.cff` in a follow-up
    commit — exactly the pattern UOR-Framework follows.
 
 ## Citation
 
 See [`CITATION.cff`](CITATION.cff). Until the first Zenodo deposit assigns a DOI, cite the repository
-and the `v0.0.1` tag.
+and the current release tag (e.g. `v0.9.0`).
 
 ## License
 

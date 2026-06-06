@@ -271,3 +271,59 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.eSeq_regular
 #print axioms Analysis.e
 #print axioms Analysis.e_pos
+
+-- v0.9.0 — the general exponential exp(q) on the rational interval [0,1].
+#print axioms Analysis.qpow_den_pos
+#print axioms Analysis.qpow_nonneg
+#print axioms Analysis.qpow_le_one
+#print axioms Analysis.expTerm_le
+#print axioms Analysis.expSum_den_pos
+#print axioms Analysis.expSum_le
+#print axioms Analysis.Qsub_add_right
+#print axioms Analysis.expdiff_dom
+#print axioms Analysis.expdiff_bound
+#print axioms Analysis.expabs_bound
+#print axioms Analysis.expSeq_regular
+#print axioms Analysis.Rexp
+#print axioms Analysis.Qeq_trans
+#print axioms Analysis.expSum_zero_eq
+#print axioms Analysis.Rexp_zero
+#print axioms Analysis.Rexp_one_pos
+#print axioms Analysis.Qadd_congr
+#print axioms Analysis.qpow_one_eq
+#print axioms Analysis.expSum_one_eq
+#print axioms Analysis.Rexp_one_eq_e
+
+-- Coverage completion: leaf and helper lemmas that are transitively reached by the audited
+-- theorems above, audited here EXPLICITLY so `honesty_audit.sh`'s coverage check can mechanically
+-- enforce that EVERY non-private proof-layer theorem/lemma is `#print axioms`-checked (no drift).
+#print axioms Analysis.RingNF.mul4
+#print axioms Analysis.I_im
+#print axioms Analysis.ofReal_im
+#print axioms Analysis.Qeq_symm
+#print axioms Analysis.neg_den_pos
+#print axioms Analysis.fct_succ
+#print axioms Analysis.eSum_step
+#print axioms Analysis.eU_den_pos
+#print axioms Analysis.e_seq
+#print axioms Analysis.one_seq
+#print axioms Analysis.zero_seq
+#print axioms Analysis.Ridx_comm
+#print axioms Analysis.RmulK_comm
+#print axioms Analysis.RmulK_pos
+#print axioms Analysis.xBound_pos
+#print axioms Analysis.Qabs_le_of_nonneg
+#print axioms Analysis.Qsub_le_sub
+#print axioms Analysis.Qsub_add_cancel
+#print axioms Analysis.Qle_self_add
+#print axioms Analysis.Qle_add_self
+#print axioms Analysis.qpow_succ
+#print axioms Analysis.qpow_zero_succ_num
+#print axioms Analysis.expSum_step
+#print axioms Analysis.expTerm_den_pos
+#print axioms Analysis.expTerm_num_nonneg
+#print axioms Analysis.expTerm_one_eq
+#print axioms Analysis.expTerm_zero_succ_num
+#print axioms Analysis.Qeq_add_zero_num
+#print axioms Analysis.Qle_Qabs_Qsub_of_Qeq
+#print axioms Analysis.Rexp_seq

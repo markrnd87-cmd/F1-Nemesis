@@ -38,6 +38,7 @@ import F1Square.Analysis.Real
 import F1Square.Analysis.Complex
 import F1Square.Analysis.Complete
 import F1Square.Analysis.Exp
+import F1Square.Analysis.ExpGen
 
 open UOR.Primitives
 
@@ -222,6 +223,12 @@ def f1SquareStatus : F1SquareStatus := {
 --   factorial + partial sums   ← Analysis.{fct, eSum} (Σ 1/i!, from scratch — core has no factorial)
 --   rigorous error bound       ← Analysis.ediff_bound (telescoping: U(n)=S(n)+2/(n+1)! decreasing)
 --   e as a constructive real   ← Analysis.{e, eSeq_regular, e_pos} (the series value; positive)
+-- v0.9.0 (the general exponential exp(q) on the rational interval [0,1]):
+--   rational powers from scratch ← Analysis.{qpow, qpow_le_one} (qⁱ; for q∈[0,1] every qⁱ ≤ 1)
+--   termwise domination bridge   ← Analysis.{expTerm_le, expdiff_dom} (qⁱ/i! ≤ 1/i!, gap dominated)
+--   rigorous error bound (reused) ← Analysis.expdiff_bound (same 2/(a+1)! tail as e, by domination)
+--   exp(q) as a constructive real ← Analysis.{Rexp, expSeq_regular}; anchors Rexp_zero (exp 0 ≈ 1),
+--                                   Rexp_one_pos (exp 1 > 0), Rexp_one_eq_e (exp 1 ≈ e — ties to v0.8.0)
 -- The crux is NOT backed and stays `none`:
 --   hodgeIndexHolds (= RH)    ← Crux.CruxFor 𝕊 — OPEN. Crux.template_hodgeIndex proves the
 --                               property only on the product-of-curves TEMPLATE, never on 𝕊.
@@ -314,5 +321,20 @@ example :
     ∧ (∀ a b : Nat, a ≤ b →
         Analysis.Qle (Analysis.Qsub (Analysis.eSum b) (Analysis.eSum a)) ⟨2, Analysis.fct (a + 1)⟩) :=
   ⟨Analysis.e_pos, fun _ _ h => Analysis.ediff_bound h⟩
+
+/-- Elaboration-checked witness binding the v0.9.0 layer: the general exponential `exp(q)` on the
+    rational interval `[0,1]` is a genuine constructive real — it agrees with `1` at `q = 0`
+    (`exp 0 ≈ 1`), is positive at `q = 1` (`exp 1 > 0`), and its partial sums carry the *same*
+    rigorous rational error bound as `e` via termwise domination (`qⁱ/i! ≤ 1/i!` for `q ∈ [0,1]`). -/
+example :
+    Analysis.Req (Analysis.Rexp ⟨0, 1⟩ (by decide) (by decide) (by decide)) Analysis.one
+    ∧ Analysis.Req (Analysis.Rexp ⟨1, 1⟩ (by decide) (by decide) (by decide)) Analysis.e
+    ∧ Analysis.Pos (Analysis.Rexp ⟨1, 1⟩ (by decide) (by decide) (by decide))
+    ∧ (∀ (q : Analysis.Q) (hq0 : 0 ≤ q.num) (hqd : 0 < q.den) (hq1 : Analysis.Qle q ⟨1, 1⟩)
+        (a b : Nat), a ≤ b →
+        Analysis.Qle (Analysis.Qsub (Analysis.expSum q b) (Analysis.expSum q a))
+          ⟨2, Analysis.fct (a + 1)⟩) :=
+  ⟨Analysis.Rexp_zero, Analysis.Rexp_one_eq_e, Analysis.Rexp_one_pos,
+   fun _ hq0 hqd hq1 _ _ h => Analysis.expdiff_bound hq0 hqd hq1 h⟩
 
 end UOR.Bridge.F1Square

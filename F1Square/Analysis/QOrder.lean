@@ -58,6 +58,49 @@ theorem Qle_trans {a b c : Q} (hb : 0 < b.den)
     Int.mul_right_comm _ _ _
   omega
 
+/-- `Qeq` is transitive (needs the middle denominator positive) — value-equality is an equivalence.
+    The cross-multiplied identities are linear-combined (`ring_uor`) into a single `· * b.den`
+    equation, then `b.den > 0` cancels it (via `Int.le_of_mul_le_mul_right` both ways). -/
+theorem Qeq_trans {a b c : Q} (hb : 0 < b.den) (hab : Qeq a b) (hbc : Qeq b c) : Qeq a c := by
+  have hb' : (0 : Int) < (b.den : Int) := by exact_mod_cast hb
+  unfold Qeq at *
+  have hz1 : a.num * (b.den : Int) - b.num * (a.den : Int) = 0 := by omega
+  have hz2 : b.num * (c.den : Int) - c.num * (b.den : Int) = 0 := by omega
+  have key : (a.num * (c.den : Int)) * (b.den : Int) - (c.num * (a.den : Int)) * (b.den : Int)
+      = (c.den : Int) * (a.num * (b.den : Int) - b.num * (a.den : Int))
+        + (a.den : Int) * (b.num * (c.den : Int) - c.num * (b.den : Int)) := by ring_uor
+  rw [hz1, hz2] at key
+  have e0 : (c.den : Int) * 0 + (a.den : Int) * 0 = 0 := by ring_uor
+  rw [e0] at key
+  have key2 : (a.num * (c.den : Int)) * (b.den : Int) = (c.num * (a.den : Int)) * (b.den : Int) := by
+    omega
+  have l1 := Int.le_of_mul_le_mul_right
+    (show (a.num * (c.den : Int)) * (b.den : Int) ≤ (c.num * (a.den : Int)) * (b.den : Int) by omega)
+    hb'
+  have l2 := Int.le_of_mul_le_mul_right
+    (show (c.num * (a.den : Int)) * (b.den : Int) ≤ (a.num * (c.den : Int)) * (b.den : Int) by omega)
+    hb'
+  omega
+
+/-- Addition respects ℚ value-equality (a congruence): `a ≈ c → b ≈ d → a + b ≈ c + d`. The
+    cross-multiplied difference is linear-combined (`ring_uor`) from the two hypotheses' vanishing
+    cross-differences. -/
+theorem Qadd_congr {a b c d : Q} (hac : Qeq a c) (hbd : Qeq b d) : Qeq (add a b) (add c d) := by
+  unfold Qeq add at *
+  simp only [Int.natCast_mul]
+  have hP : a.num * (c.den : Int) - c.num * (a.den : Int) = 0 := by omega
+  have hQ : b.num * (d.den : Int) - d.num * (b.den : Int) = 0 := by omega
+  have key :
+      (a.num * (b.den : Int) + b.num * (a.den : Int)) * ((c.den : Int) * (d.den : Int))
+        - (c.num * (d.den : Int) + d.num * (c.den : Int)) * ((a.den : Int) * (b.den : Int))
+      = (b.den : Int) * (d.den : Int) * (a.num * (c.den : Int) - c.num * (a.den : Int))
+        + (a.den : Int) * (c.den : Int) * (b.num * (d.den : Int) - d.num * (b.den : Int)) := by
+    ring_uor
+  rw [hP, hQ] at key
+  have e0 : (b.den : Int) * (d.den : Int) * 0 + (a.den : Int) * (c.den : Int) * 0 = 0 := by ring_uor
+  rw [e0] at key
+  omega
+
 /-- `|·|` respects ℚ value-equality. -/
 theorem Qabs_Qeq {a b : Q} (h : Qeq a b) : Qeq (Qabs a) (Qabs b) := by
   unfold Qeq Qabs at *

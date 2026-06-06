@@ -85,11 +85,13 @@ five gated self-checks passing): the class `H = E₁ + E₂` has `H² = 2 > 0`, 
 self-intersection *exists* — the verified form is not in the Néron–Severi-trivial / non-projective
 case. The positive cone has the required two-component structure (the Hodge-index signature
 consequence), `H` is ample on the effective fiber classes (`H·E₁ = H·E₂ = 1 > 0`, Nakai-style), and the
-form is negative-definite on `H^⊥` (eigenvalues `−2, −1`). **This establishes — rather than assumes —
-the projectivity/Kähler precondition that the tropical literature flagged as non-automatic** (tropical
-surfaces need not admit a class of positive self-intersection), and supplies the ample `H` that
-T5/§1.5 is stated against. *Scope:* established on the product-of-curves template `𝕊` must match;
-exhibiting `H` intrinsically on the concrete `F ⊗_𝔹 F` realization is pending with §1.1.
+form is negative-definite on `H^⊥` (eigenvalues `−2, −1`). **On the template this precondition is
+automatic** (it is a genuine projective surface, where projectivity was never in doubt), and the
+construction supplies the ample `H` that T5/§1.5 is stated against. The point of the tropical
+literature's caution is that on the *tropical* `𝕊` a class with `H² > 0` is **not** automatic — there
+it remains an open hypothesis (§2.2), **not** something this template computation establishes for the
+target. *Scope:* established on the product-of-curves template `𝕊` must match; exhibiting `H`
+intrinsically on the concrete `F ⊗_𝔹 F` realization is pending with §1.1.
 
 **1.5 The Hodge index theorem.** [OPEN — this is the crux]
 The intersection form is **negative-definite on the primitive complement** `H^⊥` (the classes
@@ -308,7 +310,9 @@ self-intersection issue. So: the Hodge-index positivity is carried by the fiber/
 (§1.5/T5) remains the global positivity of the fiber-form/shift-length structure = RH. The
 self-intersection cleanup is resolved by derivation, with the conflation it exposed corrected.
 
-**Following the sharpened question to its answer: the shift-length positivity is RH.** The §2.3 finding
+**Following the sharpened question to its answer: the shift-length positivity is *vacuous* — it is
+equivalent to RH, not a step toward it.** (This is a negative/cautionary finding; we lead with that so
+it is not misread as a positivity result.) The §2.3 finding
 relocated the arithmetic content to the shift lengths `log p` of the parallel pencil, raising a precise
 question — does that shift-length structure carry a positivity? Building the natural pairing on the
 pencil (derived from the explicit formula, gated by self-checks): on a set of primes the Weil-type Gram
@@ -417,7 +421,10 @@ verified for the *product-of-curves model* in §0.3, which is the boundary condi
   computation rather than a conjecture, exactly as §0.3 is a definite (and verified) computation on
   the product-of-curves model.
 
-The ladder's current state: **T1 is verified** (the 2D surface exists); **T2 is partially resolved**
+The ladder's current state: **T1 is verified at the point-set level** (an 𝔽₁/Deitmar-monoid product
+of a finite prime truncation is strictly 2-dimensional — evidence the 𝔽₁-product avoids the ℤ-collapse,
+**not** a construction of `𝕊`: its class group, intersection pairing, and Hodge index remain T2–T5 and
+the surface itself is unbuilt, §1.1/§5 [OPEN]); **T2 is partially resolved**
 (class group + distinguished classes verified, intersection-form machinery consistent, specific form
 pending `H¹`); **T4 resolves T2's pending input as a constraint** (`H¹` must be the Hilbert–Pólya
 space, spectrum = the zeros, verified via the Lefschetz↔explicit-formula identity; Connes–Consani
@@ -503,8 +510,18 @@ canonical forms, realizations, no Mathlib — one brick per release:
   rational error bound is the telescoping `U(n) := S(n) + 2/(n+1)!` decreasing, giving
   `S(b) − S(a) ≤ 2/(a+1)!`; reindexing makes the partial sums regular, so `e` is a genuine
   constructive real (and `Pos e`). Factorial built from scratch (core has none).
-- **v0.9.0+ (transcendentals arc):** the general `exp(q)` on `[0,1]`, `cos`/`sin` (alternating series
-  with the first-omitted-term bound), and `log`; then ζ and `λₙ` as exact-bounded objects, and the
+- **v0.9.0 (done):** the **general exponential `exp(q)` on the rational interval `[0,1]`** — `Σ qⁱ/i!`
+  as a constructive real (`Rexp`). It reuses the v0.8.0 machinery almost verbatim; the only new input
+  is **termwise domination**: for `q ∈ [0,1]` every power `qⁱ ≤ 1` (`qpow_le_one`), so each term
+  `qⁱ/i! ≤ 1/i!` (`expTerm_le`) and the `exp(q)` partial-sum gaps are dominated termwise by those of
+  `e` (`expdiff_dom`). Hence the *same* rational tail bound `S_q(b) − S_q(a) ≤ 2/(a+1)!`
+  (`expdiff_bound`) and the *same* reindex (`efct_reindex`) prove regularity — no new tail analysis.
+  Anchored by `exp 0 ≈ 1` (`Rexp_zero`) and `exp 1 > 0` (`Rexp_one_pos`); rational powers `qpow` built
+  from scratch (core has none). Choice-free.
+- **v0.10.0+ (transcendentals arc, continued):** the everywhere-defined `exp` on ℝ (via the
+  halving/squaring identity `exp x = exp(x/2ᵏ)^{2ᵏ}`, reusing the `[0,1]` brick and ℝ multiplication),
+  `cos`/`sin` (alternating series with the even/odd sandwich remainder — genuinely new machinery), and
+  `log` (positivity-as-data + the artanh series); then ζ and `λₙ` as exact-bounded objects, and the
   explicit formula as an exact-arithmetic trace.
 
 Each brick makes more of the analytic half *statable and finitely checkable* — never a proof of the
