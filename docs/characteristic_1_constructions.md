@@ -584,6 +584,30 @@ transcendentals stand on (a power series is exactly a regular sequence of its pa
   *modulus-free* Cauchy reals, completeness is independent of constructive `ZF`; carrying the modulus is
   what avoids that.)
 
-The v0.8.0 continuation: the **transcendentals** (exp/log/cos via convergent series with rigorous
-rational error bounds), built directly on this completeness. All v0.7.0 additions are kernel-checked,
+The v0.8.0 continuation begins the transcendentals (see §16). All v0.7.0 additions are kernel-checked,
 pure Lean 4 (no Mathlib, no `sorry`), axiom-audited. RH remains open; no 𝔽₁-square construction exists.
+
+## 16. v0.8.0 — the first transcendental: Euler's number `e`
+
+The transcendentals are where the analytic half acquires its genuine objects. **v0.8.0** delivers the
+first — Euler's number `e = Σ 1/i!` — via the exponential series, with a rigorous rational error bound
+(`Exp.lean`). It is the canonical demonstration of the "convergent series ⟹ constructive real"
+pipeline that completeness (§15) provides: a series is a regular sequence of its partial sums.
+
+- **Partial sums and factorial.** `S(N) = Σ_{i=0}^N 1/i!` (`eSum`). Lean core has no `Nat.factorial`,
+  so factorial is built from scratch (`fct`, with `fct_pos`, `self_le_fct`, the step `2·(k+1)! ≤ (k+2)!`).
+- **The rigorous error bound** (`ediff_bound`). The crux is a *telescoping* observation: the sequence
+  `U(n) := S(n) + 2/(n+1)!` is **decreasing** (`eU_step`), because `2/(n+2)! ≤ 1/(n+1)!` (i.e.
+  `2 ≤ n+2`). Hence for `a ≤ b`, `S(b) ≤ U(b) ≤ U(a) = S(a) + 2/(a+1)!`, giving the fully rational,
+  explicitly computable tail bound `S(b) − S(a) ≤ 2/(a+1)!`. (This is cleaner than the usual
+  geometric-ratio tail and inducts in one line.)
+- **`e` as a constructive real.** Reindexing `n ↦ S(n+1)` makes the bound `2/(n+2)! ≤ 1/(n+1)`, so the
+  reindexed partial sums are a regular sequence of rationals (`eSeq_regular`) — a `Real`. `e` is then a
+  genuine constructive real; `Pos e` is witnessed at index 0 (its approximant there is `2`). Since the
+  partial sums are rational, no real-number limit is needed here; completeness is what handles
+  genuinely real arguments (the v0.9.0 general `exp`).
+
+The v0.9.0+ transcendentals arc: the general `exp(q)` on `[0,1]` (the `e`-bound dominates each term
+since `|q^i/i!| ≤ 1/i!`), `cos`/`sin` via alternating series (error ≤ first omitted term), and `log`.
+All v0.8.0 additions are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), axiom-audited. RH
+remains open; no 𝔽₁-square construction exists (fresh mid-2026 synthesis).

@@ -37,6 +37,7 @@ import F1Square.Analysis.QOrder
 import F1Square.Analysis.Real
 import F1Square.Analysis.Complex
 import F1Square.Analysis.Complete
+import F1Square.Analysis.Exp
 
 open UOR.Primitives
 
@@ -217,6 +218,10 @@ def f1SquareStatus : F1SquareStatus := {
 --   limit construction         ← Analysis.{RReg, Rlim, RlimSeq_regular} (Bishop diagonal, reindex 4n+3)
 --   convergence with rate      ← Analysis.Rlim_tendsTo (X k → lim X within 1/(k+1))
 --   uniqueness of limits       ← Analysis.RTendsTo_unique (Archimedean + linear-bound criterion)
+-- v0.8.0 (the first transcendental: Euler's number e via the exponential series):
+--   factorial + partial sums   ← Analysis.{fct, eSum} (Σ 1/i!, from scratch — core has no factorial)
+--   rigorous error bound       ← Analysis.ediff_bound (telescoping: U(n)=S(n)+2/(n+1)! decreasing)
+--   e as a constructive real   ← Analysis.{e, eSeq_regular, e_pos} (the series value; positive)
 -- The crux is NOT backed and stays `none`:
 --   hodgeIndexHolds (= RH)    ← Crux.CruxFor 𝕊 — OPEN. Crux.template_hodgeIndex proves the
 --                               property only on the product-of-curves TEMPLATE, never on 𝕊.
@@ -300,5 +305,14 @@ example :
     ∧ (∀ (X : Nat → Analysis.Real) (L L' : Analysis.Real),
         Analysis.RTendsTo X L → Analysis.RTendsTo X L' → Analysis.Req L L') :=
   ⟨Analysis.Rlim_tendsTo, fun _ _ _ => Analysis.RTendsTo_unique⟩
+
+/-- Elaboration-checked witness binding the v0.8.0 layer: Euler's number `e` is a genuine constructive
+    real (positive), and the exponential series carries a rigorous rational error bound on its partial
+    sums (`S(b) − S(a) ≤ 2/(a+1)!` for `a ≤ b`) — the convergent-series-with-error-bound pattern. -/
+example :
+    Analysis.Pos Analysis.e
+    ∧ (∀ a b : Nat, a ≤ b →
+        Analysis.Qle (Analysis.Qsub (Analysis.eSum b) (Analysis.eSum a)) ⟨2, Analysis.fct (a + 1)⟩) :=
+  ⟨Analysis.e_pos, fun _ _ h => Analysis.ediff_bound h⟩
 
 end UOR.Bridge.F1Square

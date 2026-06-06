@@ -4,6 +4,34 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), starting at `v0.0.1`.
 
+## [0.8.0] - 2026-06-06
+
+### Added — the first transcendental: Euler's number `e` via the exponential series (pure Lean 4, no Mathlib, no `sorry`)
+- `F1Square/Analysis/Exp.lean` — **`e = Σ 1/i!` as a constructive real**, with a rigorous rational
+  error bound. Standing on completeness (a convergent series is a regular sequence of its partial
+  sums); since the partial sums are *rational*, the reindexed partial-sum sequence is directly a
+  regular sequence of rationals — a `Real`. Factorial is built from scratch (`fct`) because Lean core
+  has no `Nat.factorial`.
+- **The rigorous error bound** `ediff_bound`: for `a ≤ b`, the partial-sum gap `S(b) − S(a) ≤ 2/(a+1)!`,
+  via the telescoping observation that `U(n) := S(n) + 2/(n+1)!` is **decreasing** (`eU_step`, since
+  `2/(n+2)! ≤ 1/(n+1)!`) — a fully rational, explicitly computable tail bound. The reindex `n ↦ S(n+1)`
+  makes `2/(n+2)! ≤ 1/(n+1)`, so `eSeq` is regular (`eSeq_regular`) and `e` is a genuine real.
+- **`e_pos`**: `e` is positive (witnessed at index 0, where its approximant is `2`).
+- `scripts/audit_axioms.lean` extended; the honesty gate stays green (every theorem
+  `⊆ {propext, Classical.choice, Quot.sound}`; no `sorry`/`native_decide`/stray axiom).
+
+### Changed
+- `docs/` roadmap re-paced: the transcendentals are a multi-release **arc** — v0.8.0 delivers the
+  exponential-series machinery and `e`; the general `exp(q)` (on `[0,1]`), `cos`/`sin` (alternating
+  series), and `log` follow in v0.9.0+. `F1Square.lean` gains a v0.8.0 `example`.
+
+### Note
+- RH remains **open**, and no construction of the 𝔽₁-square exists (fresh mid-2026 synthesis: the
+  Feb-2026 Connes–Consani *On the Jacobian of Spec ℤ̄* is an Arakelov–Picard reinterpretation, not the
+  square; there is still no accepted 𝔽₁-scheme theory realizing `Spec ℤ ×_𝔽₁ Spec ℤ` with an intrinsic
+  intersection theory). The transcendentals make more of the analytic half *statable and checkable*,
+  never proven — proving `λₙ ≥ 0 ∀n` / the Hodge index on 𝕊 is RH.
+
 ## [0.7.0] - 2026-06-06
 
 ### Added — Cauchy completeness of ℝ (pure Lean 4, no Mathlib, no `sorry`, choice-free)

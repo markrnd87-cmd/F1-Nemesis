@@ -498,9 +498,14 @@ canonical forms, realizations, no Mathlib — one brick per release:
   within `1/(j+1)+1/(k+1)` as reals) converges to **Bishop's diagonal** `Rlim X := n ↦ (X(4n+3))_{4n+3}`
   (the `4n+3` reindex makes the diagonal itself regular), with explicit rate `1/(k+1)` (`Rlim_tendsTo`)
   and uniqueness up to `≈` (`RTendsTo_unique`). Choice-free (the modulus is carried in the data).
-- **v0.8.0:** transcendentals (exp/log/cos via convergent series with rigorous rational error bounds,
-  standing on completeness — a power series is a regular sequence of its partial sums).
-- **v0.9.0+:** ζ and `λₙ` as exact-bounded objects; the explicit formula as an exact-arithmetic trace.
+- **v0.8.0 (done):** the **first transcendental** — Euler's number `e = Σ 1/i!` — via the exponential
+  series, standing on completeness (a series is a regular sequence of partial sums). The rigorous
+  rational error bound is the telescoping `U(n) := S(n) + 2/(n+1)!` decreasing, giving
+  `S(b) − S(a) ≤ 2/(a+1)!`; reindexing makes the partial sums regular, so `e` is a genuine
+  constructive real (and `Pos e`). Factorial built from scratch (core has none).
+- **v0.9.0+ (transcendentals arc):** the general `exp(q)` on `[0,1]`, `cos`/`sin` (alternating series
+  with the first-omitted-term bound), and `log`; then ζ and `λₙ` as exact-bounded objects, and the
+  explicit formula as an exact-arithmetic trace.
 
 Each brick makes more of the analytic half *statable and finitely checkable* — never a proof of the
 crux. Proving `λₙ ≥ 0 ∀ n` / Weil positivity / the Hodge index on `𝕊` IS RH, and remains open.

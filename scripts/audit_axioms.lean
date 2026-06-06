@@ -255,3 +255,19 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rlim_tendsTo
 #print axioms Analysis.Qabs_Qsub_comm
 #print axioms Analysis.RTendsTo_unique
+
+-- v0.8.0 — the first transcendental: Euler's number e via the exponential series.
+#print axioms Analysis.fct_pos
+#print axioms Analysis.self_le_fct
+#print axioms Analysis.two_mul_fct_le
+#print axioms Analysis.eSum_den_pos
+#print axioms Analysis.eSum_le
+#print axioms Analysis.efac_step
+#print axioms Analysis.eU_step
+#print axioms Analysis.eU_le
+#print axioms Analysis.ediff_bound
+#print axioms Analysis.eabs_bound
+#print axioms Analysis.efct_reindex
+#print axioms Analysis.eSeq_regular
+#print axioms Analysis.e
+#print axioms Analysis.e_pos
