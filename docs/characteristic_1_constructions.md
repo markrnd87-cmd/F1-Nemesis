@@ -527,8 +527,34 @@ v0.4.0 made ℝ an ordered additive group; **v0.5.0** completes the field arithm
   operation-congruences `Rneg_congr`/`Radd_congr`/`Rsub_congr` (the operations are well-defined on the
   setoid) plus `Rmul_comm`.
 
-The v0.6.0 continuation: the remaining ℂ ring laws — associativity and distributivity — need
-`Rmul`-congruence and `Rmul`-associativity (a reindex-reconciliation argument, harder than the
-additive congruences); then completeness (regular sequences of reals converge) and the
-transcendentals. All v0.5.0 additions are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), and
-axiom-audited. RH remains open.
+The v0.6.0 continuation completes the ℝ/ℂ algebra (see §14). All v0.5.0 additions are kernel-checked,
+pure Lean 4 (no Mathlib, no `sorry`), and axiom-audited. RH remains open.
+
+## 14. v0.6.0 — ℝ and ℂ are commutative rings up to `≈`
+
+v0.5.0 left multiplicative congruence/associativity open: `Rmul`'s reindex `r(n) = 2K(n+1)−1` reads
+`K` off the inputs, so two `≈`-equal reals get *different* reindexes and congruence cannot be `rfl`.
+**v0.6.0** resolves this with one reusable engine and then lifts it to all the ring laws.
+
+- **The linear-bound criterion** (`Req_of_lin_bound`, `Real.lean`). If `|xₙ − yₙ| ≤ C/(n+1)` for every
+  `n` — *any* fixed constant `C`, not just `2` — then `x ≈ y`. Proof: route each target index `k`
+  through an auxiliary `m` (`|x_k − y_k| ≤ 2/(k+1) + (C+2)/(m+1)`) and kill the tail with the
+  **generalized Archimedean lemma** `Qarch_gen` (`p ≤ q + C/(m+1) ∀m ⟹ p ≤ q`, `QOrder.lean`). This is
+  our packaging of Bishop's ε-shift transitivity into a single tool: every reindex-mismatch bound
+  (which is only `O(1/(n+1))`, never the tight `2/(n+1)`) becomes a genuine `≈`.
+- **The product-gap engine** (`Rmul_gap`, with `Rgap_le`/`Rcross_le`/`canon_bound_mul`). The Bishop
+  product bound `|x_a y_a − x_b y_b| ≤ |x_a|·|y_a−y_b| + |y_b|·|x_a−x_b|` (`Qabs_mul_diff`), the
+  canonical `|·| ≤ K` bound, and the same/`≈`-cross gap collapses to scale `1/(n+1)`.
+- **ℝ is a commutative ring up to `≈`.** `Rmul_congr` (multiplication well-defined on the setoid — the
+  v0.5.0 deferral); `Rmul_assoc` (triple product: re-associate in ℚ, then telescope into nested binary
+  product-gaps); `Rmul_distrib`, `Rmul_one`, `Radd_assoc`, `Rmul_zero`; plus `Rmul_neg`,
+  `Rmul_sub_distrib`, and pointwise re-association lemmas.
+- **ℂ is a commutative ring up to `≈`** (`Complex.lean`). `Cadd_assoc`, `Cmul_one`, `Cmul_distrib`,
+  `Cmul_assoc`: each bilinear part of `(a+bi)(c+di)` reduces, via the ℝ ring laws and the
+  `≈`-congruences, to a *pointwise* additive re-association (the four triple products coincide; only
+  the grouping differs). With v0.5.0's `Cmul_comm`, ℂ satisfies all commutative-ring axioms up to `≈`.
+
+The v0.7.0 continuation: **completeness** (every regular sequence of reals converges) and the
+**transcendentals** (exp/log/cos via convergent series with rigorous error bounds). All v0.6.0
+additions are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), and axiom-audited. RH remains open;
+no construction of the 𝔽₁-square exists (fresh mid-2026 synthesis).

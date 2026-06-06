@@ -86,4 +86,68 @@ theorem Cmul_comm (z w : Complex) : Ceq (Cmul z w) (Cmul w z) :=
   ⟨Rsub_congr (Rmul_comm z.re w.re) (Rmul_comm z.im w.im),
    Req_trans (Radd_congr (Rmul_comm z.re w.im) (Rmul_comm z.im w.re)) (Radd_comm _ _)⟩
 
+-- ===========================================================================
+-- v0.6.0 — the remaining ℂ ring laws (up to `≈`), now that ℝ is a commutative ring on the setoid.
+-- These are the bilinear expansions of `(a+bi)(c+di)`; each part reduces, via the ℝ ring laws and
+-- the `≈`-congruences (`Rsub_congr`/`Radd_congr`), to a pointwise additive rearrangement. With
+-- additive associativity (`Cadd_assoc`), the unit (`Cmul_one`), commutativity (`Cmul_comm`),
+-- multiplicative associativity (`Cmul_assoc`), and distributivity (`Cmul_distrib`), **ℂ is a
+-- commutative ring up to `≈`** — the v0.6.0 brick. None of this is the crux.
+-- ===========================================================================
+
+/-- ℂ addition is associative (up to `≈`), coordinatewise from `Radd_assoc`. -/
+theorem Cadd_assoc (z w v : Complex) : Ceq (Cadd (Cadd z w) v) (Cadd z (Cadd w v)) :=
+  ⟨Radd_assoc _ _ _, Radd_assoc _ _ _⟩
+
+/-- The multiplicative unit law on ℂ (up to `≈`): `z · 1 ≈ z`. Real part `a·1 − b·0 ≈ a`; imaginary
+    part `a·0 + b·1 ≈ b`, via the ℝ unit/zero laws and the additive identity. -/
+theorem Cmul_one (z : Complex) : Ceq (Cmul z Cone) z :=
+  ⟨Req_trans (Rsub_congr (Rmul_one z.re) (Rmul_zero z.im)) (Rsub_zero z.re),
+   Req_trans (Radd_congr (Rmul_zero z.re) (Rmul_one z.im))
+     (Req_trans (Radd_comm zero z.im) (Radd_zero z.im))⟩
+
+/-- Left distributivity on ℂ (up to `≈`): `z·(w + v) ≈ z·w + z·v`. Real part: distribute each `Rmul`
+    over the `Radd`, then `(ac+ae) − (bd+bf) ≈ (ac−bd) + (ae−bf)`. Imaginary part: distribute, then the
+    middle-four swap `(ad+af) + (bc+be) ≈ (ad+bc) + (af+be)`. -/
+theorem Cmul_distrib (z w v : Complex) :
+    Ceq (Cmul z (Cadd w v)) (Cadd (Cmul z w) (Cmul z v)) :=
+  ⟨Req_trans (Rsub_congr (Rmul_distrib z.re w.re v.re) (Rmul_distrib z.im w.im v.im))
+     (Rsub_Radd_Radd _ _ _ _),
+   Req_trans (Radd_congr (Rmul_distrib z.re w.im v.im) (Rmul_distrib z.im w.re v.re))
+     (Radd_swap _ _ _ _)⟩
+
+/-- Associativity of ℂ multiplication (up to `≈`): `(z·w)·v ≈ z·(w·v)`. Each part expands (via right/
+    subtractive distributivity and per-monomial `Rmul_assoc`) to a signed sum of the four triple
+    products `z·w·v`, associated as `a(ce)`, `a(df)`, `b(cf)`, `b(de)`; the two groupings then differ
+    only by a pointwise additive re-association (`Rreassoc_sub`/`Rreassoc_add`). This completes **ℂ as
+    a commutative ring up to `≈`**. -/
+theorem Cmul_assoc (z w v : Complex) :
+    Ceq (Cmul (Cmul z w) v) (Cmul z (Cmul w v)) :=
+  ⟨Req_trans
+     (Rsub_congr
+       (Req_trans (Rmul_sub_distrib_right (Rmul z.re w.re) (Rmul z.im w.im) v.re)
+         (Rsub_congr (Rmul_assoc z.re w.re v.re) (Rmul_assoc z.im w.im v.re)))
+       (Req_trans (Rmul_distrib_right (Rmul z.re w.im) (Rmul z.im w.re) v.im)
+         (Radd_congr (Rmul_assoc z.re w.im v.im) (Rmul_assoc z.im w.re v.im))))
+     (Req_trans
+       (Rreassoc_sub (Rmul z.re (Rmul w.re v.re)) (Rmul z.re (Rmul w.im v.im))
+                     (Rmul z.im (Rmul w.re v.im)) (Rmul z.im (Rmul w.im v.re)))
+       (Req_symm
+         (Rsub_congr
+           (Rmul_sub_distrib z.re (Rmul w.re v.re) (Rmul w.im v.im))
+           (Rmul_distrib z.im (Rmul w.re v.im) (Rmul w.im v.re))))),
+   Req_trans
+     (Radd_congr
+       (Req_trans (Rmul_sub_distrib_right (Rmul z.re w.re) (Rmul z.im w.im) v.im)
+         (Rsub_congr (Rmul_assoc z.re w.re v.im) (Rmul_assoc z.im w.im v.im)))
+       (Req_trans (Rmul_distrib_right (Rmul z.re w.im) (Rmul z.im w.re) v.re)
+         (Radd_congr (Rmul_assoc z.re w.im v.re) (Rmul_assoc z.im w.re v.re))))
+     (Req_trans
+       (Rreassoc_add (Rmul z.re (Rmul w.re v.im)) (Rmul z.re (Rmul w.im v.re))
+                     (Rmul z.im (Rmul w.re v.re)) (Rmul z.im (Rmul w.im v.im)))
+       (Req_symm
+         (Radd_congr
+           (Rmul_distrib z.re (Rmul w.re v.im) (Rmul w.im v.re))
+           (Rmul_sub_distrib z.im (Rmul w.re v.re) (Rmul w.im v.im)))))⟩
+
 end UOR.Bridge.F1Square.Analysis

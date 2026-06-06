@@ -206,6 +206,12 @@ def f1SquareStatus : F1SquareStatus := {
 --   ℝ field arithmetic         ← Analysis.{Radd_comm, Radd_neg, Rmul, Rmul_comm} (add/neg/mul, regular)
 --   ≈-congruence (well-defined)← Analysis.{Rneg_congr, Radd_congr, Rsub_congr} (operations respect ≈)
 --   ℂ = ℝ×ℝ (comm. mult.)      ← Analysis.{Ceq_trans, Cadd_comm, Cadd_neg, Cmul, Cmul_comm}
+-- v0.6.0 (ℝ and ℂ are commutative rings up to ≈; ℝ multiplication well-defined on the setoid):
+--   Archimedean engine         ← Analysis.{Qarch_gen, Req_of_lin_bound} (linear bound C/(n+1) ⟹ ≈)
+--   product-gap engine         ← Analysis.{Rmul_gap, Rgap_le, Rcross_le, canon_bound_mul}
+--   ℝ multiplication well-def.  ← Analysis.Rmul_congr (the v0.5.0-deferred congruence, now proved)
+--   ℝ commutative ring         ← Analysis.{Rmul_assoc, Rmul_distrib, Rmul_one, Radd_assoc, Rmul_zero}
+--   ℂ commutative ring         ← Analysis.{Cadd_assoc, Cmul_one, Cmul_distrib, Cmul_assoc}
 -- The crux is NOT backed and stays `none`:
 --   hodgeIndexHolds (= RH)    ← Crux.CruxFor 𝕊 — OPEN. Crux.template_hodgeIndex proves the
 --                               property only on the product-of-curves TEMPLATE, never on 𝕊.
@@ -265,5 +271,20 @@ example :
     ∧ (∀ x y : Analysis.Real, Analysis.Req (Analysis.Rmul x y) (Analysis.Rmul y x))
     ∧ (∀ z w : Analysis.Complex, Analysis.Ceq (Analysis.Cmul z w) (Analysis.Cmul w z)) :=
   ⟨fun _ _ _ => Analysis.Req_trans, Analysis.Rmul_comm, Analysis.Cmul_comm⟩
+
+/-- Elaboration-checked witness binding the v0.6.0 layer: ℝ multiplication is well-defined on the
+    `≈`-setoid (the v0.5.0-deferred congruence), ℝ multiplication is associative up to `≈`, and ℂ
+    multiplication is both associative and distributive up to `≈` — so ℂ is a commutative ring. -/
+example :
+    (∀ x x' y y' : Analysis.Real, Analysis.Req x x' → Analysis.Req y y' →
+        Analysis.Req (Analysis.Rmul x y) (Analysis.Rmul x' y'))
+    ∧ (∀ x y z : Analysis.Real,
+        Analysis.Req (Analysis.Rmul (Analysis.Rmul x y) z) (Analysis.Rmul x (Analysis.Rmul y z)))
+    ∧ (∀ z w v : Analysis.Complex,
+        Analysis.Ceq (Analysis.Cmul (Analysis.Cmul z w) v) (Analysis.Cmul z (Analysis.Cmul w v)))
+    ∧ (∀ z w v : Analysis.Complex,
+        Analysis.Ceq (Analysis.Cmul z (Analysis.Cadd w v))
+                     (Analysis.Cadd (Analysis.Cmul z w) (Analysis.Cmul z v))) :=
+  ⟨fun _ _ _ _ => Analysis.Rmul_congr, Analysis.Rmul_assoc, Analysis.Cmul_assoc, Analysis.Cmul_distrib⟩
 
 end UOR.Bridge.F1Square

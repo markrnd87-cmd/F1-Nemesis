@@ -370,4 +370,391 @@ theorem Radd_congr {x x' y y' : Real} (hx : Req x x') (hy : Req y y') :
 theorem Rsub_congr {x x' y y' : Real} (hx : Req x x') (hy : Req y y') :
     Req (Rsub x y) (Rsub x' y') := Radd_congr hx (Rneg_congr hy)
 
+-- ===========================================================================
+-- v0.6.0 — the well-definedness engine and the ℝ/ℂ ring laws.
+--
+-- The reindex used by `Rmul` is tuned to make the *product* regular; it is NOT the same on two
+-- `≈`-equal inputs, so multiplication-congruence (and associativity/distributivity) cannot be `rfl`.
+-- The standard Bishop resolution is that a *linear* bound `|xₙ − yₙ| ≤ C/(n+1)` (any constant `C`,
+-- not just `2`) already forces `x ≈ y`: route each target index through a large auxiliary index and
+-- let the generalized Archimedean lemma (`Qarch_gen`) kill the tail. That criterion
+-- (`Req_of_lin_bound`) turns every reindex-mismatch into a clean `≈` fact, and the product-gap
+-- bound `|x_a y_a − x_b y_b| ≤ |x_a|·|y_a−y_b| + |y_b|·|x_a−x_b|` (with the canonical `|·| ≤ K`
+-- bound) does the rest. This is the substrate synthesis: the literature gives the canonical-bound /
+-- reindex product; the linear-bound criterion is our packaging of the ε-shift transitivity argument
+-- into one reusable engine. None of this is the crux.
+-- ===========================================================================
+
+/-- The multiplication reindex never decreases the index: `n ≤ r(n)` (since `r(n)+1 = 2K(n+1) ≥ n+1`).
+    This is what lets a regularity/equality gap at the reindexed positions be read at scale `1/(n+1)`. -/
+theorem Ridx_ge (x y : Real) (n : Nat) : n ≤ Ridx x y n := by
+  have hs := Ridx_succ x y n
+  have hk := RmulK_pos x y
+  have hmul : (n + 1) ≤ 2 * RmulK x y * (n + 1) :=
+    Nat.le_trans (by omega) (Nat.mul_le_mul (show 1 ≤ 2 * RmulK x y by omega) (Nat.le_refl (n + 1)))
+  omega
+
+/-- Constant-fraction monotonicity in the numerator (denominators both `1`): `a ≤ b ⟹ a/1 ≤ b/1`. -/
+theorem Qconst_le {a b : Nat} (h : a ≤ b) : Qle (⟨(a : Int), 1⟩ : Q) ⟨(b : Int), 1⟩ := by
+  show (a : Int) * ((1 : Nat) : Int) ≤ (b : Int) * ((1 : Nat) : Int)
+  have hab : (a : Int) ≤ (b : Int) := by exact_mod_cast h
+  omega
+
+/-- The regularity gap of one sequence, read at scale `1/(n+1)`: if both indices are `≥ n` then
+    `|x_i − x_j| ≤ 2/(n+1)`. (Collapse the regularity bound `1/(i+1)+1/(j+1)` via `Qscale_le`.) -/
+theorem Rgap_le (x : Real) {i j n : Nat} (hi : n ≤ i) (hj : n ≤ j) :
+    Qle (Qabs (Qsub (x.seq i) (x.seq j))) ⟨2, n + 1⟩ := by
+  have hmono : Qle (add (Qbound i) (Qbound j)) (add (Qbound n) (Qbound n)) :=
+    Qadd_le_add (Qscale_le (by omega) (by omega) hi) (Qscale_le (by omega) (by omega) hj)
+  have hcol : Qle (add (Qbound n) (Qbound n)) ⟨2, n + 1⟩ := by
+    apply Qeq_le; simp only [Qeq, add, Qbound]; push_cast; ring_uor
+  exact Qle_trans (add_den_pos (Qbound_den_pos i) (Qbound_den_pos j)) (x.reg i j)
+    (Qle_trans (add_den_pos (Qbound_den_pos n) (Qbound_den_pos n)) hmono hcol)
+
+/-- The cross gap of two `≈`-equal sequences, read at scale `1/(n+1)`: if both indices are `≥ n` then
+    `|x_i − x'_j| ≤ 4/(n+1)` (route through `x'_i`: equality `2/(n+1)` + regularity `2/(n+1)`). -/
+theorem Rcross_le {x x' : Real} (h : Req x x') {i j n : Nat} (hi : n ≤ i) (hj : n ≤ j) :
+    Qle (Qabs (Qsub (x.seq i) (x'.seq j))) ⟨4, n + 1⟩ := by
+  have htri := Qabs_sub_triangle (a := x.seq i) (b := x'.seq i) (c := x'.seq j)
+    (x.den_pos i) (x'.den_pos i) (x'.den_pos j)
+  have he : Qle (Qabs (Qsub (x.seq i) (x'.seq i))) ⟨2, n + 1⟩ :=
+    Qle_trans (Nat.succ_pos i) (h i) (Qscale_le (by omega) (by omega) hi)
+  have hr : Qle (Qabs (Qsub (x'.seq i) (x'.seq j))) ⟨2, n + 1⟩ := Rgap_le x' hi hj
+  have hsum := Qadd_le_add he hr
+  have hcol : Qle (add (⟨2, n + 1⟩ : Q) ⟨2, n + 1⟩) ⟨4, n + 1⟩ := by
+    apply Qeq_le; simp only [Qeq, add]; push_cast; ring_uor
+  refine Qle_trans ?_ htri (Qle_trans ?_ hsum hcol)
+  · exact add_den_pos (Qabs_den_pos (Qsub_den_pos (x.den_pos i) (x'.den_pos i)))
+      (Qabs_den_pos (Qsub_den_pos (x'.den_pos i) (x'.den_pos j)))
+  · exact add_den_pos (Nat.succ_pos n) (Nat.succ_pos n)
+
+/-- **The linear-bound criterion** (Lemma A, the v0.6.0 engine): if `|xₙ − yₙ| ≤ C/(n+1)` for every
+    `n` (any fixed constant `C`), then `x ≈ y`. For each target index `k`, route `|x_k − y_k|`
+    through an auxiliary `m`: `≤ |x_k − x_m| + |x_m − y_m| + |y_m − y_k| ≤ 2/(k+1) + (C+2)/(m+1)`;
+    the generalized Archimedean lemma kills the `m`-tail. This converts every reindex-mismatch bound
+    into a genuine `≈`. -/
+theorem Req_of_lin_bound {x y : Real} {C : Nat}
+    (hb : ∀ n, Qle (Qabs (Qsub (x.seq n) (y.seq n))) ⟨(C : Int), n + 1⟩) : Req x y := by
+  intro k
+  apply Qarch_gen (C := C + 2)
+    (Qabs_den_pos (Qsub_den_pos (x.den_pos k) (y.den_pos k))) (Nat.succ_pos k)
+  intro m
+  have h1 := Qabs_sub_triangle (a := x.seq k) (b := x.seq m) (c := y.seq k)
+    (x.den_pos k) (x.den_pos m) (y.den_pos k)
+  have h2 := Qabs_sub_triangle (a := x.seq m) (b := y.seq m) (c := y.seq k)
+    (x.den_pos m) (y.den_pos m) (y.den_pos k)
+  have c2 := Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (x.den_pos m) (y.den_pos m)))
+      (Qabs_den_pos (Qsub_den_pos (y.den_pos m) (y.den_pos k)))) h2
+      (Qadd_le_add (hb m) (y.reg m k))
+  have c1 := Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (x.den_pos k) (x.den_pos m)))
+      (Qabs_den_pos (Qsub_den_pos (x.den_pos m) (y.den_pos k)))) h1
+      (Qadd_le_add (x.reg k m) c2)
+  have hfin : Qle (add (add (Qbound k) (Qbound m))
+                      (add ⟨(C : Int), m + 1⟩ (add (Qbound m) (Qbound k))))
+                  (add (⟨2, k + 1⟩ : Q) ⟨((C + 2 : Nat) : Int), m + 1⟩) := by
+    apply Qeq_le; simp only [Qeq, add, Qbound]; push_cast; ring_uor
+  exact Qle_trans (add_den_pos (add_den_pos (Qbound_den_pos k) (Qbound_den_pos m))
+      (add_den_pos (Nat.succ_pos m) (add_den_pos (Qbound_den_pos m) (Qbound_den_pos k)))) c1 hfin
+
+/-- **The product-gap lemma**: with both factors bounded by `L` and the factor gaps bounded by
+    `s/(n+1)` and `t/(n+1)`, the product gap is bounded by `L(s+t)/(n+1)`. The binary engine for
+    multiplication-congruence and the ring laws (`Qabs_mul_diff` + `Qmul_le_mul`). -/
+theorem Rmul_gap {xa ya xb yb : Q} {L s t n : Nat}
+    (hxa : 0 < xa.den) (hya : 0 < ya.den) (hxb : 0 < xb.den) (hyb : 0 < yb.den)
+    (hxaB : Qle (Qabs xa) ⟨(L : Int), 1⟩) (hybB : Qle (Qabs yb) ⟨(L : Int), 1⟩)
+    (hyd : Qle (Qabs (Qsub ya yb)) ⟨(s : Int), n + 1⟩)
+    (hxd : Qle (Qabs (Qsub xa xb)) ⟨(t : Int), n + 1⟩) :
+    Qle (Qabs (Qsub (mul xa ya) (mul xb yb))) ⟨(L * (s + t) : Nat), n + 1⟩ := by
+  have hdiff := Qabs_mul_diff hxa hya hxb hyb
+  have t1 := Qmul_le_mul (a := Qabs xa) (b := ⟨(L : Int), 1⟩) (c := Qabs (Qsub ya yb))
+    (d := ⟨(s : Int), n + 1⟩) (Qabs_den_pos hxa) Nat.one_pos
+    (Qabs_den_pos (Qsub_den_pos hya hyb)) (Qabs_num_nonneg _) (Qabs_num_nonneg _) hxaB hyd
+  have t2 := Qmul_le_mul (a := Qabs yb) (b := ⟨(L : Int), 1⟩) (c := Qabs (Qsub xa xb))
+    (d := ⟨(t : Int), n + 1⟩) (Qabs_den_pos hyb) Nat.one_pos
+    (Qabs_den_pos (Qsub_den_pos hxa hxb)) (Qabs_num_nonneg _) (Qabs_num_nonneg _) hybB hxd
+  have hid : Qle (add (mul (⟨(L : Int), 1⟩ : Q) ⟨(s : Int), n + 1⟩) (mul ⟨(L : Int), 1⟩ ⟨(t : Int), n + 1⟩))
+                 ⟨(L * (s + t) : Nat), n + 1⟩ := by
+    apply Qeq_le; simp only [Qeq, add, mul]; push_cast; ring_uor
+  refine Qle_trans ?_ hdiff (Qle_trans ?_ (Qadd_le_add t1 t2) hid)
+  · exact add_den_pos (Qmul_den_pos (Qabs_den_pos hxa) (Qabs_den_pos (Qsub_den_pos hya hyb)))
+      (Qmul_den_pos (Qabs_den_pos hyb) (Qabs_den_pos (Qsub_den_pos hxa hxb)))
+  · exact add_den_pos (Qmul_den_pos Nat.one_pos (Nat.succ_pos n))
+      (Qmul_den_pos Nat.one_pos (Nat.succ_pos n))
+
+/-- A two-term difference collapses to the sum of the coefficients: if `P − Q = d₁ + d₂` (as ℚ
+    values) with `|d₁| ≤ p/(n+1)` and `|d₂| ≤ q/(n+1)`, then `|P − Q| ≤ (p+q)/(n+1)`. -/
+theorem Qabs_two_diff_gen {A B d1 d2 : Q} {p q n : Nat}
+    (hd1 : 0 < d1.den) (hd2 : 0 < d2.den)
+    (hAB : Qeq (Qsub A B) (add d1 d2))
+    (h1 : Qle (Qabs d1) ⟨(p : Int), n + 1⟩) (h2 : Qle (Qabs d2) ⟨(q : Int), n + 1⟩) :
+    Qle (Qabs (Qsub A B)) ⟨(p + q : Nat), n + 1⟩ := by
+  have step1 : Qle (Qabs (Qsub A B)) (Qabs (add d1 d2)) := Qeq_le (Qabs_Qeq hAB)
+  have step4 : Qle (add (⟨(p : Int), n + 1⟩ : Q) ⟨(q : Int), n + 1⟩) ⟨(p + q : Nat), n + 1⟩ := by
+    apply Qeq_le; simp only [Qeq, add]; push_cast; ring_uor
+  exact Qle_trans (Qabs_den_pos (add_den_pos hd1 hd2)) step1
+    (Qle_trans (add_den_pos (Qabs_den_pos hd1) (Qabs_den_pos hd2)) (Qabs_add_le d1 d2)
+    (Qle_trans (add_den_pos (Nat.succ_pos n) (Nat.succ_pos n)) (Qadd_le_add h1 h2) step4))
+
+/-- A product of two canonically-bounded terms is bounded by the product of the bounds:
+    `|x_i · y_j| ≤ (K_x·K_y)/1`. The bound needed for the *outer* factor in triple products. -/
+theorem canon_bound_mul (x y : Real) (i j : Nat) :
+    Qle (Qabs (mul (x.seq i) (y.seq j))) ⟨(xBound x * xBound y : Nat), 1⟩ := by
+  rw [Qabs_mul]
+  have hb := Qmul_le_mul (a := Qabs (x.seq i)) (b := ⟨(xBound x : Nat), 1⟩)
+    (c := Qabs (y.seq j)) (d := ⟨(xBound y : Nat), 1⟩) (Qabs_den_pos (x.den_pos i)) Nat.one_pos
+    (Qabs_den_pos (y.den_pos j)) (Qabs_num_nonneg _) (Qabs_num_nonneg _)
+    (canon_bound x i) (canon_bound y j)
+  have he : Qle (mul (⟨(xBound x : Nat), 1⟩ : Q) ⟨(xBound y : Nat), 1⟩)
+                ⟨(xBound x * xBound y : Nat), 1⟩ := by
+    apply Qeq_le; simp only [Qeq, mul]; push_cast; ring_uor
+  exact Qle_trans (Qmul_den_pos Nat.one_pos Nat.one_pos) hb he
+
+/-- The canonical bound relaxed to any `L ≥ K_x`: `|x_i| ≤ L/1`. -/
+theorem canon_bound_le {x : Real} {L : Nat} (h : xBound x ≤ L) (i : Nat) :
+    Qle (Qabs (x.seq i)) ⟨(L : Int), 1⟩ :=
+  Qle_trans Nat.one_pos (canon_bound x i) (Qconst_le h)
+
+/-- `one` is the constant-`1` sequence at every index (definitional). -/
+theorem one_seq (k : Nat) : one.seq k = ⟨1, 1⟩ := rfl
+
+-- The ℝ ring laws (up to `≈`), all via the linear-bound criterion + the product-gap engine.
+
+/-- **ℝ multiplication is well-defined on the `≈`-setoid** — the headline v0.6.0 result (deferred from
+    v0.5.0): `x ≈ x'`, `y ≈ y'` ⟹ `x·y ≈ x'·y'`. The reindexes `r = Ridx x y` and `r' = Ridx x' y'`
+    differ, but the product gap `|x_r y_r − x'_{r'} y'_{r'}| ≤ |x_r|·|y_r − y'_{r'}| + |y'_{r'}|·|x_r − x'_{r'}|`
+    is bounded by `8L/(n+1)` (canonical bounds `≤ L`, cross gaps `≤ 4/(n+1)`); the linear-bound
+    criterion finishes. This is what makes the ring laws — and `Cmul` — `≈`-respecting. -/
+theorem Rmul_congr {x x' y y' : Real} (hx : Req x x') (hy : Req y y') :
+    Req (Rmul x y) (Rmul x' y') := by
+  apply Req_of_lin_bound (C := max (xBound x) (xBound y') * (4 + 4))
+  intro n
+  exact Rmul_gap (x.den_pos _) (y.den_pos _) (x'.den_pos _) (y'.den_pos _)
+    (canon_bound_le (Nat.le_max_left _ _) _) (canon_bound_le (Nat.le_max_right _ _) _)
+    (Rcross_le hy (Ridx_ge x y n) (Ridx_ge x' y' n))
+    (Rcross_le hx (Ridx_ge x y n) (Ridx_ge x' y' n))
+
+/-- The multiplicative unit law on ℝ (up to `≈`): `x · 1 ≈ x`. The reindex `r = Ridx x one n ≥ n`
+    moves the index, but `x_r · 1 = x_r` (ℚ) and `|x_r − x_n| ≤ 2/(n+1)` (regularity). -/
+theorem Rmul_one (x : Real) : Req (Rmul x one) x := by
+  intro n
+  have hqe : Qeq (Qsub ((Rmul x one).seq n) (x.seq n))
+                 (Qsub (x.seq (Ridx x one n)) (x.seq n)) := by
+    show Qeq (Qsub (mul (x.seq (Ridx x one n)) (one.seq (Ridx x one n))) (x.seq n))
+             (Qsub (x.seq (Ridx x one n)) (x.seq n))
+    rw [one_seq]; simp only [Qeq, Qsub, add, neg, mul]; push_cast; ring_uor
+  exact Qle_congr_left (Qabs_den_pos (Qsub_den_pos (x.den_pos _) (x.den_pos n)))
+    (Qeq_symm (Qabs_Qeq hqe)) (Rgap_le x (Ridx_ge x one n) (Nat.le_refl n))
+
+/-- Associativity of ℝ addition (up to `≈`). The two groupings read `x, y, z` at different reindexes
+    (`4n+3` vs `2n+1`); the `y`-terms coincide and cancel, leaving `|x_{4n+3} − x_{2n+1}|` and
+    `|z_{2n+1} − z_{4n+3}|`, each `≤ 2/(n+1)` (regularity). The linear-bound criterion finishes. -/
+theorem Radd_assoc (x y z : Real) : Req (Radd (Radd x y) z) (Radd x (Radd y z)) := by
+  apply Req_of_lin_bound (C := 4)
+  intro n
+  have hqe : Qeq (Qsub ((Radd (Radd x y) z).seq n) ((Radd x (Radd y z)).seq n))
+                 (add (Qsub (x.seq (2 * (2 * n + 1) + 1)) (x.seq (2 * n + 1)))
+                      (Qsub (z.seq (2 * n + 1)) (z.seq (2 * (2 * n + 1) + 1)))) := by
+    simp only [Radd, Qeq, Qsub, add, neg]; push_cast; ring_uor
+  exact Qabs_two_diff_gen (Qsub_den_pos (x.den_pos _) (x.den_pos _))
+    (Qsub_den_pos (z.den_pos _) (z.den_pos _)) hqe
+    (Rgap_le x (by omega) (by omega)) (Rgap_le z (by omega) (by omega))
+
+/-- Left distributivity on ℝ (up to `≈`): `x·(y + z) ≈ x·y + x·z`. The difference splits into two
+    binary product gaps `|x_a y_{2a+1} − x_b y_b|` and `|x_a z_{2a+1} − x_c z_c|` (all indices `≥ n`);
+    each is bounded by `4M/(n+1)` via the product-gap engine; the criterion finishes with `C = 8M`. -/
+theorem Rmul_distrib (x y z : Real) :
+    Req (Rmul x (Radd y z)) (Radd (Rmul x y) (Rmul x z)) := by
+  apply Req_of_lin_bound (C := max (xBound x) (max (xBound y) (xBound z)) * (2 + 2)
+                            + max (xBound x) (max (xBound y) (xBound z)) * (2 + 2))
+  intro n
+  have ha := Ridx_ge x (Radd y z) n
+  have hb := Ridx_ge x y (2 * n + 1)
+  have hc := Ridx_ge x z (2 * n + 1)
+  have hMy : xBound y ≤ max (xBound x) (max (xBound y) (xBound z)) :=
+    Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _)
+  have hMz : xBound z ≤ max (xBound x) (max (xBound y) (xBound z)) :=
+    Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _)
+  have hqe : Qeq (Qsub ((Rmul x (Radd y z)).seq n) ((Radd (Rmul x y) (Rmul x z)).seq n))
+      (add (Qsub (mul (x.seq (Ridx x (Radd y z) n)) (y.seq (2 * Ridx x (Radd y z) n + 1)))
+                 (mul (x.seq (Ridx x y (2 * n + 1))) (y.seq (Ridx x y (2 * n + 1)))))
+           (Qsub (mul (x.seq (Ridx x (Radd y z) n)) (z.seq (2 * Ridx x (Radd y z) n + 1)))
+                 (mul (x.seq (Ridx x z (2 * n + 1))) (z.seq (Ridx x z (2 * n + 1)))))) := by
+    simp only [Rmul, Radd, Qeq, Qsub, add, neg, mul]; push_cast; ring_uor
+  refine Qabs_two_diff_gen
+    (Qsub_den_pos (Qmul_den_pos (x.den_pos _) (y.den_pos _)) (Qmul_den_pos (x.den_pos _) (y.den_pos _)))
+    (Qsub_den_pos (Qmul_den_pos (x.den_pos _) (z.den_pos _)) (Qmul_den_pos (x.den_pos _) (z.den_pos _)))
+    hqe ?_ ?_
+  · exact Rmul_gap (x.den_pos _) (y.den_pos _) (x.den_pos _) (y.den_pos _)
+      (canon_bound_le (Nat.le_max_left _ _) _) (canon_bound_le hMy _)
+      (Rgap_le y (by omega) (by omega)) (Rgap_le x (by omega) (by omega))
+  · exact Rmul_gap (x.den_pos _) (z.den_pos _) (x.den_pos _) (z.den_pos _)
+      (canon_bound_le (Nat.le_max_left _ _) _) (canon_bound_le hMz _)
+      (Rgap_le z (by omega) (by omega)) (Rgap_le x (by omega) (by omega))
+
+/-- Associativity of ℝ multiplication (up to `≈`): `(x·y)·z ≈ x·(y·z)`. The two groupings read the
+    three factors at *three* different reindexes, with the products associated oppositely. Re-associate
+    in ℚ (`mul_assoc`, exact), then telescope the triple-product gap into nested binary product gaps:
+    the inner gap `|x_ρ y_ρ − x_c y_σ|` is `≤ 4·max(K_x,K_y)/(n+1)`; the outer gap (with first factor
+    bounded by `K_x·K_y` and `z`-gap `≤ 2/(n+1)`) collapses it; the criterion finishes. This completes
+    ℝ as a commutative ring up to `≈`. -/
+theorem Rmul_assoc (x y z : Real) :
+    Req (Rmul (Rmul x y) z) (Rmul x (Rmul y z)) := by
+  apply Req_of_lin_bound (C := max (xBound x * xBound y) (xBound z)
+                            * (2 + max (xBound x) (xBound y) * (2 + 2)))
+  intro n
+  have ha := Ridx_ge (Rmul x y) z n
+  have hρ := Ridx_ge x y (Ridx (Rmul x y) z n)
+  have hc := Ridx_ge x (Rmul y z) n
+  have hσ := Ridx_ge y z (Ridx x (Rmul y z) n)
+  have hqe : Qeq (Qsub ((Rmul (Rmul x y) z).seq n) ((Rmul x (Rmul y z)).seq n))
+      (Qsub (mul (mul (x.seq (Ridx x y (Ridx (Rmul x y) z n)))
+                      (y.seq (Ridx x y (Ridx (Rmul x y) z n))))
+                 (z.seq (Ridx (Rmul x y) z n)))
+            (mul (mul (x.seq (Ridx x (Rmul y z) n))
+                      (y.seq (Ridx y z (Ridx x (Rmul y z) n))))
+                 (z.seq (Ridx y z (Ridx x (Rmul y z) n))))) := by
+    simp only [Rmul, Qeq, Qsub, add, neg, mul]; push_cast; ring_uor
+  have hinner : Qle (Qabs (Qsub
+        (mul (x.seq (Ridx x y (Ridx (Rmul x y) z n)))
+             (y.seq (Ridx x y (Ridx (Rmul x y) z n))))
+        (mul (x.seq (Ridx x (Rmul y z) n))
+             (y.seq (Ridx y z (Ridx x (Rmul y z) n))))))
+      ⟨(max (xBound x) (xBound y) * (2 + 2) : Nat), n + 1⟩ :=
+    Rmul_gap (x.den_pos _) (y.den_pos _) (x.den_pos _) (y.den_pos _)
+      (canon_bound_le (Nat.le_max_left _ _) _) (canon_bound_le (Nat.le_max_right _ _) _)
+      (Rgap_le y (by omega) (by omega)) (Rgap_le x (by omega) (by omega))
+  have houter : Qle (Qabs (Qsub
+        (mul (mul (x.seq (Ridx x y (Ridx (Rmul x y) z n)))
+                  (y.seq (Ridx x y (Ridx (Rmul x y) z n))))
+             (z.seq (Ridx (Rmul x y) z n)))
+        (mul (mul (x.seq (Ridx x (Rmul y z) n))
+                  (y.seq (Ridx y z (Ridx x (Rmul y z) n))))
+             (z.seq (Ridx y z (Ridx x (Rmul y z) n))))))
+      ⟨(max (xBound x * xBound y) (xBound z)
+          * (2 + max (xBound x) (xBound y) * (2 + 2)) : Nat), n + 1⟩ :=
+    Rmul_gap (Qmul_den_pos (x.den_pos _) (y.den_pos _)) (z.den_pos _)
+      (Qmul_den_pos (x.den_pos _) (y.den_pos _)) (z.den_pos _)
+      (Qle_trans Nat.one_pos (canon_bound_mul x y _ _) (Qconst_le (Nat.le_max_left _ _)))
+      (canon_bound_le (Nat.le_max_right _ _) _)
+      (Rgap_le z (by omega) (by omega)) hinner
+  exact Qle_congr_left
+    (Qabs_den_pos (Qsub_den_pos
+      (Qmul_den_pos (Qmul_den_pos (x.den_pos _) (y.den_pos _)) (z.den_pos _))
+      (Qmul_den_pos (Qmul_den_pos (x.den_pos _) (y.den_pos _)) (z.den_pos _))))
+    (Qeq_symm (Qabs_Qeq hqe)) houter
+
+-- Unit / zero laws and the pointwise additive rearrangements the ℂ ring laws reduce to.
+
+/-- `zero` is the constant-`0` sequence at every index (definitional). -/
+theorem zero_seq (k : Nat) : zero.seq k = ⟨0, 1⟩ := rfl
+
+/-- The multiplicative zero law on ℝ (up to `≈`): `x · 0 ≈ 0` (the product value is `0` at every
+    reindexed point). -/
+theorem Rmul_zero (x : Real) : Req (Rmul x zero) zero := by
+  apply Req_of_seq_Qeq
+  intro n
+  show Qeq (mul (x.seq (Ridx x zero n)) (zero.seq (Ridx x zero n))) (zero.seq n)
+  simp [zero_seq, Qeq, mul]
+
+/-- The additive unit law on ℝ (up to `≈`): `x + 0 ≈ x` (the `2n+1` reindex, value unchanged). -/
+theorem Radd_zero (x : Real) : Req (Radd x zero) x := by
+  intro n
+  have hqe : Qeq (Qsub ((Radd x zero).seq n) (x.seq n)) (Qsub (x.seq (2 * n + 1)) (x.seq n)) := by
+    show Qeq (Qsub (add (x.seq (2 * n + 1)) (zero.seq (2 * n + 1))) (x.seq n))
+             (Qsub (x.seq (2 * n + 1)) (x.seq n))
+    simp only [zero_seq, Qeq, Qsub, add, neg]; push_cast; ring_uor
+  exact Qle_congr_left (Qabs_den_pos (Qsub_den_pos (x.den_pos _) (x.den_pos n)))
+    (Qeq_symm (Qabs_Qeq hqe)) (Rgap_le x (by omega) (by omega))
+
+/-- The subtractive unit law on ℝ (up to `≈`): `x − 0 ≈ x`. -/
+theorem Rsub_zero (x : Real) : Req (Rsub x zero) x := by
+  intro n
+  have hqe : Qeq (Qsub ((Rsub x zero).seq n) (x.seq n)) (Qsub (x.seq (2 * n + 1)) (x.seq n)) := by
+    show Qeq (Qsub (add (x.seq (2 * n + 1)) ((Rneg zero).seq (2 * n + 1))) (x.seq n))
+             (Qsub (x.seq (2 * n + 1)) (x.seq n))
+    simp only [Rneg, zero_seq, Qeq, Qsub, add, neg]; push_cast; ring_uor
+  exact Qle_congr_left (Qabs_den_pos (Qsub_den_pos (x.den_pos _) (x.den_pos n)))
+    (Qeq_symm (Qabs_Qeq hqe)) (Rgap_le x (by omega) (by omega))
+
+/-- Right distributivity on ℝ (up to `≈`), via commutativity and left distributivity. -/
+theorem Rmul_distrib_right (x y w : Real) :
+    Req (Rmul (Radd x y) w) (Radd (Rmul x w) (Rmul y w)) :=
+  Req_trans (Rmul_comm (Radd x y) w)
+    (Req_trans (Rmul_distrib w x y) (Radd_congr (Rmul_comm w x) (Rmul_comm w y)))
+
+/-- Additive rearrangement `(P+Q) − (R+S) ≈ (P−R) + (Q−S)` — pointwise (both groupings read the four
+    summands at the same reindexed positions, so it is an exact ℚ identity at each index). -/
+theorem Rsub_Radd_Radd (P Q R S : Real) :
+    Req (Rsub (Radd P Q) (Radd R S)) (Radd (Rsub P R) (Rsub Q S)) := by
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
+/-- Additive rearrangement `(P+Q) + (R+S) ≈ (P+R) + (Q+S)` — pointwise (middle-four swap). -/
+theorem Radd_swap (P Q R S : Real) :
+    Req (Radd (Radd P Q) (Radd R S)) (Radd (Radd P R) (Radd Q S)) := by
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Radd, Qeq, add]; push_cast; ring_uor
+
+-- Negation/multiplication interaction and subtractive distributivity (the v0.6.0 pieces that, with the
+-- two re-association rearrangements below, complete ℂ multiplicative associativity).
+
+/-- `(−x)·y ≈ −(x·y)`. The reindexes of `Rmul (Rneg x) y` and `Rmul x y` coincide (`Rneg` preserves
+    the canonical bound), so the gap reduces to the product gap `|x_{r₂}y_{r₂} − x_{r₁}y_{r₁}|`; the
+    linear-bound criterion finishes. -/
+theorem Rmul_neg_left (x y : Real) : Req (Rmul (Rneg x) y) (Rneg (Rmul x y)) := by
+  apply Req_of_lin_bound (C := max (xBound x) (xBound y) * (2 + 2))
+  intro n
+  have hqe : Qeq (Qsub ((Rmul (Rneg x) y).seq n) ((Rneg (Rmul x y)).seq n))
+      (Qsub (mul (x.seq (Ridx x y n)) (y.seq (Ridx x y n)))
+            (mul (x.seq (Ridx (Rneg x) y n)) (y.seq (Ridx (Rneg x) y n)))) := by
+    show Qeq (Qsub (mul ((Rneg x).seq (Ridx (Rneg x) y n)) (y.seq (Ridx (Rneg x) y n)))
+                   (neg (mul (x.seq (Ridx x y n)) (y.seq (Ridx x y n)))))
+             (Qsub (mul (x.seq (Ridx x y n)) (y.seq (Ridx x y n)))
+                   (mul (x.seq (Ridx (Rneg x) y n)) (y.seq (Ridx (Rneg x) y n))))
+    simp only [Rneg, Qeq, Qsub, add, neg, mul]; push_cast; ring_uor
+  have hgap : Qle (Qabs (Qsub (mul (x.seq (Ridx x y n)) (y.seq (Ridx x y n)))
+        (mul (x.seq (Ridx (Rneg x) y n)) (y.seq (Ridx (Rneg x) y n)))))
+      ⟨(max (xBound x) (xBound y) * (2 + 2) : Nat), n + 1⟩ :=
+    Rmul_gap (x.den_pos _) (y.den_pos _) (x.den_pos _) (y.den_pos _)
+      (canon_bound_le (Nat.le_max_left _ _) _) (canon_bound_le (Nat.le_max_right _ _) _)
+      (Rgap_le y (Ridx_ge x y n) (Ridx_ge (Rneg x) y n))
+      (Rgap_le x (Ridx_ge x y n) (Ridx_ge (Rneg x) y n))
+  exact Qle_congr_left
+    (Qabs_den_pos (Qsub_den_pos (Qmul_den_pos (x.den_pos _) (y.den_pos _))
+      (Qmul_den_pos (x.den_pos _) (y.den_pos _))))
+    (Qeq_symm (Qabs_Qeq hqe)) hgap
+
+/-- `x·(−y) ≈ −(x·y)`, via commutativity. -/
+theorem Rmul_neg_right (x y : Real) : Req (Rmul x (Rneg y)) (Rneg (Rmul x y)) :=
+  Req_trans (Rmul_comm x (Rneg y))
+    (Req_trans (Rmul_neg_left y x) (Rneg_congr (Rmul_comm y x)))
+
+/-- Left distributivity over subtraction: `x·(y − z) ≈ x·y − x·z`. -/
+theorem Rmul_sub_distrib (x y z : Real) :
+    Req (Rmul x (Rsub y z)) (Rsub (Rmul x y) (Rmul x z)) :=
+  Req_trans (Rmul_distrib x y (Rneg z)) (Radd_congr (Req_refl _) (Rmul_neg_right x z))
+
+/-- Right distributivity over subtraction: `(x − y)·z ≈ x·z − y·z`. -/
+theorem Rmul_sub_distrib_right (x y z : Real) :
+    Req (Rmul (Rsub x y) z) (Rsub (Rmul x z) (Rmul y z)) :=
+  Req_trans (Rmul_comm (Rsub x y) z)
+    (Req_trans (Rmul_sub_distrib z x y) (Rsub_congr (Rmul_comm z x) (Rmul_comm z y)))
+
+/-- Re-association for the real part of the triple product: `(P₁−P₄) − (P₂+P₃) ≈ (P₁−P₂) − (P₃+P₄)`
+    (both equal `P₁−P₂−P₃−P₄`; pointwise). -/
+theorem Rreassoc_sub (P1 P2 P3 P4 : Real) :
+    Req (Rsub (Rsub P1 P4) (Radd P2 P3)) (Rsub (Rsub P1 P2) (Radd P3 P4)) := by
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
+/-- Re-association for the imaginary part: `(Q₁−Q₄) + (Q₂+Q₃) ≈ (Q₁+Q₂) + (Q₃−Q₄)` (pointwise). -/
+theorem Rreassoc_add (Q1 Q2 Q3 Q4 : Real) :
+    Req (Radd (Rsub Q1 Q4) (Radd Q2 Q3)) (Radd (Radd Q1 Q2) (Rsub Q3 Q4)) := by
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
 end UOR.Bridge.F1Square.Analysis

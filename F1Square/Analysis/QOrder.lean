@@ -26,6 +26,20 @@ theorem Qle_refl (a : Q) : Qle a a := by unfold Qle; omega
 /-- Value-equality implies `≤` (no positivity needed). -/
 theorem Qeq_le {a b : Q} (h : Qeq a b) : Qle a b := by unfold Qeq Qle at *; omega
 
+/-- Monotonicity of the bound fractions: a smaller numerator over a larger denominator is `≤`.
+    `c ≤ d`, `0 ≤ c`, `j ≤ k`  ⟹  `c/(k+1) ≤ d/(j+1)`. This is the workhorse for collapsing a sum of
+    regularity/equality bounds — whose indices all exceed a target `n` — down to a single `C/(n+1)`,
+    the form the linear-bound criterion (and hence the ring laws) consumes. -/
+theorem Qscale_le {c d : Int} {j k : Nat} (hcd : c ≤ d) (hc : 0 ≤ c) (hjk : j ≤ k) :
+    Qle ⟨c, k + 1⟩ ⟨d, j + 1⟩ := by
+  have hj : ((j + 1 : Nat) : Int) ≤ ((k + 1 : Nat) : Int) := by exact_mod_cast Nat.succ_le_succ hjk
+  have h1 : c * ((j + 1 : Nat) : Int) ≤ c * ((k + 1 : Nat) : Int) :=
+    Int.mul_le_mul_of_nonneg_left hj hc
+  have h2 : c * ((k + 1 : Nat) : Int) ≤ d * ((k + 1 : Nat) : Int) :=
+    Int.mul_le_mul_of_nonneg_right hcd (Int.ofNat_nonneg _)
+  show c * ((j + 1 : Nat) : Int) ≤ d * ((k + 1 : Nat) : Int)
+  omega
+
 /-- `≤` on ℚ is transitive (needs the middle denominator positive). -/
 theorem Qle_trans {a b c : Q} (hb : 0 < b.den)
     (hab : Qle a b) (hbc : Qle b c) : Qle a c := by
@@ -193,6 +207,49 @@ theorem Qarch {p q : Q} (hp : 0 < p.den) (hq : 0 < q.den)
                 * (6 * ((p.den : Int) * (q.den : Int)) + 1)
               ≤ 6 * ((p.den : Int) * (q.den : Int)) := by omega
     exact arch_core _ _ hN1 hP1 hbig
+
+-- The pure-ℤ contradiction kernel of the generalized Archimedean lemma (arbitrary coefficient `C`).
+private theorem arch_core_gen (N P C : Int) (hN : 1 ≤ N) (hP : 1 ≤ P) (hC : 0 ≤ C) :
+    ¬ (N * (C * P + 1) ≤ C * P) := by
+  intro h
+  have hNP : P ≤ N * P := by
+    have := Int.mul_le_mul_of_nonneg_right hN (by omega : (0 : Int) ≤ P); simpa using this
+  have h1 : C * P ≤ C * (N * P) := Int.mul_le_mul_of_nonneg_left hNP hC
+  have h2 : N * (C * P + 1) = C * (N * P) + N := by ring_uor
+  omega
+
+/-- **Generalized Archimedean lemma** on ℚ: if `p ≤ q + C/(m+1)` for every `m` (any fixed coefficient
+    `C : ℕ`), then `p ≤ q`. The vanishing of the rational tail `C/(m+1)` is what lets a *linear* bound
+    `|xₙ − yₙ| ≤ C/(n+1)` (with any constant `C`) collapse to Bishop equality — the criterion the ℝ
+    ring laws rest on. (`Qarch` is the `C = 6` instance.) -/
+theorem Qarch_gen {p q : Q} {C : Nat} (hp : 0 < p.den) (hq : 0 < q.den)
+    (H : ∀ m : Nat, Qle p (add q ⟨(C : Int), m + 1⟩)) : Qle p q := by
+  rcases Qle_or_Qlt p q with h | h
+  · exact h
+  · exfalso
+    unfold Qlt at h
+    have key := H (C * (p.den * q.den))
+    unfold Qle add at key
+    push_cast at key h
+    have hP1 : (1 : Int) ≤ (p.den : Int) * (q.den : Int) := by
+      have h0 : 0 < p.den * q.den := Nat.mul_pos hp hq
+      have h1 : (0 : Int) < ((p.den * q.den : Nat) : Int) := by exact_mod_cast h0
+      push_cast at h1; omega
+    have hN1 : (1 : Int) ≤ p.num * (q.den : Int) - q.num * (p.den : Int) := by omega
+    have e1 : p.num * ((q.den : Int) * ((C : Int) * ((p.den : Int) * (q.den : Int)) + 1))
+            = p.num * (q.den : Int) * ((C : Int) * ((p.den : Int) * (q.den : Int)) + 1) := by ring_uor
+    have e2 : (q.num * ((C : Int) * ((p.den : Int) * (q.den : Int)) + 1) + (C : Int) * (q.den : Int))
+                * (p.den : Int)
+            = q.num * (p.den : Int) * ((C : Int) * ((p.den : Int) * (q.den : Int)) + 1)
+              + (C : Int) * ((p.den : Int) * (q.den : Int)) := by ring_uor
+    have e3 : (p.num * (q.den : Int) - q.num * (p.den : Int))
+                * ((C : Int) * ((p.den : Int) * (q.den : Int)) + 1)
+            = p.num * (q.den : Int) * ((C : Int) * ((p.den : Int) * (q.den : Int)) + 1)
+              - q.num * (p.den : Int) * ((C : Int) * ((p.den : Int) * (q.den : Int)) + 1) := by ring_uor
+    have hbig : (p.num * (q.den : Int) - q.num * (p.den : Int))
+                * ((C : Int) * ((p.den : Int) * (q.den : Int)) + 1)
+              ≤ (C : Int) * ((p.den : Int) * (q.den : Int)) := by omega
+    exact arch_core_gen _ _ _ hN1 hP1 (Int.ofNat_nonneg _) hbig
 
 -- ===========================================================================
 -- v0.5.0 — ℚ multiplication and order (the lemmas ℝ multiplication consumes).

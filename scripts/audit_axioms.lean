@@ -207,3 +207,41 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Cmul_re
 #print axioms Analysis.Cmul_im
 #print axioms Analysis.Cmul_comm
+
+-- v0.6.0 — the well-definedness engine (generalized Archimedean lemma + linear-bound criterion).
+#print axioms Analysis.Qscale_le
+#print axioms Analysis.Qarch_gen
+#print axioms Analysis.Ridx_ge
+#print axioms Analysis.Qconst_le
+#print axioms Analysis.Rgap_le
+#print axioms Analysis.Rcross_le
+#print axioms Analysis.Req_of_lin_bound
+#print axioms Analysis.Rmul_gap
+#print axioms Analysis.Qabs_two_diff_gen
+#print axioms Analysis.canon_bound_mul
+#print axioms Analysis.canon_bound_le
+
+-- v0.6.0 — ℝ as a commutative ring up to ≈ (multiplication well-defined on the setoid).
+#print axioms Analysis.Rmul_congr
+#print axioms Analysis.Rmul_one
+#print axioms Analysis.Radd_assoc
+#print axioms Analysis.Rmul_distrib
+#print axioms Analysis.Rmul_assoc
+#print axioms Analysis.Rmul_zero
+#print axioms Analysis.Radd_zero
+#print axioms Analysis.Rsub_zero
+#print axioms Analysis.Rmul_distrib_right
+#print axioms Analysis.Rsub_Radd_Radd
+#print axioms Analysis.Radd_swap
+#print axioms Analysis.Rmul_neg_left
+#print axioms Analysis.Rmul_neg_right
+#print axioms Analysis.Rmul_sub_distrib
+#print axioms Analysis.Rmul_sub_distrib_right
+#print axioms Analysis.Rreassoc_sub
+#print axioms Analysis.Rreassoc_add
+
+-- v0.6.0 — ℂ as a commutative ring up to ≈.
+#print axioms Analysis.Cadd_assoc
+#print axioms Analysis.Cmul_one
+#print axioms Analysis.Cmul_distrib
+#print axioms Analysis.Cmul_assoc

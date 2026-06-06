@@ -487,10 +487,16 @@ canonical forms, realizations, no Mathlib — one brick per release:
   + `n ↦ 2K(n+1)−1` reindexing) and commutativity; and **ℂ = ℝ×ℝ with all four operations** (`Cadd`,
   `Cneg`, `Cmul`, the additive-group laws **and commutative multiplication** `Cmul_comm` up to `≈`,
   via the operation-congruences `Rneg_congr`/`Radd_congr`/`Rsub_congr`).
-- **v0.6.0:** the remaining ℂ ring laws (associativity, distributivity) via `Rmul`-congruence and
-  `Rmul`-associativity (reindex reconciliation), and **completeness** (every regular sequence of reals
-  converges); then transcendentals (exp/log/cos via convergent series with rigorous error bounds).
-- **v0.7.0+:** ζ and `λₙ` as exact-bounded objects; the explicit formula as an exact-arithmetic trace.
+- **v0.6.0 (done):** **ℝ and ℂ are commutative rings up to `≈`.** The reindex used by `Rmul` differs
+  on `≈`-equal inputs, so congruence/associativity are not `rfl`; the resolution is a **linear-bound
+  criterion** `Req_of_lin_bound` (`|xₙ − yₙ| ≤ C/(n+1)` for any constant `C` ⟹ `x ≈ y`), built on the
+  **generalized Archimedean lemma** `Qarch_gen` and a product-gap engine `Rmul_gap`. This proves
+  `Rmul`-congruence (multiplication well-defined on the setoid — the v0.5.0 deferral), `Rmul_assoc`,
+  `Rmul_distrib`, `Rmul_one`, `Radd_assoc`; and lifts to `Cmul_assoc`, `Cmul_distrib`, `Cmul_one`,
+  `Cadd_assoc` (the bilinear expansions reduce, via the ℝ ring laws, to pointwise re-associations).
+- **v0.7.0:** **completeness** (every regular sequence of reals converges, diagonal-limit construction);
+  then transcendentals (exp/log/cos via convergent series with rigorous error bounds).
+- **v0.8.0+:** ζ and `λₙ` as exact-bounded objects; the explicit formula as an exact-arithmetic trace.
 
 Each brick makes more of the analytic half *statable and finitely checkable* — never a proof of the
 crux. Proving `λₙ ≥ 0 ∀ n` / Weil positivity / the Hodge index on `𝕊` IS RH, and remains open.
