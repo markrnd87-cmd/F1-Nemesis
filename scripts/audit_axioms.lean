@@ -389,6 +389,8 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.expSumM_le_U
 #print axioms Analysis.LipS_shift
 #print axioms Analysis.LipS_le_U
+#print axioms Analysis.two_pow_ge
+#print axioms Analysis.fct_ge_geom
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one

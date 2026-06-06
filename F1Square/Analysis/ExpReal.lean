@@ -369,4 +369,56 @@ theorem LipS_le_U (M : Nat) : ∀ N, Qle (LipS M N) (expM_U M (2 * M))
   | (N + 1) =>
       Qle_trans (expSumM_den_pos M N) (Qeq_le (LipS_shift M N)) (expSumM_le_U M N)
 
+-- ===========================================================================
+-- Factorial growth: the super-fast factorial tail converts to a `1/(j+1)` reindex.
+-- ===========================================================================
+
+/-- `2ᵈ ≥ d + 1`. -/
+theorem two_pow_ge (d : Nat) : d + 1 ≤ npow 2 d := by
+  induction d with
+  | zero => decide
+  | succ n ih =>
+      have : npow 2 (n + 1) = 2 * npow 2 n := npow_succ 2 n
+      rw [this]
+      have hpos : 1 ≤ npow 2 n := npow_pos (by decide) n
+      omega
+
+/-- **Factorial growth**: for `d ≥ 0`, `Mᵃ⁺¹·(2M+1)! · 2ᵈ ≤ (a+1)! · M²ᴹ⁺¹` with `a = 2M + d`
+    (the factorial outpaces the exponential by a factor `2` every step past `2M`). -/
+theorem fct_ge_geom (M : Nat) : ∀ d,
+    npow M (2 * M + 1 + d) * fct (2 * M + 1) * npow 2 d
+      ≤ fct (2 * M + 1 + d) * npow M (2 * M + 1)
+  | 0 => by
+      rw [show npow 2 0 = 1 from rfl, Nat.mul_one]
+      exact Nat.le_of_eq (Nat.mul_comm _ _)
+  | (d + 1) => by
+      have ih := fct_ge_geom M d
+      have ihInt : (npow M (2 * M + 1 + d) : Int) * (fct (2 * M + 1) : Int) * (npow 2 d : Int)
+          ≤ (fct (2 * M + 1 + d) : Int) * (npow M (2 * M + 1) : Int) := by exact_mod_cast ih
+      have goalInt : (npow M (2 * M + 1 + (d + 1)) : Int) * (fct (2 * M + 1) : Int)
+            * (npow 2 (d + 1) : Int)
+          ≤ (fct (2 * M + 1 + (d + 1)) : Int) * (npow M (2 * M + 1) : Int) := by
+        have e1 : (npow M (2 * M + 1 + (d + 1)) : Int) * (fct (2 * M + 1) : Int) * (npow 2 (d + 1) : Int)
+            = (2 * M : Int) * ((npow M (2 * M + 1 + d) : Int) * (fct (2 * M + 1) : Int)
+              * (npow 2 d : Int)) := by
+          rw [show 2 * M + 1 + (d + 1) = (2 * M + 1 + d) + 1 from by omega,
+            npow_succ M (2 * M + 1 + d), npow_succ 2 d]; push_cast; ring_uor
+        have e2 : (fct (2 * M + 1 + (d + 1)) : Int) * (npow M (2 * M + 1) : Int)
+            = (((2 * M + 1 + d) + 1 : Nat) : Int) * ((fct (2 * M + 1 + d) : Int)
+              * (npow M (2 * M + 1) : Int)) := by
+          rw [show 2 * M + 1 + (d + 1) = (2 * M + 1 + d) + 1 from by omega,
+            fct_succ (2 * M + 1 + d)]; push_cast; ring_uor
+        rw [e1, e2]
+        have s1 : (2 : Int) * (M : Int) * ((npow M (2 * M + 1 + d) : Int) * (fct (2 * M + 1) : Int)
+              * (npow 2 d : Int))
+            ≤ (2 : Int) * (M : Int) * ((fct (2 * M + 1 + d) : Int) * (npow M (2 * M + 1) : Int)) :=
+          Int.mul_le_mul_of_nonneg_left ihInt (by omega)
+        have s2 : (2 : Int) * (M : Int) * ((fct (2 * M + 1 + d) : Int) * (npow M (2 * M + 1) : Int))
+            ≤ (((2 * M + 1 + d) + 1 : Nat) : Int) * ((fct (2 * M + 1 + d) : Int)
+              * (npow M (2 * M + 1) : Int)) :=
+          Int.mul_le_mul_of_nonneg_right (by push_cast; omega)
+            (Int.mul_nonneg (Int.ofNat_nonneg _) (Int.ofNat_nonneg _))
+        exact Int.le_trans s1 s2
+      exact_mod_cast goalInt
+
 end UOR.Bridge.F1Square.Analysis
