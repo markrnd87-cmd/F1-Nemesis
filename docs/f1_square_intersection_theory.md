@@ -538,10 +538,17 @@ canonical forms, realizations, no Mathlib — one brick per release:
   `Rle` (Bishop `xₙ ≤ yₙ + 2/(n+1)`) with reflexivity, `≈`-compatibility, antisymmetry up to `≈`, and
   **transitivity via the Archimedean lemma** (`Qarch_gen` kills the `6/(m+1)` tail of the four-step
   chain); `Rnonneg` canonicalized, with `Rnonneg → 0 ≤ x`.
-- **The transcendentals (concrete release sequence, no open `+`):** **v0.12.0** the reciprocal `Rinv`
-  and the everywhere-defined `exp` on ℝ (real powers, real `exp` on `[0,1]` via completeness, then the
-  halving/squaring identity `exp x = exp(x/2ᵏ)^{2ᵏ}`); **v0.13.0** `cos`/`sin` (alternating series with
-  the even/odd sandwich remainder) and `log` (positivity-as-data + the artanh series).
+- **v0.12.0 (done):** ℝ as a constructive **field with powers**, and **`exp` on all of ℝ**. Real powers
+  `Rpow` (`Pow.lean`); the reciprocal `1/x` of a positive real via positivity-as-data and division `Rdiv`
+  (`Inv.lean`). `exp` (`ExpReal.lean`) is the **diagonal of rational partial sums** `exp(x)_j = S_{R j}(x_{R j})`
+  with a single reindex `R j` — the diagonal sequence of *rationals* is itself Bishop-regular
+  (`|exp(x)_j − exp(x)_k| ≤ 1/(j+1)+1/(k+1)`), so it is a constructive real directly (no `Rlim` needed).
+  Three rational bounds make it rigorous: a geometric **truncation** tail `2Mᵃ⁺¹/(a+1)!`, a uniform
+  **Lipschitz** bound, and a **factorial-growth** estimate converting the tail to a `1/(j+1)` reindex —
+  all axiom-clean.
+- **The remaining transcendentals (concrete release, no open `+`):** **v0.13.0** `cos`/`sin` (alternating
+  series with the even/odd sandwich remainder) and `log` (positivity-as-data + the artanh series); the
+  prerequisites (`Rinv`, `qpow` with its bounds, ℝ-completeness) are all in place.
 - **The next phase (the analytic→arithmetic bridge):** the analytic continuation of ζ into the critical
   strip (needs *complex* exp/log, built on the real transcendentals), the genuine `λₙ` realizing the
   v0.10.0 interfaces, and the explicit formula as an exact-arithmetic trace. This phase ends at

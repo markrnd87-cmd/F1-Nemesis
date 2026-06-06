@@ -1,12 +1,14 @@
 /-
 F1 square — the everywhere-defined exponential `exp` on ℝ (the v0.12.0 transcendental, commit 2/2).
 
-`exp(x)` for a *real* `x` is built as the **diagonal of rational partial sums**: the partial sums
-`S_N(q) = Σ_{i≤N} qⁱ/i!` (already `expSum`, which is defined for any rational `q`) evaluated at rational
-approximants `q = x_{g j}` of `x`, embedded by `ofQ` and passed to the completeness limit `Rlim`. The
-whole construction stays *rational* until the final `ofQ`/`Rlim`, so it needs only rational bounds on
-`expSum`: a geometric tail bound (for `|q| ≤ M`) and a Lipschitz bound. This file begins with the
-`qpow` facts those bounds rest on.
+`exp(x)` for a *real* `x` is built as the **diagonal of rational partial sums**: the `j`-th approximant
+is `S_{R j}(x_{R j})`, where `S_N(q) = Σ_{i≤N} qⁱ/i!` (already `expSum`, defined for any rational `q`)
+and `R j` is a single reindex serving both the argument index and the truncation depth. The resulting
+sequence of *rationals* is itself Bishop-regular — `|exp(x)_j − exp(x)_k| ≤ 1/(j+1) + 1/(k+1)` — so it
+*is* a constructive real directly (no `ofQ`/`Rlim` needed). The regularity rests on three rational
+bounds on `expSum`: a geometric tail bound (truncation, for `|q| ≤ M`), a Lipschitz bound, and a
+factorial-growth estimate converting the tail to a `1/(j+1)` reindex. This file builds those bounds
+(starting with the `qpow` facts), then assembles the diagonal.
 
 Pure Lean 4, no Mathlib, no `sorry`.
 -/
@@ -420,5 +422,186 @@ theorem fct_ge_geom (M : Nat) : ∀ d,
             (Int.mul_nonneg (Int.ofNat_nonneg _) (Int.ofNat_nonneg _))
         exact Int.le_trans s1 s2
       exact_mod_cast goalInt
+
+/-- **Truncation reindex**: `2·Mᵃ⁺¹·e ≤ (a+1)!` for `a = 2M + d` whenever `2e·M²ᴹ⁺¹ ≤ d+1`
+    (so the factorial tail at depth `a` is `≤ 1/e`). -/
+theorem trunc_reindex (M e d : Nat) (hM : 0 < M) (h : 2 * e * npow M (2 * M + 1) ≤ d + 1) :
+    2 * npow M (2 * M + 1 + d) * e ≤ fct (2 * M + 1 + d) := by
+  have h2eP : 2 * e * npow M (2 * M + 1) ≤ fct (2 * M + 1) * npow 2 d :=
+    Nat.le_trans (Nat.le_trans h (two_pow_ge d)) (Nat.le_mul_of_pos_left _ (fct_pos (2 * M + 1)))
+  have step1 : 2 * npow M (2 * M + 1 + d) * e * npow M (2 * M + 1)
+      ≤ npow M (2 * M + 1 + d) * fct (2 * M + 1) * npow 2 d := by
+    have hrw1 : 2 * npow M (2 * M + 1 + d) * e * npow M (2 * M + 1)
+        = npow M (2 * M + 1 + d) * (2 * e * npow M (2 * M + 1)) := by
+      simp only [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm]
+    have hrw2 : npow M (2 * M + 1 + d) * (fct (2 * M + 1) * npow 2 d)
+        = npow M (2 * M + 1 + d) * fct (2 * M + 1) * npow 2 d := by
+      simp only [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm]
+    rw [hrw1, ← hrw2]
+    exact Nat.mul_le_mul (Nat.le_refl _) h2eP
+  have chain : npow M (2 * M + 1) * (2 * npow M (2 * M + 1 + d) * e)
+      ≤ npow M (2 * M + 1) * fct (2 * M + 1 + d) := by
+    have e3 : npow M (2 * M + 1) * (2 * npow M (2 * M + 1 + d) * e)
+        = 2 * npow M (2 * M + 1 + d) * e * npow M (2 * M + 1) := by
+      simp only [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm]
+    have e4 : npow M (2 * M + 1) * fct (2 * M + 1 + d)
+        = fct (2 * M + 1 + d) * npow M (2 * M + 1) := Nat.mul_comm _ _
+    rw [e3, e4]
+    exact Nat.le_trans step1 (fct_ge_geom M d)
+  exact Nat.le_of_mul_le_mul_left chain (npow_pos hM (2 * M + 1))
+
+/-- The `M`-series partial sums have non-negative numerators. -/
+theorem expSumM_num_nonneg (M : Nat) : ∀ N, 0 ≤ (expSumM M N).num
+  | 0 => by show (0 : Int) ≤ 1; decide
+  | (n + 1) => by
+      show (0 : Int) ≤ (expSumM M n).num * (fct (n + 1) : Int)
+        + (npow M (n + 1) : Int) * ((expSumM M n).den : Int)
+      exact Int.add_nonneg (Int.mul_nonneg (expSumM_num_nonneg M n) (Int.ofNat_nonneg _))
+        (Int.mul_nonneg (Int.ofNat_nonneg _) (Int.ofNat_nonneg _))
+
+/-- `U_M(N)` has a non-negative numerator. -/
+theorem expM_U_num_nonneg (M N : Nat) : 0 ≤ (expM_U M N).num := by
+  show (0 : Int) ≤ (expSumM M N).num * (fct (N + 1) : Int)
+    + (2 * npow M (N + 1) : Int) * ((expSumM M N).den : Int)
+  exact Int.add_nonneg (Int.mul_nonneg (expSumM_num_nonneg M N) (Int.ofNat_nonneg _))
+    (Int.mul_nonneg (Int.mul_nonneg (by decide) (Int.ofNat_nonneg _)) (Int.ofNat_nonneg _))
+
+/-- A non-negative rational is `≤` its numerator (as `num/1`). -/
+theorem Qle_toNat {q : Q} (hq : 0 ≤ q.num) (hd : 0 < q.den) : Qle q ⟨(q.num.toNat : Int), 1⟩ := by
+  show q.num * 1 ≤ (q.num.toNat : Int) * (q.den : Int)
+  rw [Int.toNat_of_nonneg hq, Int.mul_one]
+  have h := Int.mul_le_mul_of_nonneg_left
+    (show (1 : Int) ≤ (q.den : Int) by exact_mod_cast hd) hq
+  rwa [Int.mul_one] at h
+
+-- ===========================================================================
+-- The diagonal construction: exp(x) for a real x.
+-- ===========================================================================
+
+/-- The combined reindex constant: `M²ᴹ⁺¹ + Cₙₐₜ + 1`, where `Cₙₐₜ` bounds the Lipschitz coefficient
+    and `M²ᴹ⁺¹` drives the truncation. -/
+@[irreducible] def RexpReal_K (x : Real) : Nat :=
+  npow (xBound x) (2 * xBound x + 1) + (expM_U (xBound x) (2 * xBound x)).num.toNat + 1
+
+/-- The diagonal reindex: depth `=` argument index `= 2M + 4(j+1)·K`. -/
+@[irreducible] def RexpReal_R (x : Real) (j : Nat) : Nat := 2 * xBound x + 4 * (j + 1) * RexpReal_K x
+
+/-- The `j`-th diagonal rational approximant `S_{x_{R j}}(R j)`. -/
+def RexpReal_seq (x : Real) (j : Nat) : Q := expSum (x.seq (RexpReal_R x j)) (RexpReal_R x j)
+
+-- `maxHeartbeats` raised: this single proof assembles the truncation + Lipschitz bounds with several
+-- ℚ-cross-multiplication discharges; the reindex defs are `irreducible` (so unification never unfolds
+-- their heavy bodies), but the bound-chaining itself is long. No `sorry`/`native_decide`; axiom-clean.
+set_option maxHeartbeats 1000000 in
+/-- **The diagonal regularity (one side)**: for `j ≤ k`, the gap is `≤ 1/(j+1)`. -/
+theorem RexpReal_diag_le (x : Real) {j k : Nat} (hjk : j ≤ k) :
+    Qle (Qabs (Qsub (RexpReal_seq x j) (RexpReal_seq x k))) (Qbound j) := by
+  have hM : 0 < xBound x := xBound_pos x
+  have hK1 : npow (xBound x) (2 * xBound x + 1) ≤ RexpReal_K x := by unfold RexpReal_K; omega
+  have hK2 : (expM_U (xBound x) (2 * xBound x)).num.toNat ≤ RexpReal_K x := by unfold RexpReal_K; omega
+  have hRle : RexpReal_R x j ≤ RexpReal_R x k := by
+    unfold RexpReal_R
+    have hmul : 4 * (j + 1) * RexpReal_K x ≤ 4 * (k + 1) * RexpReal_K x :=
+      Nat.mul_le_mul (Nat.mul_le_mul (Nat.le_refl 4) (Nat.succ_le_succ hjk)) (Nat.le_refl _)
+    omega
+  have h2M : 2 * xBound x ≤ RexpReal_R x j := by unfold RexpReal_R; omega
+  -- midpoint B = expSum (x_{Rk}) (R j)
+  have htri := Qabs_sub_triangle (a := RexpReal_seq x j)
+    (b := expSum (x.seq (RexpReal_R x k)) (RexpReal_R x j)) (c := RexpReal_seq x k)
+    (expSum_den_pos (x.den_pos _) _) (expSum_den_pos (x.den_pos _) _) (expSum_den_pos (x.den_pos _) _)
+  -- Lipschitz part:  |S_{x_{Rj}}(Rj) − S_{x_{Rk}}(Rj)| ≤ 1/(2(j+1))
+  have hLip : Qle (Qabs (Qsub (RexpReal_seq x j) (expSum (x.seq (RexpReal_R x k)) (RexpReal_R x j))))
+      (⟨1, 2 * (j + 1)⟩ : Q) := by
+    have hLS := expSum_Lip_le (x.den_pos (RexpReal_R x j)) (x.den_pos (RexpReal_R x k))
+      (canon_bound x (RexpReal_R x j)) (canon_bound x (RexpReal_R x k)) (RexpReal_R x j)
+    have hCle : Qle (LipS (xBound x) (RexpReal_R x j))
+        ⟨((expM_U (xBound x) (2 * xBound x)).num.toNat : Int), 1⟩ :=
+      Qle_trans (expM_U_den_pos _ _) (LipS_le_U (xBound x) (RexpReal_R x j))
+        (Qle_toNat (expM_U_num_nonneg _ _) (expM_U_den_pos _ _))
+    have hDnn : 0 ≤ (Qabs (Qsub (x.seq (RexpReal_R x j)) (x.seq (RexpReal_R x k)))).num :=
+      Qabs_num_nonneg _
+    -- D ≤ 2/(Rj+1)
+    have hDbound : Qle (Qabs (Qsub (x.seq (RexpReal_R x j)) (x.seq (RexpReal_R x k))))
+        ⟨2, RexpReal_R x j + 1⟩ := by
+      have hxreg := x.reg (RexpReal_R x j) (RexpReal_R x k)
+      have hanti : Qle (Qbound (RexpReal_R x k)) (Qbound (RexpReal_R x j)) := by
+        show (1 : Int) * ((RexpReal_R x j + 1 : Nat) : Int) ≤ 1 * ((RexpReal_R x k + 1 : Nat) : Int)
+        have : RexpReal_R x j + 1 ≤ RexpReal_R x k + 1 := by omega
+        rw [Int.one_mul, Int.one_mul]; exact_mod_cast this
+      have hsum : Qeq (add (Qbound (RexpReal_R x j)) (Qbound (RexpReal_R x j))) ⟨2, RexpReal_R x j + 1⟩ := by
+        simp only [Qeq, add, Qbound]; push_cast; ring_uor
+      exact Qle_trans (add_den_pos (Qbound_den_pos _) (Qbound_den_pos _)) hxreg
+        (Qle_trans (add_den_pos (Qbound_den_pos _) (Qbound_den_pos _))
+          (Qadd_le_add (Qle_refl _) hanti) (Qeq_le hsum))
+    -- assemble:  Lip ≤ (LipS)·D ≤ ⟨Cnat,1⟩·D ≤ ⟨Cnat,1⟩·⟨2,Rj+1⟩ ≤ 1/(2(j+1))
+    refine Qle_trans (Qmul_den_pos (LipS_den_pos _ _) (Qabs_den_pos (Qsub_den_pos (x.den_pos _) (x.den_pos _)))) hLS ?_
+    refine Qle_trans (Qmul_den_pos Nat.one_pos (Qabs_den_pos (Qsub_den_pos (x.den_pos _) (x.den_pos _))))
+      (Qmul_le_mul_right hDnn hCle) ?_
+    refine Qle_trans (Qmul_den_pos Nat.one_pos (Nat.succ_pos _))
+      (Qmul_le_mul_left (Int.ofNat_nonneg _) hDbound) ?_
+    -- ⟨Cnat,1⟩ · ⟨2,Rj+1⟩ ≤ ⟨1, 2(j+1)⟩
+    show ((expM_U (xBound x) (2 * xBound x)).num.toNat : Int) * 2 * (2 * (j + 1) : Nat)
+        ≤ 1 * ((1 * (RexpReal_R x j + 1) : Nat) : Int)
+    have harith : (expM_U (xBound x) (2 * xBound x)).num.toNat * 2 * (2 * (j + 1))
+        ≤ 1 * (1 * (RexpReal_R x j + 1)) := by
+      have hstep : 4 * (j + 1) * (expM_U (xBound x) (2 * xBound x)).num.toNat
+          ≤ 4 * (j + 1) * RexpReal_K x := Nat.mul_le_mul (Nat.le_refl _) hK2
+      have he : (expM_U (xBound x) (2 * xBound x)).num.toNat * 2 * (2 * (j + 1))
+          = 4 * (j + 1) * (expM_U (xBound x) (2 * xBound x)).num.toNat := by
+        have hI : (((expM_U (xBound x) (2 * xBound x)).num.toNat * 2 * (2 * (j + 1)) : Nat) : Int)
+            = ((4 * (j + 1) * (expM_U (xBound x) (2 * xBound x)).num.toNat : Nat) : Int) := by
+          push_cast; ring_uor
+        exact_mod_cast hI
+      rw [he]; unfold RexpReal_R; omega
+    exact_mod_cast harith
+  -- truncation part:  |S_{x_{Rk}}(Rj) − S_{x_{Rk}}(Rk)| ≤ 1/(2(j+1))
+  have hTr : Qle (Qabs (Qsub (expSum (x.seq (RexpReal_R x k)) (RexpReal_R x j)) (RexpReal_seq x k)))
+      (⟨1, 2 * (j + 1)⟩ : Q) := by
+    have hTB := expSum_trunc_bound (x.den_pos (RexpReal_R x k)) (canon_bound x (RexpReal_R x k))
+      (a := RexpReal_R x j) (Nat.le_trans h2M (Nat.le_add_right _ 2)) hRle
+    rw [Qabs_Qsub_comm]
+    refine Qle_trans (fct_pos (RexpReal_R x j + 1)) hTB ?_
+    -- ⟨2·M^{Rj+1}, (Rj+1)!⟩ ≤ ⟨1, 2(j+1)⟩
+    show (2 * npow (xBound x) (RexpReal_R x j + 1) : Int) * (2 * (j + 1) : Nat)
+        ≤ 1 * ((fct (RexpReal_R x j + 1) : Nat) : Int)
+    have hd : 2 * xBound x + 1 + 4 * (j + 1) * RexpReal_K x = RexpReal_R x j + 1 := by unfold RexpReal_R; omega
+    have htr := trunc_reindex (xBound x) (2 * (j + 1)) (4 * (j + 1) * RexpReal_K x) hM
+      (by have : 2 * (2 * (j + 1)) * npow (xBound x) (2 * xBound x + 1)
+            ≤ 4 * (j + 1) * RexpReal_K x := by
+            have h4 : 4 * (j + 1) * npow (xBound x) (2 * xBound x + 1) ≤ 4 * (j + 1) * RexpReal_K x :=
+              Nat.mul_le_mul (Nat.le_refl _) hK1
+            have he : 2 * (2 * (j + 1)) * npow (xBound x) (2 * xBound x + 1)
+                = 4 * (j + 1) * npow (xBound x) (2 * xBound x + 1) := by
+              have hI : ((2 * (2 * (j + 1)) * npow (xBound x) (2 * xBound x + 1) : Nat) : Int)
+                  = ((4 * (j + 1) * npow (xBound x) (2 * xBound x + 1) : Nat) : Int) := by
+                push_cast; ring_uor
+              exact_mod_cast hI
+            rw [he]; exact h4
+          omega)
+    rw [hd] at htr
+    -- htr : 2 * M^{Rj+1} * (2(j+1)) ≤ (Rj+1)!
+    have : (2 * npow (xBound x) (RexpReal_R x j + 1)) * (2 * (j + 1)) ≤ fct (RexpReal_R x j + 1) := htr
+    rw [Int.one_mul]; exact_mod_cast this
+  -- combine:  ≤ 1/(2(j+1)) + 1/(2(j+1)) ≈ 1/(j+1)
+  have hfin : Qeq (add (⟨1, 2 * (j + 1)⟩ : Q) ⟨1, 2 * (j + 1)⟩) (Qbound j) := by
+    simp only [Qeq, add, Qbound]; push_cast; ring_uor
+  exact Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (expSum_den_pos (x.den_pos _) _) (expSum_den_pos (x.den_pos _) _)))
+      (Qabs_den_pos (Qsub_den_pos (expSum_den_pos (x.den_pos _) _) (expSum_den_pos (x.den_pos _) _))))
+    htri (Qle_trans (add_den_pos (by show 0 < 2 * (j + 1); omega) (by show 0 < 2 * (j + 1); omega))
+      (Qadd_le_add hLip hTr) (Qeq_le hfin))
+
+/-- The diagonal sequence is Bishop-regular. -/
+theorem RexpReal_regular (x : Real) : IsRegular (RexpReal_seq x) := by
+  intro j k
+  rcases Nat.le_total j k with h | h
+  · exact Qle_trans (Qbound_den_pos j) (RexpReal_diag_le x h) (Qle_self_add (by show (0:Int) ≤ 1; decide))
+  · have hswap := RexpReal_diag_le x h
+    rw [Qabs_Qsub_comm] at hswap
+    exact Qle_trans (Qbound_den_pos k) hswap (Qle_add_self (by show (0:Int) ≤ 1; decide))
+
+/-- **`exp` on ℝ**: the everywhere-defined real exponential, as the diagonal of rational partial sums. -/
+def RexpReal (x : Real) : Real :=
+  ⟨RexpReal_seq x, RexpReal_regular x,
+    fun j => expSum_den_pos (x.den_pos (RexpReal_R x j)) (RexpReal_R x j)⟩
 
 end UOR.Bridge.F1Square.Analysis

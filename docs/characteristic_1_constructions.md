@@ -691,9 +691,43 @@ genuine limiting step: chaining `x ≤ y ≤ z` through an auxiliary index `m` y
 kills the `6/(m+1)` tail — exactly the argument behind `Req_trans`. `Rnonneg` (Bishop `x ≥ 0`) gets its
 canonical home here (moved from `Li`), with `Rle_zero_of_Rnonneg` (`x ≥ 0 ⟹ 0 ≤ x`).
 
-The remaining transcendentals follow as concrete releases (no open `+`): **v0.12.0** reciprocal `Rinv`
-+ `exp` on ℝ (real powers, real `exp` on `[0,1]` via completeness, then halving/squaring); **v0.13.0**
-`cos`/`sin` + `log`. Then the next phase — ζ's continuation into the critical strip (needs complex
-exp/log), the genuine `λₙ`, and the explicit-formula trace — which ends at `λₙ > 0 ∀n` = RH, the open
-frontier. All v0.11.0 additions are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), axiom-audited
-and choice-free. RH remains open (June 2026); no 𝔽₁-square construction exists.
+All v0.11.0 additions are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), axiom-audited
+and choice-free.
+
+## 20. v0.12.0 — ℝ as a constructive field with powers, and `exp` on all of ℝ
+
+**v0.12.0** makes ℝ a constructive **field with powers** and builds the **everywhere-defined `exp`**.
+
+*Field / powers.* Real powers `Rpow x n` are iterated `Rmul` (`Pow.lean`). The reciprocal `1/x` of a
+*positive* real (`Inv.lean`) is **positivity-as-data**: a positive real comes with a witness `k` such
+that `x_k > 1/(k+1)`; setting `δ = x_k − 1/(k+1) > 0` floors `x` by `L = δ/2 > 0` on the tail
+`m ≥ 2δ.den`, and the reindex `R n = 4δ.den²·(n+1) + 2δ.den` makes the reciprocal sequence
+`n ↦ 1/x_{R n}` Bishop-regular (the modulus `|1/a − 1/b| = |a−b|·(1/a)(1/b)` is controlled because the
+arguments are bounded below by `L`). Division is `Rdiv x y = x · (1/y)`.
+
+*`exp` on ℝ.* `exp(x)` (`ExpReal.lean`) is the **diagonal of rational partial sums**:
+
+  `exp(x)_j = S_{R j}(x_{R j})`,  where  `S_N(q) = Σ_{i≤N} qⁱ/i!`  and  `R j = 2M + 4(j+1)·K`,
+
+a single reindex `R j` serving both the argument index `x_{R j}` and the truncation depth, with
+`M = ⌈|x|⌉` (the canonical bound `xBound`) and `K` packaging the truncation and Lipschitz constants. The
+key point: the diagonal is a sequence of **rationals** that is *already* Bishop-regular —
+`|exp(x)_j − exp(x)_k| ≤ 1/(j+1) + 1/(k+1)` — so it is a constructive real **directly**, with no appeal
+to completeness/`Rlim`. Regularity (for `j ≤ k`, splitting through the midpoint `S_{R j}(x_{R k})`) rests
+on three rational bounds on `expSum`, each proved here and axiom-clean:
+
+  1. **truncation** (`expSum_trunc_bound`): for `|q| ≤ M` and `2M ≤ a ≤ b`,
+     `|S_q(b) − S_q(a)| ≤ 2Mᵃ⁺¹/(a+1)!` — via the dominating `M`-series `Σ Mⁱ/i!` (`expSumM`) with its
+     telescoping tail (`expM_diff_bound`) and termwise domination of the general-`q` gap;
+  2. **Lipschitz** (`expSum_Lip_le`, `LipS_le_U`): `|S_q(N) − S_{q'}(N)| ≤ C·|q − q'|` with `C` uniform
+     in `N` — from the per-power estimate `|qⁱ − q'ⁱ| ≤ i·Mⁱ⁻¹·|q − q'|`, summed and bounded;
+  3. **factorial growth** (`fct_ge_geom`, `trunc_reindex`): the factorial outpaces `Mⁱ` by a factor `2`
+     every step past `2M`, converting the super-fast tail (1) into the `1/(j+1)` reindex.
+
+The remaining transcendentals follow as a concrete release (no open `+`): **v0.13.0** `cos`/`sin`
+(alternating series with the even/odd sandwich remainder) and `log` (positivity-as-data + the artanh
+series) — their prerequisites (`Rinv`, `qpow` with its bounds, ℝ-completeness) are all in place. Then the
+next phase — ζ's continuation into the critical strip (needs complex exp/log), the genuine `λₙ`, and the
+explicit-formula trace — which ends at `λₙ > 0 ∀n` = RH, the open frontier. All v0.12.0 additions are
+kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), axiom-audited and choice-free. RH remains open
+(June 2026); no 𝔽₁-square construction exists.

@@ -4,6 +4,42 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), starting at `v0.0.1`.
 
+## [0.12.0] - 2026-06-06
+
+### Added — ℝ as a constructive field with powers, and `exp` on all of ℝ (pure Lean 4, no Mathlib, no `sorry`)
+- **Real field / powers** (the multiplicative substrate the transcendentals need):
+  - `F1Square/Analysis/Pow.lean` — real powers `Rpow` (iterated `Rmul`) with `Rpow_one`, `Rpow_congr`
+    (powers respect `≈`).
+  - `F1Square/Analysis/Inv.lean` — the reciprocal `1/x` of a positive real, **positivity-as-data**: from
+    a witness `k` with `x_k > 1/(k+1)`, floor `x` by `L = δ/2 > 0` on the tail and reindex
+    `R n = 4δ.den²(n+1) + 2δ.den`; `RinvSeq_regular` assembles full Bishop regularity. Plus the rational
+    reciprocal `Qinv` (inverse law `a·(1/a) ≈ 1`, antitonicity, the difference identity
+    `1/a − 1/b = (b−a)·(1/a)·(1/b)`) and division `Rdiv`.
+  - `QOrder.lean` gains `Qmul_congr` and `Qmul_add_right` (ℚ multiplication respects `≈`; right
+    distributivity).
+- **`exp` on ℝ** (`F1Square/Analysis/ExpReal.lean`) — the everywhere-defined real exponential, as the
+  **diagonal of rational partial sums**: `exp(x)_j = S_{R j}(x_{R j})` with `S_N(q) = Σ_{i≤N} qⁱ/i!`
+  and a single reindex `R j` for both argument index and truncation depth. The diagonal sequence of
+  rationals is itself Bishop-regular (`RexpReal_regular`: `|exp(x)_j − exp(x)_k| ≤ 1/(j+1)+1/(k+1)`), so
+  it *is* a constructive real directly. Its three rational ingredients, all axiom-clean:
+  - **truncation bound** `expSum_trunc_bound` — `|S_q(b) − S_q(a)| ≤ 2Mᵃ⁺¹/(a+1)!` for `|q| ≤ M`,
+    `2M ≤ a ≤ b` (the dominating `M`-series `expSumM` with its telescoping tail `expM_diff_bound`, and
+    termwise domination of the general-`q` gap);
+  - **Lipschitz bound** `expSum_Lip_le` + `LipS_le_U` — `|S_q(N) − S_{q'}(N)| ≤ C·|q − q'|` with `C`
+    uniform in `N` (per-power `|qⁱ − q'ⁱ| ≤ i·Mⁱ⁻¹·|q−q'|`, summed);
+  - **factorial-growth** `fct_ge_geom` + `trunc_reindex` — the super-fast factorial tail converts to a
+    `1/(j+1)` reindex.
+- `F1Square.lean` gains the v0.12.0 manifest mapping + an elaboration-checked `example` (real powers
+  `x¹ ≈ x`; `exp` is genuinely constructed with its rigorous diagonal gap bound).
+  `scripts/audit_axioms.lean` extended (coverage 341/341, enforced); honesty audit PASS, axiom-clean.
+
+### Note
+- This completes the field/powers + `exp` substrate. Next: **v0.13.0** `cos`/`sin` + `log` (prereqs —
+  `Rinv`, `qpow` with its bounds, ℝ-completeness — are all in place). Then the next phase: ζ's
+  continuation into the critical strip (needs complex exp/log), the genuine `λₙ` realizing the v0.10.0
+  interfaces, and the explicit-formula trace, ending at `λₙ > 0 ∀n` = RH (the open frontier). RH remains
+  open (June 2026); no 𝔽₁-square construction exists.
+
 ## [0.11.0] - 2026-06-06
 
 ### Added — the order `≤` on constructive ℝ (pure Lean 4, no Mathlib, no `sorry`): the foundation for the transcendentals
@@ -419,6 +455,7 @@ Initial research base for the 𝔽₁-square / Riemann Hypothesis program.
   solution: the formalization compiles and states the construction problem precisely; it
   does not assert the crux.
 
+[0.12.0]: https://github.com/afflom/F1/releases/tag/v0.12.0
 [0.11.0]: https://github.com/afflom/F1/releases/tag/v0.11.0
 [0.10.0]: https://github.com/afflom/F1/releases/tag/v0.10.0
 [0.9.0]: https://github.com/afflom/F1/releases/tag/v0.9.0

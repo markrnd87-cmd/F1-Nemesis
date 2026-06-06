@@ -257,6 +257,12 @@ def f1SquareStatus : F1SquareStatus := {
 --                               Rle_trans (Archimedean), Rle_zero_of_Rnonneg}; Rnonneg canonicalized here
 --   ℚ signed-bound helpers    ← Analysis.{Qle_self_Qabs, Qabs_le_of_both, Qle_add_of_Qabs_sub,
 --                               Qsub_le_of_le_add}
+-- v0.12.0 (ℝ as a constructive field with powers, and `exp` on all of ℝ):
+--   real field/powers          ← Analysis.{Rpow (iterated Rmul), Rpow_one, Rpow_congr; Rinv (1/x via
+--                               a positivity witness, full Bishop regularity), Rdiv}
+--   exp on ℝ (diagonal)        ← Analysis.{RexpReal = ⟨S_{x_{Rj}}(Rj)⟩ₙ, RexpReal_regular}, built from the
+--                               rational bounds expSum_trunc_bound (geometric tail), expSum_Lip_le +
+--                               LipS_le_U (Lipschitz), fct_ge_geom (factorial growth) — all axiom-clean
 -- The crux is NOT backed and stays `none` (BOTH faces, same RH):
 --   hodgeIndexHolds (= RH, geometric) ← Crux.CruxFor 𝕊 — OPEN. Crux.template_hodgeIndex proves the
 --                               property only on the product-of-curves TEMPLATE, never on 𝕊.
@@ -404,5 +410,17 @@ example :
     ∧ (∀ x : Analysis.Real, Analysis.Rnonneg x → Analysis.Rle Analysis.zero x) :=
   ⟨Analysis.Rle_refl, fun _ _ => Analysis.Rle_antisymm, fun _ _ _ => Analysis.Rle_trans,
    fun _ => Analysis.Rle_zero_of_Rnonneg⟩
+
+/-- Elaboration-checked witness binding the v0.12.0 layer: real powers satisfy `x¹ ≈ x`, and the
+    everywhere-defined `exp` on ℝ is a genuinely constructed real — its diagonal sequence is
+    Bishop-regular, with the explicit rigorous gap bound `|expₓ(j) − expₓ(k)| ≤ 1/(j+1)` for `j ≤ k`
+    (truncation + Lipschitz, both axiom-clean). -/
+example :
+    (∀ x : Analysis.Real, Analysis.Req (Analysis.Rpow x 1) x)
+    ∧ (∀ x : Analysis.Real, Analysis.IsRegular (Analysis.RexpReal_seq x))
+    ∧ (∀ x : Analysis.Real, ∀ j k : Nat, j ≤ k →
+        Analysis.Qle (Analysis.Qabs (Analysis.Qsub (Analysis.RexpReal_seq x j)
+          (Analysis.RexpReal_seq x k))) (Analysis.Qbound j)) :=
+  ⟨Analysis.Rpow_one, Analysis.RexpReal_regular, fun _ _ _ h => Analysis.RexpReal_diag_le _ h⟩
 
 end UOR.Bridge.F1Square
