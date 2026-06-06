@@ -554,7 +554,36 @@ v0.5.0 left multiplicative congruence/associativity open: `Rmul`'s reindex `r(n)
   `≈`-congruences, to a *pointwise* additive re-association (the four triple products coincide; only
   the grouping differs). With v0.5.0's `Cmul_comm`, ℂ satisfies all commutative-ring axioms up to `≈`.
 
-The v0.7.0 continuation: **completeness** (every regular sequence of reals converges) and the
-**transcendentals** (exp/log/cos via convergent series with rigorous error bounds). All v0.6.0
-additions are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), and axiom-audited. RH remains open;
-no construction of the 𝔽₁-square exists (fresh mid-2026 synthesis).
+The v0.7.0 continuation completes the metric story (see §15). All v0.6.0 additions are kernel-checked,
+pure Lean 4 (no Mathlib, no `sorry`), and axiom-audited. RH remains open; no construction of the
+𝔽₁-square exists (fresh mid-2026 synthesis).
+
+## 15. v0.7.0 — Cauchy completeness of ℝ
+
+With ℝ a commutative ring (§14), **v0.7.0** proves it is **Cauchy complete**: every regular sequence of
+reals converges. This is the constructive analogue of "ℝ is complete" and the foundation the
+transcendentals stand on (a power series is exactly a regular sequence of its partial sums).
+
+- **Regular sequence of reals** (`RReg`, `Complete.lean`). `X : ℕ → Real` is regular when `X j` and
+  `X k` agree within `1/(j+1) + 1/(k+1)` *as reals* — at every index `n`,
+  `|(X j)ₙ − (X k)ₙ| ≤ 1/(j+1) + 1/(k+1) + 2/(n+1)`. The `2/(n+1)` is the modulus of the real
+  comparison; it is genuinely needed (for honest Cauchy data like partial sums the coarse low-index
+  approximants carry their own error, so the modulus-free uniform bound would be false).
+- **The diagonal limit** (`Rlim`). `(lim X)ₙ := (X(4n+3))_{4n+3}`. The reindex `4n+3` reads each real
+  far enough out that its modulus is small; `RlimSeq_regular` shows the diagonal satisfies
+  `|·| ≤ 1/(m+1)+1/(n+1)`, so `lim X` is a genuine constructive real. (The constant `4n+3` is the
+  0-indexed analogue of Bishop's `g(n) = cn`; re-derived against our own bounds.)
+- **Convergence with a rate** (`Rlim_tendsTo`). `X k → lim X` within `1/(k+1)`: routing through the
+  large index `4n+3` keeps the modulus small, and regularity + the regular-sequence bound give
+  `|(X k)ₙ − (lim X)ₙ| ≤ 2/(k+1) + 2/(n+1)`.
+- **Uniqueness** (`RTendsTo_unique`). Limits are unique up to `≈`: the gap `|Lₙ − L'ₙ|` is
+  `≤ 4/(k+1) + 4/(n+1)` for every `k`; the generalized Archimedean lemma kills the `k`-tail and the
+  linear-bound criterion turns the residual into `≈`.
+- **Choice-free.** Because the regular-sequence data carries its own modulus, the diagonal needs no
+  countable choice — the axiom audit shows only `propext`/`Quot.sound`, never `Classical.choice`. (For
+  *modulus-free* Cauchy reals, completeness is independent of constructive `ZF`; carrying the modulus is
+  what avoids that.)
+
+The v0.8.0 continuation: the **transcendentals** (exp/log/cos via convergent series with rigorous
+rational error bounds), built directly on this completeness. All v0.7.0 additions are kernel-checked,
+pure Lean 4 (no Mathlib, no `sorry`), axiom-audited. RH remains open; no 𝔽₁-square construction exists.

@@ -36,6 +36,7 @@ import F1Square.Analysis.RingTac
 import F1Square.Analysis.QOrder
 import F1Square.Analysis.Real
 import F1Square.Analysis.Complex
+import F1Square.Analysis.Complete
 
 open UOR.Primitives
 
@@ -212,6 +213,10 @@ def f1SquareStatus : F1SquareStatus := {
 --   ℝ multiplication well-def.  ← Analysis.Rmul_congr (the v0.5.0-deferred congruence, now proved)
 --   ℝ commutative ring         ← Analysis.{Rmul_assoc, Rmul_distrib, Rmul_one, Radd_assoc, Rmul_zero}
 --   ℂ commutative ring         ← Analysis.{Cadd_assoc, Cmul_one, Cmul_distrib, Cmul_assoc}
+-- v0.7.0 (Cauchy completeness of ℝ — every regular sequence of reals converges):
+--   limit construction         ← Analysis.{RReg, Rlim, RlimSeq_regular} (Bishop diagonal, reindex 4n+3)
+--   convergence with rate      ← Analysis.Rlim_tendsTo (X k → lim X within 1/(k+1))
+--   uniqueness of limits       ← Analysis.RTendsTo_unique (Archimedean + linear-bound criterion)
 -- The crux is NOT backed and stays `none`:
 --   hodgeIndexHolds (= RH)    ← Crux.CruxFor 𝕊 — OPEN. Crux.template_hodgeIndex proves the
 --                               property only on the product-of-curves TEMPLATE, never on 𝕊.
@@ -286,5 +291,14 @@ example :
         Analysis.Ceq (Analysis.Cmul z (Analysis.Cadd w v))
                      (Analysis.Cadd (Analysis.Cmul z w) (Analysis.Cmul z v))) :=
   ⟨fun _ _ _ _ => Analysis.Rmul_congr, Analysis.Rmul_assoc, Analysis.Cmul_assoc, Analysis.Cmul_distrib⟩
+
+/-- Elaboration-checked witness binding the v0.7.0 layer: ℝ is Cauchy complete — every regular
+    sequence of reals converges to its diagonal limit (with an explicit rate), and limits are unique
+    up to `≈`. -/
+example :
+    (∀ (X : Nat → Analysis.Real) (h : Analysis.RReg X), Analysis.RTendsTo X (Analysis.Rlim X h))
+    ∧ (∀ (X : Nat → Analysis.Real) (L L' : Analysis.Real),
+        Analysis.RTendsTo X L → Analysis.RTendsTo X L' → Analysis.Req L L') :=
+  ⟨Analysis.Rlim_tendsTo, fun _ _ _ => Analysis.RTendsTo_unique⟩
 
 end UOR.Bridge.F1Square

@@ -245,3 +245,13 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Cmul_one
 #print axioms Analysis.Cmul_distrib
 #print axioms Analysis.Cmul_assoc
+
+-- v0.7.0 — Cauchy completeness of ℝ (every regular sequence of reals converges).
+#print axioms Analysis.Qfrac_le
+#print axioms Analysis.Qcollapse_le
+#print axioms Analysis.RlimSeq_regular
+#print axioms Analysis.Rlim
+#print axioms Analysis.Rlim_seq
+#print axioms Analysis.Rlim_tendsTo
+#print axioms Analysis.Qabs_Qsub_comm
+#print axioms Analysis.RTendsTo_unique

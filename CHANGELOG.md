@@ -4,6 +4,35 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), starting at `v0.0.1`.
 
+## [0.7.0] - 2026-06-06
+
+### Added — Cauchy completeness of ℝ (pure Lean 4, no Mathlib, no `sorry`, choice-free)
+- `F1Square/Analysis/Complete.lean` — **every regular sequence of reals converges**. A sequence
+  `X : ℕ → Real` is **regular** (`RReg`) when `X j` and `X k` agree within `1/(j+1) + 1/(k+1)` as reals
+  (`|(X j)ₙ − (X k)ₙ| ≤ 1/(j+1) + 1/(k+1) + 2/(n+1)`, the canonical modulus). The limit `Rlim X` is
+  **Bishop's diagonal** `n ↦ (X(4n+3))_{4n+3}` — the `4n+3` reindex reads each real far enough out that
+  the diagonal is itself a regular sequence of rationals (`RlimSeq_regular`), so `Rlim X` is a genuine
+  constructive real. **Convergence with a rate** `Rlim_tendsTo`: `X k → Rlim X` within `1/(k+1)` (gap
+  `≤ 2/(k+1) + 2/(n+1)`). **Uniqueness** `RTendsTo_unique`: limits are unique up to `≈` (via the
+  generalized Archimedean lemma `Qarch_gen` + the linear-bound criterion `Req_of_lin_bound`).
+- Supporting ℚ lemmas: `Qfrac_le` / `Qcollapse_le` (collapse a scaled-denominator sum to a unit
+  fraction) and `Qabs_Qsub_comm` (`|a−b| = |b−a|`).
+- The construction is **choice-free**: because the regular-sequence data carries its own modulus, the
+  diagonal needs no countable choice (the `#print axioms` audit shows no `Classical.choice` — only
+  `propext`, `Quot.sound`). `scripts/audit_axioms.lean` extended; the honesty gate stays green.
+
+### Changed
+- `docs/` roadmap re-paced: the **transcendentals** (exp/log/cos via convergent series with rigorous
+  rational error bounds) — which stand directly on this completeness brick (a power series is a regular
+  sequence of its partial sums) — move to v0.8.0. `F1Square.lean` gains a v0.7.0 `example`.
+
+### Note
+- RH remains **open**, and no construction of the 𝔽₁-square exists (fresh mid-2026 synthesis: the
+  Feb-2026 Connes–Consani *On the Jacobian of Spec ℤ̄* is an Arakelov–Picard reinterpretation, not the
+  square; there is still no accepted 𝔽₁-scheme theory realizing `Spec ℤ ×_𝔽₁ Spec ℤ` with an intrinsic
+  intersection theory). Completeness makes the analytic half *statable and checkable*, never proven —
+  proving `λₙ ≥ 0 ∀n` / the Hodge index on 𝕊 is RH.
+
 ## [0.6.0] - 2026-06-06
 
 ### Added — ℝ and ℂ are commutative rings up to `≈`; ℝ multiplication well-defined on the setoid (pure Lean 4, no Mathlib, no `sorry`)

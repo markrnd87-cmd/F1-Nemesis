@@ -494,9 +494,13 @@ canonical forms, realizations, no Mathlib — one brick per release:
   `Rmul`-congruence (multiplication well-defined on the setoid — the v0.5.0 deferral), `Rmul_assoc`,
   `Rmul_distrib`, `Rmul_one`, `Radd_assoc`; and lifts to `Cmul_assoc`, `Cmul_distrib`, `Cmul_one`,
   `Cadd_assoc` (the bilinear expansions reduce, via the ℝ ring laws, to pointwise re-associations).
-- **v0.7.0:** **completeness** (every regular sequence of reals converges, diagonal-limit construction);
-  then transcendentals (exp/log/cos via convergent series with rigorous error bounds).
-- **v0.8.0+:** ζ and `λₙ` as exact-bounded objects; the explicit formula as an exact-arithmetic trace.
+- **v0.7.0 (done):** **Cauchy completeness of ℝ.** A *regular sequence of reals* (`RReg`: `X j, X k`
+  within `1/(j+1)+1/(k+1)` as reals) converges to **Bishop's diagonal** `Rlim X := n ↦ (X(4n+3))_{4n+3}`
+  (the `4n+3` reindex makes the diagonal itself regular), with explicit rate `1/(k+1)` (`Rlim_tendsTo`)
+  and uniqueness up to `≈` (`RTendsTo_unique`). Choice-free (the modulus is carried in the data).
+- **v0.8.0:** transcendentals (exp/log/cos via convergent series with rigorous rational error bounds,
+  standing on completeness — a power series is a regular sequence of its partial sums).
+- **v0.9.0+:** ζ and `λₙ` as exact-bounded objects; the explicit formula as an exact-arithmetic trace.
 
 Each brick makes more of the analytic half *statable and finitely checkable* — never a proof of the
 crux. Proving `λₙ ≥ 0 ∀ n` / Weil positivity / the Hodge index on `𝕊` IS RH, and remains open.
