@@ -101,6 +101,18 @@ theorem Qadd_congr {a b c d : Q} (hac : Qeq a c) (hbd : Qeq b d) : Qeq (add a b)
   rw [e0] at key
   omega
 
+/-- Multiplication respects ℚ value-equality (a congruence): `a ≈ c → b ≈ d → a·b ≈ c·d`.
+    (Multiply the two cross-multiplied hypotheses.) -/
+theorem Qmul_congr {a b c d : Q} (hac : Qeq a c) (hbd : Qeq b d) : Qeq (mul a b) (mul c d) := by
+  unfold Qeq mul at *
+  simp only [Int.natCast_mul]
+  have h : (a.num * (c.den : Int)) * (b.num * (d.den : Int))
+      = (c.num * (a.den : Int)) * (d.num * (b.den : Int)) := by rw [hac, hbd]
+  calc (a.num * b.num) * ((c.den : Int) * (d.den : Int))
+      = (a.num * (c.den : Int)) * (b.num * (d.den : Int)) := by ring_uor
+    _ = (c.num * (a.den : Int)) * (d.num * (b.den : Int)) := h
+    _ = (c.num * d.num) * ((a.den : Int) * (b.den : Int)) := by ring_uor
+
 /-- `|·|` respects ℚ value-equality. -/
 theorem Qabs_Qeq {a b : Q} (h : Qeq a b) : Qeq (Qabs a) (Qabs b) := by
   unfold Qeq Qabs at *

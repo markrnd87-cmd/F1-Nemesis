@@ -342,6 +342,31 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rle_trans
 #print axioms Analysis.Rle_zero_of_Rnonneg
 
+-- v0.12.0 (in progress) — the multiplicative substrate: real powers + the reciprocal.
+#print axioms Analysis.Rpow_zero
+#print axioms Analysis.Rpow_succ
+#print axioms Analysis.Rpow_one
+#print axioms Analysis.Rpow_congr
+#print axioms Analysis.Qmul_congr
+#print axioms Analysis.Qinv_den_pos
+#print axioms Analysis.Qinv_num_pos
+#print axioms Analysis.Qmul_Qinv
+#print axioms Analysis.Qinv_antitone
+#print axioms Analysis.Qinv_sub_eq
+#print axioms Analysis.Rdelta_num_pos
+#print axioms Analysis.Rdelta_den_pos
+#print axioms Analysis.RL_num_pos
+#print axioms Analysis.RL_den_pos
+#print axioms Analysis.Rinv_lb
+#print axioms Analysis.Qabs_Qinv
+#print axioms Analysis.Rinv_num_pos
+#print axioms Analysis.RinvR_ge
+#print axioms Analysis.Rinv_perterm
+#print axioms Analysis.Qmul_add_right
+#print axioms Analysis.Qabs_Qsub_swap
+#print axioms Analysis.RinvSeq_regular
+#print axioms Analysis.Rinv
+
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one
 #print axioms Li.template_liPositive
