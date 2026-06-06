@@ -17,8 +17,18 @@ lake build
 #     in scripts/audit_axioms.lean. This makes the audit's "every theorem" invariant self-enforcing:
 #     a newly added (or renamed) theorem that is not audited fails CI, so coverage cannot silently
 #     drift and a `sorry` cannot hide in an un-audited leaf lemma.
-declared="$(grep -rhoE '^(theorem|lemma) [A-Za-z_][A-Za-z0-9_'"'"']*' F1Square.lean F1Square/ \
-  | sed -E 's/^(theorem|lemma) //' | sort -u)"
+declared_all="$(grep -rhoE '^(theorem|lemma) [A-Za-z_][A-Za-z0-9_'"'"']*' F1Square.lean F1Square/ \
+  | sed -E 's/^(theorem|lemma) //' | sort)"
+# The coverage check matches on the leaf (short) name, so it is only sound if leaf names are unique.
+# Guard that invariant: if two proof-layer theorems share a short name, fully-qualified auditing is
+# required and the leaf-matching below could mask a gap — so fail loudly.
+dups="$(echo "$declared_all" | uniq -d)"
+if [ -n "$dups" ]; then
+  echo "FAIL: duplicate proof-layer theorem short-names (coverage gate matches on leaf names):" >&2
+  echo "$dups" >&2
+  exit 1
+fi
+declared="$(echo "$declared_all" | uniq)"
 audited="$(grep -oE '#print axioms [A-Za-z0-9_.]+' scripts/audit_axioms.lean \
   | sed -E 's/#print axioms //; s/^.*\.//' | sort -u)"
 missing="$(comm -23 <(echo "$declared") <(echo "$audited"))"

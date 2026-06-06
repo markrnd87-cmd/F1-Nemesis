@@ -637,10 +637,40 @@ argument `q ∈ [0,1]`, as a constructive real (`ExpGen.lean`). The design point
 - **Supporting infrastructure.** `Qeq_trans` (ℚ value-equality is an equivalence) was added to the order
   library — the cross-multiplied identities are linear-combined and cancelled via `b.den > 0`.
 
-The v0.10.0+ arc continues: the everywhere-defined `exp` on ℝ (via the halving/squaring identity
-`exp x = exp(x/2ᵏ)^{2ᵏ}`, reusing this `[0,1]` brick and ℝ multiplication), `cos`/`sin` via alternating
-series (the even/odd sandwich remainder — genuinely new machinery, so its own brick), and `log`
-(positivity-as-data + the artanh series). All v0.9.0 additions are kernel-checked, pure Lean 4 (no
-Mathlib, no `sorry`), axiom-audited and choice-free. RH remains open (June 2026); no 𝔽₁-square
-construction exists — the Feb-2026 Connes–Consani *On the Jacobian of Spec ℤ̄* (arXiv:2602.15941) is a
-Jacobian/adele-class-space construction, not the square nor an intrinsic intersection theory.
+The v0.10.0 continuation locks the λₙ / RH proof boundary and ships ζ as an exact-bounded object
+(see §18). All v0.9.0 additions are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), axiom-audited
+and choice-free.
+
+## 18. v0.10.0 — the λₙ / RH proof boundary, and ζ as an exact-bounded object
+
+**v0.10.0** does two coupled things: it pins the **analytic face of the RH crux** (`Li.lean`) and it
+ships **ζ as a genuine exact-bounded object** (`Analysis.ExactBounded`, `Analysis.Zeta`).
+
+- **The proof boundary (`Li.lean`).** By **Li's criterion** (Li 1997), RH ⟺ `λₙ > 0 ∀ n ≥ 1` (the
+  non-strict `≥ 0` form is the general Bombieri–Lagarias 1999 multiset criterion). `LiPositive` /
+  `LiNonneg` are genuine, satisfiable properties (`template_liPositive` on the constant-`1` sequence);
+  the **crux** `LiCrux λ` on the unconstructed genuine ζ-derived `λ` is OPEN
+  (`f1SquareStatus.liPositivityHolds = none`), guarded by a detailed faithfulness caution and the
+  **finite-check guard** `liPositive_iff_all_upTo` — `LiPositive = ⋀_N LiPositiveUpTo N`, so the
+  numerical positivity of the first ~10⁵ `λₙ` (Feb 2025) is *not* a proof. The Bombieri–Lagarias
+  decomposition and the Weil explicit formula (Weil 1952 / Connes 1999) are stated as honest
+  interfaces; crucially `λₙ^{arith} = −Σ Λ(m)wₙ(m)` and `λₙ^{∞}` have **opposite signs**, so `λₙ > 0`
+  is a delicate cancellation — the open difficulty, which no termwise lemma supplies.
+- **`ExactBoundedReal` (`ExactBounded.lean`).** A constructive real presented as a stream of certified
+  rational enclosures `[xₙ − 1/(n+1), xₙ + 1/(n+1)]` of exact width `2/(n+1)` (`enclosure_width`). The
+  Li coefficients are typed `λ : Nat → ExactBoundedReal`.
+- **ζ as an exact-bounded object (`Zeta.lean`).** For integer `s ≥ 2`, `ζ(s) = Σ_{i≥1} 1/iˢ` is built
+  as a genuine exact-bounded real, with the rigorous rational tail bound `S(b) − S(a) ≤ 1/(a+1)`
+  (`zetadiff_bound`) via the telescoping decreasing `U(N) := S(N) + 1/(N+1)` — the added term
+  `1/(N+2)ˢ ≤ 1/((N+1)(N+2))` because `(N+1)(N+2) ≤ (N+2)² ≤ (N+2)ˢ`. The bound is already the Bishop
+  modulus, so the partial sums are *directly* regular (no reindex). `zeta_pos`: `ζ(s) > 0`. Natural
+  powers `npow` are built from scratch.
+
+**Honest scope.** This ζ is the convergent half-plane `Re(s) > 1` at integer points — where ζ has **no
+zeros** and RH does **not** live. The analytic continuation to the critical strip (and ζ at complex
+`s`), and the genuine `λₙ` *values* (which need that continuation and `log`), are **not** built — only
+the exact-bounded *type* and the boundary are shipped, with nothing fabricated. All v0.10.0 additions
+are kernel-checked, pure Lean 4 (no Mathlib, no `sorry`), axiom-audited and choice-free. RH remains
+open (June 2026); no 𝔽₁-square construction exists — the Feb-2026 Connes–Consani *On the Jacobian of
+Spec ℤ̄* (arXiv:2602.15941) is a Jacobian/adele-class-space construction, not the square nor an
+intrinsic intersection theory.

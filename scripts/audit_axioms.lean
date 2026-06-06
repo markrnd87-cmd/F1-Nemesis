@@ -327,3 +327,38 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qeq_add_zero_num
 #print axioms Analysis.Qle_Qabs_Qsub_of_Qeq
 #print axioms Analysis.Rexp_seq
+
+-- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
+#print axioms Li.Rnonneg_zero
+#print axioms Li.Rnonneg_one
+#print axioms Li.Pos_one
+#print axioms Li.Rnonneg_Radd
+#print axioms Li.template_liPositive
+#print axioms Li.template_liNonneg
+#print axioms Li.template_liPositiveUpTo
+#print axioms Li.liPositive_iff_all_upTo
+#print axioms Li.liDecomposition_genuine
+#print axioms Li.explicitFormulaTrace_genuine
+#print axioms Li.liAgreesWith_genuine
+
+-- v0.10.0 — ExactBoundedReal enclosure interface + ζ(s) as an exact-bounded object.
+#print axioms Analysis.enclosure_width
+#print axioms Analysis.lowerB_le_upperB
+#print axioms Analysis.certificate
+#print axioms Analysis.npow_succ
+#print axioms Analysis.npow_pos
+#print axioms Analysis.npow_two
+#print axioms Analysis.npow_one
+#print axioms Analysis.npow_mono
+#print axioms Analysis.zetaSum_den_pos
+#print axioms Analysis.zetaSum_step
+#print axioms Analysis.zetaSum_le
+#print axioms Analysis.zeta_step_le
+#print axioms Analysis.zetaU_den_pos
+#print axioms Analysis.zetaU_step
+#print axioms Analysis.zetaU_le
+#print axioms Analysis.zetadiff_bound
+#print axioms Analysis.zetaabs_bound
+#print axioms Analysis.zetaSeq_regular
+#print axioms Analysis.zeta_seq
+#print axioms Analysis.zeta_pos

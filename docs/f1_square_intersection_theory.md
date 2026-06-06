@@ -518,11 +518,29 @@ canonical forms, realizations, no Mathlib — one brick per release:
   (`expdiff_bound`) and the *same* reindex (`efct_reindex`) prove regularity — no new tail analysis.
   Anchored by `exp 0 ≈ 1` (`Rexp_zero`) and `exp 1 > 0` (`Rexp_one_pos`); rational powers `qpow` built
   from scratch (core has none). Choice-free.
-- **v0.10.0+ (transcendentals arc, continued):** the everywhere-defined `exp` on ℝ (via the
+- **v0.10.0 (done):** the **λₙ / RH proof boundary, locked faithfully** (`Li.lean`) — the *analytic
+  face* of the same crux `Crux.lean` states geometrically. By **Li's criterion** (Li 1997),
+  RH ⟺ `λₙ > 0 ∀ n ≥ 1` (the non-strict `≥ 0` form is the general Bombieri–Lagarias 1999 multiset
+  criterion). Pinned BEFORE ζ is built: `LiPositive`/`LiNonneg` are genuine, satisfiable properties
+  (`template_liPositive`); the crux `LiCrux λ` on the unconstructed genuine ζ-derived `λ` is OPEN
+  (`liPositivityHolds = none`), with a faithfulness caution forbidding the standard traps and the
+  **finite-check guard** `liPositive_iff_all_upTo` (the universal `∀ N` that no `decide` reaches — the
+  first ~10⁵ λₙ are numerically positive, which is *not* a proof). The Bombieri–Lagarias decomposition
+  and the Weil explicit formula (Weil 1952 / Connes 1999) are stated as honest interfaces. Crucially,
+  `λₙ^{arith}` and `λₙ^{∞}` have opposite signs, so positivity is a *cancellation* — the open difficulty.
+  v0.10.0 also ships **ζ and `λₙ` as exact-bounded objects**: `ExactBoundedReal` (a constructive real as
+  a stream of certified rational enclosures of width `2/(n+1)`) is the type `λ : Nat → ExactBoundedReal`
+  inhabits, and **`ζ(s)` for integer `s ≥ 2` is built as a concrete such object** (`zeta`, `Σ 1/iˢ` with
+  the rigorous tail bound `zetadiff_bound`, `ζ(s) > 0`). *Honest scope:* this ζ is the convergent regime
+  `Re(s) > 1` (no zeros, not the critical strip); the analytic continuation and the genuine `λₙ` *values*
+  (which need it and `log`) are deferred — only the exact-bounded type and the boundary are shipped now.
+- **v0.11.0+ (transcendentals arc, continued):** the everywhere-defined `exp` on ℝ (via the
   halving/squaring identity `exp x = exp(x/2ᵏ)^{2ᵏ}`, reusing the `[0,1]` brick and ℝ multiplication),
   `cos`/`sin` (alternating series with the even/odd sandwich remainder — genuinely new machinery), and
-  `log` (positivity-as-data + the artanh series); then ζ and `λₙ` as exact-bounded objects, and the
-  explicit formula as an exact-arithmetic trace.
+  `log` (positivity-as-data + the artanh series); then the analytic continuation of ζ into the critical
+  strip and the genuine `λₙ` realizing the v0.10.0 interfaces, and the explicit formula as an
+  exact-arithmetic trace.
 
 Each brick makes more of the analytic half *statable and finitely checkable* — never a proof of the
-crux. Proving `λₙ ≥ 0 ∀ n` / Weil positivity / the Hodge index on `𝕊` IS RH, and remains open.
+crux. Proving `λₙ > 0 ∀ n` (Li's criterion) / Weil positivity / the Hodge index on `𝕊` IS RH, and
+remains open.

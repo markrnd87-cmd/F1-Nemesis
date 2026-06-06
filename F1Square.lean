@@ -39,6 +39,9 @@ import F1Square.Analysis.Complex
 import F1Square.Analysis.Complete
 import F1Square.Analysis.Exp
 import F1Square.Analysis.ExpGen
+import F1Square.Analysis.ExactBounded
+import F1Square.Analysis.Zeta
+import F1Square.Li
 
 open UOR.Primitives
 
@@ -161,7 +164,8 @@ structure F1SquareStatus where
   intersectionTemplateValid : Option Bool   -- §2.2 / T3: true (classical, on template)
   ampleClassExists          : Option Bool   -- §1.4: true (verified on template)
   parallelPencilFinding     : Option Bool   -- §2.3: candidate-model structural finding
-  hodgeIndexHolds           : Option Bool   -- §1.5 / T5: NONE — this is RH
+  hodgeIndexHolds           : Option Bool   -- §1.5 / T5: NONE — this is RH (geometric face)
+  liPositivityHolds         : Option Bool   -- Li's criterion: NONE — this is RH (analytic face)
   deriving Repr
 
 def f1SquareStatus : F1SquareStatus := {
@@ -170,7 +174,8 @@ def f1SquareStatus : F1SquareStatus := {
   intersectionTemplateValid := some true      -- classical Hodge index for product surfaces
   ampleClassExists          := some true      -- verified on the template
   parallelPencilFinding     := none           -- candidate model, not asserted canonical
-  hodgeIndexHolds           := none           -- = RH, OPEN, never asserted
+  hodgeIndexHolds           := none           -- = RH (geometric face), OPEN, never asserted
+  liPositivityHolds         := none           -- = RH (analytic face: λₙ > 0 ∀n, Li 1997), OPEN, never asserted
 }
 
 -- ===========================================================================
@@ -229,11 +234,28 @@ def f1SquareStatus : F1SquareStatus := {
 --   rigorous error bound (reused) ← Analysis.expdiff_bound (same 2/(a+1)! tail as e, by domination)
 --   exp(q) as a constructive real ← Analysis.{Rexp, expSeq_regular}; anchors Rexp_zero (exp 0 ≈ 1),
 --                                   Rexp_one_pos (exp 1 > 0), Rexp_one_eq_e (exp 1 ≈ e — ties to v0.8.0)
--- The crux is NOT backed and stays `none`:
---   hodgeIndexHolds (= RH)    ← Crux.CruxFor 𝕊 — OPEN. Crux.template_hodgeIndex proves the
+-- v0.10.0 (the λₙ / RH PROOF BOUNDARY — locked faithfully before ζ is built):
+--   Bishop ℝ ≥ 0 / > 0         ← Li.{Rnonneg, Rnonneg_zero, Rnonneg_one, Pos_one}
+--   Li-positivity property     ← Li.{LiPositive (strict, ζ-specific Li 1997), LiNonneg (BL 1999 form)};
+--                                template_liPositive proves it for the constant-1 sequence (genuine)
+--   the finite-check guard     ← Li.liPositive_iff_all_upTo (LiPositive = ∀N, LiPositiveUpTo; no
+--                                finite N / `decide` reaches the universal — the first ~10⁵ λₙ are
+--                                numerically positive yet that is NOT a proof)
+--   ζ-layer substrate (interfaces, never asserted for the genuine λ) ← Li.{LiDecomposition (BL),
+--                                ExplicitFormulaTrace (Weil 1952/Connes 1999), LiAgreesWith}
+--   ζ(s) as an exact-bounded object ← Analysis.{zeta (Σ1/iˢ, integer s≥2), zeta_pos, zetadiff_bound
+--                                (the rigorous rational tail certificate)}; λₙ typed as
+--                                Nat → ExactBoundedReal (Analysis.ExactBounded). HONEST SCOPE: ζ here
+--                                is the convergent regime Re(s)>1 (no zeros, not the critical strip);
+--                                the genuine λₙ values need analytic continuation + log (deferred).
+-- The crux is NOT backed and stays `none` (BOTH faces, same RH):
+--   hodgeIndexHolds (= RH, geometric) ← Crux.CruxFor 𝕊 — OPEN. Crux.template_hodgeIndex proves the
 --                               property only on the product-of-curves TEMPLATE, never on 𝕊.
--- No arbitrary ceiling: if a genuine, audited, faithful proof of the crux ever lands, this field
--- flips `none → some true` because that is then the truth (program stance, never a defect).
+--   liPositivityHolds (= RH, analytic) ← Li.LiCrux λ for the unconstructed genuine Li sequence λ —
+--                               OPEN. Li.template_liPositive proves the property only for a constant
+--                               sequence, never for λ; LiPositive λ ⟺ RH is [CLASSICAL] (Li 1997).
+-- No arbitrary ceiling: if a genuine, audited, faithful proof of the crux ever lands, these fields
+-- flip `none → some true` because that is then the truth (program stance, never a defect).
 -- ===========================================================================
 
 /-- Elaboration-checked witness that the manifest's established fields rest on real theorems
@@ -336,5 +358,30 @@ example :
           ⟨2, Analysis.fct (a + 1)⟩) :=
   ⟨Analysis.Rexp_zero, Analysis.Rexp_one_eq_e, Analysis.Rexp_one_pos,
    fun _ hq0 hqd hq1 _ _ h => Analysis.expdiff_bound hq0 hqd hq1 h⟩
+
+/-- Elaboration-checked witness binding the v0.10.0 layer — the λₙ / RH proof boundary, locked
+    faithfully. The Li-positivity PROPERTY is genuine (the constant-`1` sequence satisfies it), it is
+    *exactly* the conjunction of all finite truncations (so no finite check is a proof), and the
+    Bombieri–Lagarias decomposition is a genuine interface — while the CRUX, `LiCrux` for the
+    unconstructed genuine Li sequence of ζ, is never asserted (`liPositivityHolds = none`, = RH). -/
+example :
+    Li.LiPositive (fun _ => Analysis.one)
+    ∧ (∀ lam : Nat → Analysis.ExactBoundedReal, Li.LiPositive lam ↔ ∀ N, Li.LiPositiveUpTo lam N)
+    ∧ (∀ lam : Nat → Analysis.ExactBoundedReal, Li.LiDecomposition lam lam (fun _ => Analysis.zero))
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Li.template_liPositive, Li.liPositive_iff_all_upTo, Li.liDecomposition_genuine, rfl⟩
+
+/-- Elaboration-checked witness that ζ ships as a genuine **exact-bounded object**: for every integer
+    `s ≥ 2`, `ζ(s) = Σ 1/iˢ` is a constructive real that is positive (`zeta_pos`) and whose partial
+    sums carry the rigorous rational error bound `S(b) − S(a) ≤ 1/(a+1)` (`zetadiff_bound`) — its
+    precision certificate. (This is ζ in the convergent regime `Re(s) > 1`, where it has no zeros; the
+    analytic continuation to the critical strip — where RH lives — is not built.) -/
+example :
+    (∀ (s : Nat) (hs : 2 ≤ s), Analysis.Pos (Analysis.zeta s hs))
+    ∧ (∀ (s : Nat) (_hs : 2 ≤ s) (a b : Nat), a ≤ b →
+        Analysis.Qle (Analysis.Qsub (Analysis.zetaSum s b) (Analysis.zetaSum s a)) ⟨1, a + 1⟩)
+    ∧ (∀ (x : Analysis.ExactBoundedReal) (n : Nat),
+        Analysis.Qeq (Analysis.Qsub (Analysis.upperB x n) (Analysis.lowerB x n)) ⟨2, n + 1⟩) :=
+  ⟨Analysis.zeta_pos, fun s hs _ _ h => Analysis.zetadiff_bound s hs h, Analysis.enclosure_width⟩
 
 end UOR.Bridge.F1Square

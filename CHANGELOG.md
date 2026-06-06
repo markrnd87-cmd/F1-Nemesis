@@ -4,6 +4,58 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), starting at `v0.0.1`.
 
+## [0.10.0] - 2026-06-06
+
+### Added — the λₙ / Riemann-Hypothesis proof boundary, locked faithfully (pure Lean 4, no Mathlib, no `sorry`)
+- `F1Square/Li.lean` — the **analytic face** of the same crux `Crux.lean` states geometrically. By
+  **Li's criterion** (Li 1997), RH ⟺ `λₙ > 0` for all `n ≥ 1` (the paired sum over the nontrivial
+  zeros; the non-strict `≥ 0` form is the general Bombieri–Lagarias 1999 multiset criterion, also
+  ⟺ RH). This brick states that boundary precisely, before ζ is built, so the proof boundary is pinned.
+- **Bishop ℝ order**: `Rnonneg` (the non-strict `x ≥ 0`, companion to the existing strict `Pos`), with
+  `Rnonneg_zero`, `Rnonneg_one`, `Pos_one`, and the generic `Rnonneg_Radd` (sum of non-negatives is
+  non-negative — *explicitly disclaimed* as **not** the mechanism behind Li-positivity, since the
+  Bombieri–Lagarias parts `λₙ^{arith} = −Σ Λ(m)wₙ(m)` and `λₙ^{∞}` have opposite signs and `λₙ > 0` is
+  a delicate cancellation, which is the open difficulty).
+- **The Li-positivity property** `LiPositive` (strict, ζ-specific) and `LiNonneg` (BL non-strict),
+  proven genuine/satisfiable by `template_liPositive`/`template_liNonneg` (the constant-`1` sequence) —
+  the analytic analogue of `Crux.template_hodgeIndex`.
+- **The finite-check guard** `liPositive_iff_all_upTo`: `LiPositive lam ↔ ∀ N, LiPositiveUpTo lam N`.
+  This encodes precisely why the numerical positivity of the first ~10⁵ Li coefficients (computed to
+  n = 100 000, Feb 2025) is **not** a proof: the theorem is the universal `∀ N`, which no finite
+  `decide` reaches.
+- **THE CRUX (analytic face)** `LiCrux λ` for the unconstructed genuine ζ-derived Li sequence — OPEN,
+  never asserted, never axiomatized. A detailed **faithfulness caution** forbids the standard traps
+  (existential witness, manifestly-positive definition, finite/truncated `decide`); `LiPositive λ ⟺ RH`
+  is [CLASSICAL] (Li 1997), and positivity reformulations do not make RH easier (Conrey–Li 2000).
+- **ζ-layer substrate as honest interfaces** (genuine/inhabited, never asserted for the real `λ`):
+  `LiDecomposition` (Bombieri–Lagarias), `ExplicitFormulaTrace` (Weil 1952 / Connes 1999), `LiAgreesWith`.
+
+### Added — ζ and λₙ as exact-bounded objects
+- `F1Square/Analysis/ExactBounded.lean` — **`ExactBoundedReal`**: a constructive real presented as a
+  stream of certified rational enclosures `[xₙ − 1/(n+1), xₙ + 1/(n+1)]`, with the exact-width identity
+  `enclosure_width` (`upperB − lowerB = 2/(n+1)`), `lowerB_le_upperB`, and the regularity `certificate`.
+  The Li coefficients are typed `λ : Nat → ExactBoundedReal`.
+- `F1Square/Analysis/Zeta.lean` — **`ζ(s)` for integer `s ≥ 2` as a genuine exact-bounded constructive
+  real**: `Σ_{i≥1} 1/iˢ` (natural powers `npow` from scratch), with the rigorous rational tail bound
+  `zetadiff_bound` (`S(b) − S(a) ≤ 1/(a+1)` for `a ≤ b`) via the telescoping decreasing
+  `U(N) := S(N) + 1/(N+1)` (the added term `1/(N+2)ˢ ≤ 1/((N+1)(N+2))` since `(N+1)(N+2) ≤ (N+2)ˢ`).
+  The bound is already the Bishop modulus, so the partial sums are directly regular (`zetaSeq_regular`,
+  no reindex). `zeta_pos`: `ζ(s) > 0`. **Honest scope:** this is ζ in the convergent half-plane
+  `Re(s) > 1` at integer points — where ζ has **no zeros** and RH does **not** live; the analytic
+  continuation to the critical strip (and ζ at complex `s`) is **not** built, and the genuine `λₙ`
+  *values* (needing the continuation + `log`) are not fabricated — only their exact-bounded *type* and
+  the boundary are shipped.
+- `F1Square.lean`: the status roll-up `F1SquareStatus` gains `liPositivityHolds := none` — the analytic
+  face of RH, alongside the geometric `hodgeIndexHolds := none`. Both crux faces are `none`. New v0.10.0
+  mapping + two elaboration-checked `example`s (the Li boundary; ζ as an exact-bounded object);
+  `scripts/audit_axioms.lean` extended (coverage now 279/279, enforced); honesty audit PASS,
+  axiom-clean and choice-free.
+
+### Note
+- RH remains **open** (June 2026); Li-positivity is unproven for all `n` (only finite ranges checked
+  numerically). No 𝔽₁-square construction exists. This brick makes the analytic boundary *statable and
+  checkable* — it does not, and cannot here, prove `λₙ > 0 ∀n`, which is RH.
+
 ## [0.9.0] - 2026-06-06
 
 ### Added — the general exponential `exp(q)` on the rational interval `[0,1]` (pure Lean 4, no Mathlib, no `sorry`, choice-free)
@@ -344,6 +396,11 @@ Initial research base for the 𝔽₁-square / Riemann Hypothesis program.
   solution: the formalization compiles and states the construction problem precisely; it
   does not assert the crux.
 
+[0.10.0]: https://github.com/afflom/F1/releases/tag/v0.10.0
+[0.9.0]: https://github.com/afflom/F1/releases/tag/v0.9.0
+[0.8.0]: https://github.com/afflom/F1/releases/tag/v0.8.0
+[0.7.0]: https://github.com/afflom/F1/releases/tag/v0.7.0
+[0.6.0]: https://github.com/afflom/F1/releases/tag/v0.6.0
 [0.5.0]: https://github.com/afflom/F1/releases/tag/v0.5.0
 [0.4.0]: https://github.com/afflom/F1/releases/tag/v0.4.0
 [0.3.0]: https://github.com/afflom/F1/releases/tag/v0.3.0
