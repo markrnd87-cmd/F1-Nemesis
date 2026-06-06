@@ -18,6 +18,15 @@ import UOR.Individuals.Convergence
 import UOR.Individuals.Division
 import UOR.Individuals.Homology
 
+-- The genuine Lean proof layer (real theorems, no Mathlib, no `sorry`): proves the
+-- [VERIFIED] / [CLASSICAL] boundary facts of the program. The crux (= RH) is never proved there.
+import F1Square.Mechanism
+import F1Square.Template
+import F1Square.CharOne
+import F1Square.Bridge
+import F1Square.CycleCounts
+import F1Square.Crux
+
 open UOR.Primitives
 
 namespace UOR.Bridge.F1Square
@@ -150,5 +159,34 @@ def f1SquareStatus : F1SquareStatus := {
   parallelPencilFinding     := none           -- candidate model, not asserted canonical
   hodgeIndexHolds           := none           -- = RH, OPEN, never asserted
 }
+
+-- ===========================================================================
+-- Proof-layer backing (P1–P6). The established (`some true`) fields above are discharged by
+-- GENUINE Lean theorems in the proof layer (`F1Square/*.lean`), each audited axiom-clean
+-- (no `sorry` / `native_decide` / stray axiom) by `scripts/honesty_audit.sh`:
+--   intersectionTemplateValid ← Template.{E1_dot_E2, E3_sq, pair_symm}                 (P1, §2.2)
+--   ampleClassExists          ← Template.{H_sq_pos, Hperp_neg_semidef, Hperp_definite} (P1, §1.4)
+--   the Hodge/Hasse flip      ← Mechanism.{hodgeType_iff, hasse_q4/q9/q25_*}           (P1, §0.3/§9.1)
+--   tropical positivity (R13) ← Mechanism.{tropMult_nonneg, bezout_line_line/conic}    (P2)
+--   characteristic 1 (R1,R12) ← CharOne.{tAdd_idem, cycle_reversal_invariant}          (P2)
+--   trace counts (R6)         ← CycleCounts.{N1 … N8}  (exact `Bᵐ`)                    (P3b)
+--   mechanism + §2.3 control  ← Bridge.{hodge_implies_spectral_bound, control_psd}     (P3)
+-- The crux is NOT backed and stays `none`:
+--   hodgeIndexHolds (= RH)    ← Crux.CruxFor 𝕊 — OPEN. Crux.template_hodgeIndex proves the
+--                               property only on the product-of-curves TEMPLATE, never on 𝕊.
+-- No arbitrary ceiling: if a genuine, audited, faithful proof of the crux ever lands, this field
+-- flips `none → some true` because that is then the truth (program stance, never a defect).
+-- ===========================================================================
+
+/-- Elaboration-checked witness that the manifest's established fields rest on real theorems
+    (not just annotations): a sample of the proof layer, referenced from the manifest itself. -/
+example :
+    Template.pair (1, 1, 0) (1, 1, 0) = 2
+    ∧ Mechanism.hodgeType 25 10
+    ∧ (0 ≤ Bridge.controlForm 3 5 7 11 2 4)
+    ∧ CycleCounts.trace (CycleCounts.powM CycleCounts.B 8) = 34
+    ∧ Crux.HodgeIndex Crux.templatePolarized :=
+  ⟨Template.H_sq, Mechanism.hasse_q25_a10, Bridge.control_psd 3 5 7 11 2 4,
+   CycleCounts.N8, Crux.template_hodgeIndex⟩
 
 end UOR.Bridge.F1Square

@@ -24,7 +24,9 @@ negative-definiteness *is* RH.
 
 | path | what it is |
 |---|---|
-| [`F1Square.lean`](F1Square.lean) | Lean 4 formalization of the target object and its intersection theory (`UOR.Bridge.F1Square`), with the honest status of each result and a `F1SquareStatus` roll-up. |
+| [`F1Square.lean`](F1Square.lean) | Lean 4 formalization of the target object and its intersection theory (`UOR.Bridge.F1Square`), with the honest status of each result and a `F1SquareStatus` roll-up, now imports the proof layer and carries an elaboration-checked `example` tying each established field to a genuine theorem. |
+| [`F1Square/`](F1Square/) | The **genuine-proof layer** — real Lean 4 theorems (no Mathlib, no `sorry`): the function-field Hodge mechanism (`Mechanism`, `Template`), the characteristic-1 base (`CharOne`), exact Bowen–Lanford counts (`CycleCounts`), the mechanism bridge + §2.3 control (`Bridge`), and the crux stated faithfully (`Crux`). |
+| [`scripts/honesty_audit.sh`](scripts/honesty_audit.sh) | The mechanized-honesty gate (run in CI): `#print axioms` over every proof-layer theorem must show only `{propext, Classical.choice, Quot.sound}` — no `sorry`, no `native_decide`, no stray axioms. |
 | [`docs/f1_square_intersection_theory.md`](docs/f1_square_intersection_theory.md) | Precise specification of the target object (§1), the candidate-construction gap table (§2), the named obstructions (§3), and the T1–T5 verification ladder (§4). |
 | [`docs/missing_object_over_Q.md`](docs/missing_object_over_Q.md) | The four equivalent solution routes and the `λₙ` / Hodge-index convergence map. |
 | [`docs/characteristic_1_constructions.md`](docs/characteristic_1_constructions.md) | The verified characteristic-1 / tropical stack (R1–R16) that supplies the 1-dimensional arithmetic-site curve. |
@@ -38,8 +40,12 @@ convention of the upstream UOR-Foundation library:
   theorem, cited).
 - `universallyValid := none` ⇒ **not** asserted proven in this encoding (open or conditional).
 
-The open crux — the Hodge index theorem for the square, which is RH — is encoded with `none`, never
-`some true`. No field anywhere asserts an unproven claim as true. Results that *are* established
+The open crux — the Hodge index theorem for the square, which is RH — is encoded with `none` because
+it is open. The mechanized audit ([`scripts/honesty_audit.sh`](scripts/honesty_audit.sh)) makes this
+honesty a **verifier, not a prohibition**: it forbids `sorry` / `native_decide` / stray axioms in the
+proof layer, not a genuine proof. No field asserts an unproven claim as true; if the crux is ever
+genuinely (axiom-clean, faithfully) proved, its status becomes `some true` because that is then the
+truth. Results that *are* established
 (the intersection-pairing template, the ample class on the template, the parallel-pencil structure)
 carry their genuine status; the crux does not.
 

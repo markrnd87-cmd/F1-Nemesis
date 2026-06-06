@@ -22,3 +22,9 @@ jobs:
         uses: leanprover/lean-action@v1
         with:
           build-args: "F1Square"
+
+      # Mechanized-honesty gate: the genuine-proof layer must be axiom-clean —
+      # no `sorry` (sorryAx), no `native_decide` (Lean.ofReduceBool), no stray axioms.
+      # `#print axioms` is authoritative; see scripts/honesty_audit.sh.
+      - name: Mechanized-honesty audit
+        run: bash scripts/honesty_audit.sh

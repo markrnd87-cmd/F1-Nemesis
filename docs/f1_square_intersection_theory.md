@@ -179,6 +179,28 @@ sharpen *where* the program stands.
   with the scrutiny history warrants, and to demand independent verification of the
   negative-definiteness specifically — that is the step where prior programs broke.
 
+**2026-06-06 — citation verification (independent full-text check).** A pass over the references
+above confirms every paper is real, with these corrections and one substantive finding:
+- **Authors/details:** *Zeta zeros and prolate wave operators* is Connes–Consani–**Moscovici** (the
+  third author was omitted); arXiv 2310.15367 is *Hodge theory for tropical **fans***, a **2023**
+  preprint (not "2025"); arXiv 1905.07085 is **Pietromonaco** (an MSc thesis), not "Bryan et al.";
+  arXiv 1703.10521 is **Sagnier** (a CC-*type* site), not Connes–Consani; the Riemann–Roch titles
+  carry the bar, `Spec ℤ̄` (the Arakelov compactification).
+- **The Feb-2026 Jacobian paper proves moduli, NOT positivity.** *On the Jacobian of `Spec ℤ̄`*
+  (arXiv 2602.15941, 17 Feb 2026, preprint) is verified real and builds the arithmetic
+  Picard/Jacobian monoid encoding infinite genus (divisors over supernatural numbers `∏ p^{aₚ}`,
+  `aₚ ∈ ℕ∪{∞}`). But its full text contains **zero** occurrences of "Hodge" / "Weil positivity" /
+  "positivity" and it does not claim RH: it advances the **curve-level** (1-dimensional) geometry
+  one rung; it is **not** the Hodge-index/positivity step. Reading it as progress *on the crux*
+  would overstate it.
+- **The deferred Hermitian-Jacobi computation (critical path to T5) has NOT appeared** as of this
+  date. The only later Connes–Consani–Moscovici paper, *Zeta Spectral Triples* (arXiv 2511.22755,
+  Nov 2025), uses a different mechanism (Euler-product rank-one perturbations + a Carathéodory–Fejér/
+  Toeplitz self-adjointness result) and is **explicitly a conditional strategy** ("a rigorous proof
+  of this convergence would establish the Riemann Hypothesis"), with only **numerical**
+  spectrum-to-zeros agreement. So items (A)/(B) below stand unchanged: no 𝔽₁/arithmetic-site
+  unconditional result about the zeros, and no construction of the 2-dimensional square, in 2024–2026.
+
 **Net effect on this scaffold.** The recent work confirms the architecture and advances the *adjacent*
 pillars (the infinite-genus Jacobian for `H¹`/T4; archimedean+semilocal Weil positivity on the crux; the
 proven tropical signature template for the R13 lift), while leaving the **two open items unchanged**: the
@@ -193,8 +215,9 @@ open status.
 
 - **A consistent, sourced intersection form for a product of curves (the template for T3).** For an
   elliptic curve product `E × E`, the Néron–Severi group is `NS(E × E) = ⟨E₁, E₂, E₃ := Δ − E₁ − E₂⟩ ≅ ℤ³`
-  with the intersection form `E₁·E₂ = 1`, `E₁² = E₂² = 0`, `E₃² = −2`, `E₁·E₃ = E₂·E₃ = 0` (e.g. Bryan et
-  al., enumerative geometry of the banana manifold, arXiv 1905.07085). [CLASSICAL.] This is the *correct*
+  with the intersection form `E₁·E₂ = 1`, `E₁² = E₂² = 0`, `E₃² = −2`, `E₁·E₃ = E₂·E₃ = 0` (the `NS(E×E)` lattice is standard, surveyed
+  e.g. in Pietromonaco, arXiv 1905.07085 — an MSc thesis on the banana manifold, *not* "Bryan et
+  al."; the underlying DT computation is Bryan, arXiv 1902.08695). [CLASSICAL.] This is the *correct*
   reference pairing — its signature is `(1, 2)` (verified by direct eigenvalue computation, and the core
   `{E₁, E₂, E₃}` block reproduces it exactly), genuine Hodge index. Extending by graph-of-multiplication
   classes `Γ_m` (derived via Lefschetz `Γ_m·Δ = 1 − tr + deg` and adjunction `Γ_m² = 0` for `g = 1`, *not*
@@ -206,8 +229,9 @@ open status.
 - **External confirmation that the square is genuinely unbuilt and under active construction.** The
   precise object this scaffold targets — the tensor product `F ⊗_𝔹 F` of the arithmetic-site tropical
   curve with itself over the Boolean semiring `𝔹` — is, in the Connes–Consani lineage, explicitly an
-  open construction: a researcher (arXiv 1703.10521, *An arithmetic site of Connes–Consani type for
-  imaginary quadratic fields*) defines `F ⊗_𝔹 F` abstractly and reports "currently trying to find a
+  open construction: a researcher (Sagnier, arXiv 1703.10521, *An arithmetic site of Connes–Consani
+  type for imaginary quadratic fields with class number 1* — a CC-*type* site, not a Connes–Consani
+  paper) defines `F ⊗_𝔹 F` abstractly and reports "currently trying to find a
   concrete description" of it, noting the concrete description of `ℤ ⊗_𝔹 ℤ` already has applications.
   [CLASSICAL/in-progress.] *Bearing:* this confirms §1.1/§2's "open" status precisely and externally —
   the 2-dimensional square has no concrete intersection-theoretic description yet, by someone working on

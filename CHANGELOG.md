@@ -4,6 +4,41 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), starting at `v0.0.1`.
 
+## [0.1.0] - 2026-06-06
+
+### Added — the genuine-proof layer (real Lean 4 theorems, no Mathlib, no `sorry`)
+- `F1Square/Mechanism.lean` — the function-field Hodge mechanism as the square-root-free integer
+  Hasse condition (`hodgeType_iff : hodgeType q a ↔ a² ≤ 4q`) with the §9.1 flip cases at
+  `q = 4, 9, 25`; tropical intersection-positivity `mult = mu·mv·|det| ≥ 0` and tropical Bézout (R13).
+- `F1Square/Template.lean` — the product-of-curves intersection template (§2.2): pairing symmetry,
+  the sourced numbers `E₁·E₂ = 1`, `E₃² = −2`, the ample class `H² = 2 > 0`, and genuine
+  negative-definiteness on the primitive complement `H^⊥` (`diag(−2,−2)`, nondegenerate) — the §1.4
+  Hodge-type `(1,2)` decomposition.
+- `F1Square/CharOne.lean` — the characteristic-1 (max-plus) base: idempotency (R1), the semiring
+  laws, and the reversal theorem (R12: cycle weight/length invariant under reversal).
+- `F1Square/CycleCounts.lean` — the Bowen–Lanford trace identity (R6) `N_m = tr(Bᵐ)` for the example
+  graph, `N₁…N₈ = 0,2,6,2,10,14,14,34`, kernel-checked by `decide` on exact integer `Bᵐ`.
+- `F1Square/Bridge.lean` — the mechanism bridge (Hodge type ⟹ spectral bound) and the §2.3 control
+  mechanized (a rank-1 cos/sin Gram is PSD for ANY spectrum, so its positivity is vacuous w.r.t. RH).
+- `F1Square/Crux.lean` — the crux stated faithfully: `HodgeIndex` proved for the Template
+  (`template_hodgeIndex`); `CruxFor 𝕊` left OPEN (not forbidden) for the unconstructed square.
+- `scripts/honesty_audit.sh` + `scripts/audit_axioms.lean` — the mechanized-honesty gate:
+  `#print axioms` over every proof-layer theorem must show only `{propext, Classical.choice,
+  Quot.sound}` — no `sorry` (sorryAx), no `native_decide` (ofReduceBool), no stray axioms. Wired into CI.
+- `F1Square.lean` now imports the proof layer and carries an elaboration-checked `example` tying the
+  manifest's established status fields to the genuine theorems; the crux field stays `none`.
+
+### Changed
+- `docs/f1_square_intersection_theory.md` §2 — citation corrections from an independent full-text
+  verification (2026-06-06): Pietromonaco (not "Bryan et al.") for 1905.07085; Sagnier (not
+  Connes–Consani) for 1703.10521; Moscovici added to the prolate paper; 2310.15367 is a 2023
+  "tropical fans" preprint; the Feb-2026 *Jacobian of `Spec ℤ̄`* (2602.15941) proves moduli, **not**
+  positivity; the deferred Hermitian-Jacobi computation (critical path to T5) has not appeared.
+
+### Note
+- The Riemann Hypothesis remains **open**. The crux (the Hodge index theorem for the 𝔽₁ square) is
+  proved nowhere; the honesty audit is a *verifier*, not a prohibition.
+
 ## [0.0.1] - 2026-06-06
 
 Initial research base for the 𝔽₁-square / Riemann Hypothesis program.
@@ -35,4 +70,5 @@ Initial research base for the 𝔽₁-square / Riemann Hypothesis program.
   solution: the formalization compiles and states the construction problem precisely; it
   does not assert the crux.
 
+[0.1.0]: https://github.com/afflom/F1/releases/tag/v0.1.0
 [0.0.1]: https://github.com/afflom/F1/releases/tag/v0.0.1
