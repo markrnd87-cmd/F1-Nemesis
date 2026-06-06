@@ -380,6 +380,15 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.expTerm_abs_le_M
 #print axioms Analysis.expSum_abs_diff_le_M
 #print axioms Analysis.expSum_trunc_bound
+#print axioms Analysis.qpow_abs_le
+#print axioms Analysis.qpow_diff_bound
+#print axioms Analysis.expTerm_diff_bound
+#print axioms Analysis.LipS_den_pos
+#print axioms Analysis.expSum_Lip_le
+#print axioms Analysis.Pbound_closed
+#print axioms Analysis.expSumM_le_U
+#print axioms Analysis.LipS_shift
+#print axioms Analysis.LipS_le_U
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one

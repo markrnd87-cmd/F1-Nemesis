@@ -196,10 +196,6 @@ theorem Rinv_perterm {x : Real} {k : Nat} (hk : Qlt (Qbound k) (x.seq k)) (m : N
   exact Rinv_reindex_core ((Rdelta x k).den : Int) ((Rdelta x k).num) ((RinvR x k m : Int) + 1)
     ((m : Int) + 1) hdn (Int.ofNat_nonneg _) (by omega) hr
 
-/-- Right distributivity of ℚ multiplication over addition (value-level). -/
-theorem Qmul_add_right (a b c : Q) : Qeq (mul (add a b) c) (add (mul a c) (mul b c)) := by
-  simp only [Qeq, mul, add]; push_cast; ring_uor
-
 /-- `|a − b| = |b − a|` (the absolute value of a difference is symmetric). -/
 theorem Qabs_Qsub_swap (a b : Q) : Qabs (Qsub a b) = Qabs (Qsub b a) := by
   unfold Qabs

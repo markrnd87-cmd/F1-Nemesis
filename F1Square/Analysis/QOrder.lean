@@ -113,6 +113,10 @@ theorem Qmul_congr {a b c d : Q} (hac : Qeq a c) (hbd : Qeq b d) : Qeq (mul a b)
     _ = (c.num * (a.den : Int)) * (d.num * (b.den : Int)) := h
     _ = (c.num * d.num) * ((a.den : Int) * (b.den : Int)) := by ring_uor
 
+/-- Right distributivity of ℚ multiplication over addition (value-level): `(a+b)·c ≈ a·c + b·c`. -/
+theorem Qmul_add_right (a b c : Q) : Qeq (mul (add a b) c) (add (mul a c) (mul b c)) := by
+  simp only [Qeq, mul, add]; push_cast; ring_uor
+
 /-- `|·|` respects ℚ value-equality. -/
 theorem Qabs_Qeq {a b : Q} (h : Qeq a b) : Qeq (Qabs a) (Qabs b) := by
   unfold Qeq Qabs at *

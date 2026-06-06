@@ -194,4 +194,179 @@ theorem expSum_trunc_bound {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q
   Qle_trans (Qsub_den_pos (expSumM_den_pos M b) (expSumM_den_pos M a))
     (expSum_abs_diff_le_M hqd hq hab) (expM_diff_bound M ha2 hab)
 
+-- ===========================================================================
+-- Lipschitz: the per-power difference bound `|qⁱ − q'ⁱ| ≤ (i·Mⁱ⁻¹)·|q−q'|`.
+-- ===========================================================================
+
+/-- `|qⁱ| ≤ Mⁱ` when `|q| ≤ M` (the power's absolute value is dominated). -/
+theorem qpow_abs_le {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨(M : Int), 1⟩) (i : Nat) :
+    Qle (Qabs (qpow q i)) ⟨(npow M i : Int), 1⟩ := by
+  have h1 : Qle (Qabs (qpow q i)) (qpow (Qabs q) i) := Qeq_le (qpow_abs q i)
+  have h2 : Qle (qpow (Qabs q) i) (qpow (⟨(M : Int), 1⟩ : Q) i) :=
+    qpow_base_mono (Qabs_den_pos hqd) Nat.one_pos (Qabs_num_nonneg q) hq i
+  rw [qpow_nat_base M i] at h2
+  exact Qle_trans (qpow_den_pos (Qabs_den_pos hqd) i) h1 h2
+
+/-- The Lipschitz coefficient `i·Mⁱ⁻¹` for `qⁱ`, recursively (avoiding `i−1`):
+    `P(0)=0`, `P(i+1)=M·P(i) + Mⁱ`. -/
+def Pbound (M : Nat) : Nat → Nat
+  | 0 => 0
+  | (i + 1) => M * Pbound M i + npow M i
+
+/-- **Per-power Lipschitz bound**: `|qⁱ − q'ⁱ| ≤ (i·Mⁱ⁻¹)·|q − q'|` when `|q|,|q'| ≤ M`. -/
+theorem qpow_diff_bound {q q' : Q} {M : Nat} (hqd : 0 < q.den) (hq'd : 0 < q'.den)
+    (hq : Qle (Qabs q) ⟨(M : Int), 1⟩) (hq' : Qle (Qabs q') ⟨(M : Int), 1⟩) :
+    ∀ i, Qle (Qabs (Qsub (qpow q i) (qpow q' i)))
+      (mul ⟨(Pbound M i : Int), 1⟩ (Qabs (Qsub q q')))
+  | 0 => by
+      show Qle (Qabs (Qsub (qpow q 0) (qpow q' 0))) (mul ⟨(0 : Int), 1⟩ (Qabs (Qsub q q')))
+      have h0 : (Qsub (qpow q 0) (qpow q' 0)).num = 0 := rfl
+      unfold Qle Qabs mul
+      rw [h0]; simp
+  | (i + 1) => by
+      have ihh := qpow_diff_bound hqd hq'd hq hq' i
+      have hqpid : 0 < (qpow q i).den := qpow_den_pos hqd i
+      have hqp'id : 0 < (qpow q' i).den := qpow_den_pos hq'd i
+      -- identity: q^{i+1} − q'^{i+1} = q·(qⁱ − q'ⁱ) + (q − q')·q'ⁱ
+      have hid : Qeq (Qsub (qpow q (i + 1)) (qpow q' (i + 1)))
+          (add (mul q (Qsub (qpow q i) (qpow q' i))) (mul (Qsub q q') (qpow q' i))) := by
+        show Qeq (Qsub (mul q (qpow q i)) (mul q' (qpow q' i)))
+          (add (mul q (Qsub (qpow q i) (qpow q' i))) (mul (Qsub q q') (qpow q' i)))
+        simp only [Qeq, Qsub, mul, add, neg]; push_cast; ring_uor
+      -- triangle
+      have htri : Qle (Qabs (Qsub (qpow q (i + 1)) (qpow q' (i + 1))))
+          (add (Qabs (mul q (Qsub (qpow q i) (qpow q' i))))
+            (Qabs (mul (Qsub q q') (qpow q' i)))) :=
+        Qle_congr_left
+          (Qabs_den_pos (add_den_pos (Qmul_den_pos hqd (Qsub_den_pos hqpid hqp'id))
+            (Qmul_den_pos (Qsub_den_pos hqd hq'd) hqp'id)))
+          (Qeq_symm (Qabs_Qeq hid)) (Qabs_add_le _ _)
+      -- bound each summand
+      have hP1 : Qle (Qabs (mul q (Qsub (qpow q i) (qpow q' i))))
+          (mul ⟨(M : Int), 1⟩ (mul ⟨(Pbound M i : Int), 1⟩ (Qabs (Qsub q q')))) := by
+        rw [Qabs_mul]
+        exact Qmul_le_mul (Qabs_den_pos hqd) Nat.one_pos
+          (Qabs_den_pos (Qsub_den_pos hqpid hqp'id)) (Qabs_num_nonneg q) (Qabs_num_nonneg _) hq ihh
+      have hP2 : Qle (Qabs (mul (Qsub q q') (qpow q' i)))
+          (mul (Qabs (Qsub q q')) ⟨(npow M i : Int), 1⟩) := by
+        rw [Qabs_mul]
+        exact Qmul_le_mul_left (Qabs_num_nonneg _) (qpow_abs_le hq'd hq' i)
+      have hsum := Qadd_le_add hP1 hP2
+      -- regroup to Pbound M (i+1) · |q − q'|
+      have hfactor : Qeq
+          (add (mul ⟨(M : Int), 1⟩ (mul ⟨(Pbound M i : Int), 1⟩ (Qabs (Qsub q q'))))
+            (mul (Qabs (Qsub q q')) ⟨(npow M i : Int), 1⟩))
+          (mul ⟨(Pbound M (i + 1) : Int), 1⟩ (Qabs (Qsub q q'))) := by
+        simp only [Pbound, Qeq, mul, add]; push_cast; ring_uor
+      refine Qle_trans ?_ htri (Qle_trans ?_ hsum (Qeq_le hfactor))
+      · exact add_den_pos (Qabs_den_pos (Qmul_den_pos hqd (Qsub_den_pos hqpid hqp'id)))
+          (Qabs_den_pos (Qmul_den_pos (Qsub_den_pos hqd hq'd) hqp'id))
+      · exact add_den_pos (Qmul_den_pos Nat.one_pos (Qmul_den_pos Nat.one_pos
+          (Qabs_den_pos (Qsub_den_pos hqd hq'd))))
+          (Qmul_den_pos (Qabs_den_pos (Qsub_den_pos hqd hq'd)) Nat.one_pos)
+
+/-- **Per-term Lipschitz bound**: `|qⁱ/i! − q'ⁱ/i!| ≤ (Pbound M i / i!)·|q − q'|`. -/
+theorem expTerm_diff_bound {q q' : Q} {M : Nat} (hqd : 0 < q.den) (hq'd : 0 < q'.den)
+    (hq : Qle (Qabs q) ⟨(M : Int), 1⟩) (hq' : Qle (Qabs q') ⟨(M : Int), 1⟩) (i : Nat) :
+    Qle (Qabs (Qsub (expTerm q i) (expTerm q' i)))
+      (mul ⟨(Pbound M i : Int), fct i⟩ (Qabs (Qsub q q'))) := by
+  have hfac : Qeq (Qsub (expTerm q i) (expTerm q' i))
+      (mul (Qsub (qpow q i) (qpow q' i)) ⟨1, fct i⟩) := by
+    show Qeq (Qsub (mul (qpow q i) ⟨1, fct i⟩) (mul (qpow q' i) ⟨1, fct i⟩))
+      (mul (Qsub (qpow q i) (qpow q' i)) ⟨1, fct i⟩)
+    simp only [Qeq, Qsub, mul, add, neg]; push_cast; ring_uor
+  have heq1 : Qeq (Qabs (Qsub (expTerm q i) (expTerm q' i)))
+      (mul (Qabs (Qsub (qpow q i) (qpow q' i))) ⟨1, fct i⟩) := by
+    have h := Qabs_Qeq hfac
+    rw [Qabs_mul, show Qabs (⟨1, fct i⟩ : Q) = ⟨1, fct i⟩ from rfl] at h
+    exact h
+  have hb1 : Qle (mul (Qabs (Qsub (qpow q i) (qpow q' i))) ⟨1, fct i⟩)
+      (mul (mul ⟨(Pbound M i : Int), 1⟩ (Qabs (Qsub q q'))) ⟨1, fct i⟩) :=
+    Qmul_le_mul_right (by show (0 : Int) ≤ 1; decide) (qpow_diff_bound hqd hq'd hq hq' i)
+  have heq2 : Qeq (mul (mul ⟨(Pbound M i : Int), 1⟩ (Qabs (Qsub q q'))) ⟨1, fct i⟩)
+      (mul ⟨(Pbound M i : Int), fct i⟩ (Qabs (Qsub q q'))) := by
+    simp only [Qeq, mul]; push_cast; ring_uor
+  exact Qle_trans
+    (Qmul_den_pos (Qabs_den_pos (Qsub_den_pos (qpow_den_pos hqd i) (qpow_den_pos hq'd i))) (fct_pos i))
+    (Qeq_le heq1)
+    (Qle_trans (Qmul_den_pos (Qmul_den_pos Nat.one_pos (Qabs_den_pos (Qsub_den_pos hqd hq'd)))
+      (fct_pos i)) hb1 (Qeq_le heq2))
+
+/-- The Lipschitz partial sum `Σ_{i=0}^N Pbound M i / i!`. -/
+def LipS (M : Nat) : Nat → Q
+  | 0 => ⟨(Pbound M 0 : Int), fct 0⟩
+  | (n + 1) => add (LipS M n) ⟨(Pbound M (n + 1) : Int), fct (n + 1)⟩
+
+theorem LipS_den_pos (M : Nat) : ∀ N, 0 < (LipS M N).den
+  | 0 => fct_pos 0
+  | (n + 1) => add_den_pos (LipS_den_pos M n) (fct_pos (n + 1))
+
+/-- **The Lipschitz sum bound**: `|S_q(N) − S_{q'}(N)| ≤ (LipS M N)·|q − q'|`. -/
+theorem expSum_Lip_le {q q' : Q} {M : Nat} (hqd : 0 < q.den) (hq'd : 0 < q'.den)
+    (hq : Qle (Qabs q) ⟨(M : Int), 1⟩) (hq' : Qle (Qabs q') ⟨(M : Int), 1⟩) :
+    ∀ N, Qle (Qabs (Qsub (expSum q N) (expSum q' N))) (mul (LipS M N) (Qabs (Qsub q q')))
+  | 0 => by
+      have h0 : (Qsub (expSum q 0) (expSum q' 0)).num = 0 := rfl
+      unfold Qle Qabs
+      rw [h0]; simp [LipS, Pbound, mul]
+  | (N + 1) => by
+      have ih := expSum_Lip_le hqd hq'd hq hq' N
+      have hAd : 0 < (expSum q N).den := expSum_den_pos hqd N
+      have hCd : 0 < (expSum q' N).den := expSum_den_pos hq'd N
+      have hBd : 0 < (expTerm q (N + 1)).den := expTerm_den_pos hqd (N + 1)
+      have hDd : 0 < (expTerm q' (N + 1)).den := expTerm_den_pos hq'd (N + 1)
+      refine Qle_trans
+        (add_den_pos (Qabs_den_pos (Qsub_den_pos hAd hCd)) (Qabs_den_pos (Qsub_den_pos hBd hDd)))
+        (Qabs_sub_add4 hAd hBd hCd hDd)
+        (Qle_trans
+          (add_den_pos (Qmul_den_pos (LipS_den_pos M N) (Qabs_den_pos (Qsub_den_pos hqd hq'd)))
+            (Qmul_den_pos (fct_pos (N + 1)) (Qabs_den_pos (Qsub_den_pos hqd hq'd))))
+          (Qadd_le_add ih (expTerm_diff_bound hqd hq'd hq hq' (N + 1)))
+          (Qeq_le (Qeq_symm (Qmul_add_right (LipS M N)
+            ⟨(Pbound M (N + 1) : Int), fct (N + 1)⟩ (Qabs (Qsub q q'))))))
+
+/-- Closed form of the Lipschitz coefficient: `Pbound M (i+1) = (i+1)·Mⁱ`. -/
+theorem Pbound_closed (M : Nat) : ∀ i, Pbound M (i + 1) = (i + 1) * npow M i
+  | 0 => by simp [Pbound, npow]
+  | (i + 1) => by
+      show M * Pbound M (i + 1) + npow M (i + 1) = (i + 1 + 1) * npow M (i + 1)
+      rw [Pbound_closed M i]
+      have hgoal : (M : Int) * (((i : Int) + 1) * (npow M i : Int)) + (npow M (i + 1) : Int)
+          = ((i : Int) + 1 + 1) * (npow M (i + 1) : Int) := by
+        rw [npow_succ]; push_cast; ring_uor
+      exact_mod_cast hgoal
+
+/-- The `M`-series partial sum is bounded by its tail-`U` value at `2M`, for every `N`. -/
+theorem expSumM_le_U (M N : Nat) : Qle (expSumM M N) (expM_U M (2 * M)) := by
+  rcases Nat.le_total N (2 * M) with h | h
+  · exact Qle_trans (expSumM_den_pos M (2 * M)) (expSumM_le M h)
+      (Qle_self_add (Int.ofNat_nonneg _))
+  · exact Qle_trans (expM_U_den_pos M N) (Qle_self_add (Int.ofNat_nonneg _))
+      (expM_U_le M (by omega) h)
+
+/-- The Lipschitz partial sum shifts to the `M`-series: `LipS M (N+1) ≈ S_M(N)`. -/
+theorem LipS_shift (M : Nat) : ∀ N, Qeq (LipS M (N + 1)) (expSumM M N)
+  | 0 => rfl
+  | (N + 1) => by
+      have hterm : Qeq (⟨(Pbound M (N + 2) : Int), fct (N + 2)⟩ : Q)
+          ⟨(npow M (N + 1) : Int), fct (N + 1)⟩ := by
+        show (Pbound M (N + 2) : Int) * (fct (N + 1) : Int)
+            = (npow M (N + 1) : Int) * (fct (N + 2) : Int)
+        rw [Pbound_closed M (N + 1), fct_succ (N + 1)]
+        push_cast; ring_uor
+      show Qeq (add (LipS M (N + 1)) ⟨(Pbound M (N + 2) : Int), fct (N + 2)⟩)
+        (add (expSumM M N) ⟨(npow M (N + 1) : Int), fct (N + 1)⟩)
+      exact Qadd_congr (LipS_shift M N) hterm
+
+/-- **The Lipschitz coefficient is uniformly bounded**: `LipS M N ≤ U_M(2M)` for every `N`. -/
+theorem LipS_le_U (M : Nat) : ∀ N, Qle (LipS M N) (expM_U M (2 * M))
+  | 0 => by
+      have h : Qle (LipS M 0) (expSumM M 0) := by
+        show Qle (⟨(0 : Int), fct 0⟩ : Q) ⟨1, 1⟩
+        show (0 : Int) * 1 ≤ 1 * ((fct 0 : Nat) : Int)
+        rw [Int.zero_mul, Int.one_mul]; exact Int.ofNat_nonneg _
+      exact Qle_trans (expSumM_den_pos M 0) h (expSumM_le_U M 0)
+  | (N + 1) =>
+      Qle_trans (expSumM_den_pos M N) (Qeq_le (LipS_shift M N)) (expSumM_le_U M N)
+
 end UOR.Bridge.F1Square.Analysis
