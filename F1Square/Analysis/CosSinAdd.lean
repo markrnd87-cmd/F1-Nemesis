@@ -709,6 +709,17 @@ theorem altErr_abs_le {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨
 -- The real lift: `cos² + sin² = 1` as constructive reals (begins here).
 -- ===========================================================================
 
+/-- **Squaring difference**: `|a² − b²| ≤ |a − b|·(|a| + |b|)` over `Q` (since `a²−b² = (a−b)(a+b)`).
+    The vehicle for reconciling `(altSum R)²` to `(altSum R')²` once the partial sums are close. -/
+theorem Qsq_diff_le (a b : Q) (had : 0 < a.den) (hbd : 0 < b.den) :
+    Qle (Qabs (Qsub (mul a a) (mul b b))) (mul (Qabs (Qsub a b)) (add (Qabs a) (Qabs b))) := by
+  have hring : Qeq (Qsub (mul a a) (mul b b)) (mul (Qsub a b) (add a b)) := by
+    simp only [Qeq, Qsub, mul, add, neg]; push_cast; ring_uor
+  refine Qle_congr_left (Qabs_den_pos (Qmul_den_pos (Qsub_den_pos had hbd) (add_den_pos had hbd)))
+    (Qeq_symm (Qabs_Qeq hring)) ?_
+  rw [Qabs_mul]
+  exact Qmul_le_mul_left (Qabs_num_nonneg _) (Qabs_add_le a b)
+
 /-- Four-factor real rearrangement `(a·b)·(c·d) ≈ (a·c)·(b·d)` (via `Rmul` associativity/commutativity). -/
 theorem Rmul4_rearrange (a b c d : Real) :
     Req (Rmul (Rmul a b) (Rmul c d)) (Rmul (Rmul a c) (Rmul b d)) :=
