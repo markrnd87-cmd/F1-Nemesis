@@ -698,6 +698,8 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rmul4_rearrange
 #print axioms Analysis.Rsin_sq_eq
 #print axioms Analysis.altSum_reconcile
+#print axioms Analysis.RaltReal_trunc_decay
+#print axioms Analysis.RaltReal_trunc_le
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one

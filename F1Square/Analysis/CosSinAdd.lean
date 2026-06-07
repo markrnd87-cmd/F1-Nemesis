@@ -709,6 +709,35 @@ theorem altErr_abs_le {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨
 -- The real lift: `cos² + sin² = 1` as constructive reals (begins here).
 -- ===========================================================================
 
+/-- **Factorial decay at the diagonal depth** (extracted from `RaltReal_diag_le`): with `M = xBound x`,
+    the truncation term at depth `R = RaltReal_R x j` satisfies `2(M²)^{R+1}·2(j+1) ≤ (R+1)!`. -/
+theorem RaltReal_trunc_decay (x : Real) (j : Nat) :
+    2 * npow (xBound x * xBound x) (RaltReal_R x j + 1) * (2 * (j + 1))
+      ≤ fct (RaltReal_R x j + 1) := by
+  have hM : 0 < xBound x := xBound_pos x
+  have hB : 0 < xBound x * xBound x := Nat.mul_pos hM hM
+  have hK : npow (xBound x * xBound x) (2 * (xBound x * xBound x) + 1) ≤ RaltReal_K x := by
+    unfold RaltReal_K; omega
+  have htr := trunc_reindex (xBound x * xBound x) (2 * (j + 1)) (4 * (j + 1) * RaltReal_K x) hB (by
+    have h4 : 4 * (j + 1) * npow (xBound x * xBound x) (2 * (xBound x * xBound x) + 1)
+        ≤ 4 * (j + 1) * RaltReal_K x := Nat.mul_le_mul (Nat.le_refl _) hK
+    rw [show 2 * (2 * (j + 1)) = 4 * (j + 1) from by omega]
+    omega)
+  have hd : 2 * (xBound x * xBound x) + 1 + 4 * (j + 1) * RaltReal_K x = RaltReal_R x j + 1 := by
+    unfold RaltReal_R; omega
+  rw [hd] at htr; exact htr
+
+/-- The diagonal truncation term as a rational bound: `2(M²)^{R+1}/(R+1)! ≤ 1/(2(j+1))` at `R = RaltReal_R x j`. -/
+theorem RaltReal_trunc_le (x : Real) (j : Nat) :
+    Qle (⟨(2 * npow (xBound x * xBound x) (RaltReal_R x j + 1) : Int), fct (RaltReal_R x j + 1)⟩ : Q)
+      ⟨1, 2 * (j + 1)⟩ := by
+  show (2 * npow (xBound x * xBound x) (RaltReal_R x j + 1) : Int) * ((2 * (j + 1) : Nat) : Int)
+      ≤ (1 : Int) * ((fct (RaltReal_R x j + 1) : Nat) : Int)
+  have h := RaltReal_trunc_decay x j
+  have hI : ((2 * npow (xBound x * xBound x) (RaltReal_R x j + 1) * (2 * (j + 1)) : Nat) : Int)
+      ≤ ((fct (RaltReal_R x j + 1) : Nat) : Int) := by exact_mod_cast h
+  push_cast at hI ⊢; omega
+
 /-- **Squaring difference**: `|a² − b²| ≤ |a − b|·(|a| + |b|)` over `Q` (since `a²−b² = (a−b)(a+b)`).
     The vehicle for reconciling `(altSum R)²` to `(altSum R')²` once the partial sums are close. -/
 theorem Qsq_diff_le (a b : Q) (had : 0 < a.den) (hbd : 0 < b.den) :
