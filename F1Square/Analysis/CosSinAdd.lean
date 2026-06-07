@@ -925,6 +925,33 @@ theorem Qsq_diff_le (a b : Q) (had : 0 < a.den) (hbd : 0 < b.den) :
   rw [Qabs_mul]
   exact Qmul_le_mul_left (Qabs_num_nonneg _) (Qabs_add_le a b)
 
+/-- The alternating partial sum is bounded by the constant `U = expM_U M² (2M²)` (uniformly in depth). -/
+theorem altSum_abs_le_U {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨(M : Int), 1⟩)
+    (off N : Nat) : Qle (Qabs (altSum q off N)) (expM_U (M * M) (2 * (M * M))) := by
+  rw [altSum_eq_Fsum]
+  exact Qle_trans (Fsum_den_pos (fun i => Qabs_den_pos (altTerm_den_pos hqd off i)) N)
+    (Fsum_abs_le (fun i => altTerm_den_pos hqd off i) N) (altAbsSum_le_U hqd hq off N)
+
+/-- **Squared depth reconciliation**: `|(altSum R)² − (altSum N)²| ≤ (2(M²)^{R+1}/(R+1)!)·(U+U)` for
+    `R ≤ N` — the squaring bound `Qsq_diff_le` fed by the depth tail `altSum_trunc_bound` and the
+    uniform bound `altSum_abs_le_U`. -/
+theorem altSq_reconcile {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨(M : Int), 1⟩)
+    (off R N : Nat) (hR2 : 2 * (M * M) ≤ R + 2) (hRN : R ≤ N) :
+    Qle (Qabs (Qsub (mul (altSum q off R) (altSum q off R)) (mul (altSum q off N) (altSum q off N))))
+      (mul ⟨(2 * npow (M * M) (R + 1) : Int), fct (R + 1)⟩
+        (add (expM_U (M * M) (2 * (M * M))) (expM_U (M * M) (2 * (M * M))))) := by
+  have hRd := altSum_den_pos hqd off R
+  have hNd := altSum_den_pos hqd off N
+  refine Qle_trans (Qmul_den_pos (Qabs_den_pos (Qsub_den_pos hRd hNd))
+      (add_den_pos (Qabs_den_pos hRd) (Qabs_den_pos hNd)))
+    (Qsq_diff_le (altSum q off R) (altSum q off N) hRd hNd) ?_
+  exact Qmul_le_mul (Qabs_den_pos (Qsub_den_pos hRd hNd)) (fct_pos (R + 1))
+    (add_den_pos (Qabs_den_pos hRd) (Qabs_den_pos hNd)) (Qabs_num_nonneg _)
+    (Int.add_nonneg (Int.mul_nonneg (Qabs_num_nonneg _) (Int.ofNat_nonneg _))
+      (Int.mul_nonneg (Qabs_num_nonneg _) (Int.ofNat_nonneg _)))
+    (by rw [Qabs_Qsub_comm]; exact altSum_trunc_bound hqd hq off hR2 hRN)
+    (Qadd_le_add (altSum_abs_le_U hqd hq off R) (altSum_abs_le_U hqd hq off N))
+
 /-- **cos² diagonal de-reindex**: the `Rmul` diagonal of `cos²` at `n` is within `2·xBound/(n+1)` of the
     natural-diagonal square `(RaltReal_seq x 0 n)²`. (Removes `Rmul`'s `Ridx` reindex via the diagonal
     regularity `RaltReal_diag_le` and the squaring bound `Qsq_diff_le`.) -/
