@@ -320,6 +320,18 @@ theorem alternating_binomial (m : Nat) :
     simp only [Qeq]; rw [hnum]; simp
   exact Qeq_trans (qpow_den_pos (by decide) (m + 1)) (Qeq_symm hb) hz
 
+/-- **Fubini for finite sums**: `Σ_{i≤M} Σ_{j≤N} gᵢⱼ ≈ Σ_{j≤N} Σ_{i≤M} gᵢⱼ`. -/
+theorem Fsum_swap {g : Nat → Nat → Q} (hg : ∀ i j, 0 < (g i j).den) (N : Nat) :
+    ∀ M, Qeq (Fsum (fun i => Fsum (fun j => g i j) N) M)
+      (Fsum (fun j => Fsum (fun i => g i j) M) N)
+  | 0 => Fsum_congr (fun j => Qeq_refl (g 0 j)) N
+  | (M + 1) =>
+      Qeq_trans
+        (add_den_pos (Fsum_den_pos (fun j => Fsum_den_pos (fun i => hg i j) M) N)
+          (Fsum_den_pos (fun j => hg (M + 1) j) N))
+        (Qadd_congr (Fsum_swap hg N M) (Qeq_refl (Fsum (fun j => g (M + 1) j) N)))
+        (Qeq_symm (Fsum_add (fun j => Fsum_den_pos (fun i => hg i j) M) (fun j => hg (M + 1) j) N))
+
 /-- Triangle inequality for finite sums: `|Σ fᵢ| ≤ Σ |fᵢ|`. -/
 theorem Fsum_abs_le {f : Nat → Q} (hf : ∀ i, 0 < (f i).den) :
     ∀ M, Qle (Qabs (Fsum f M)) (Fsum (fun i => Qabs (f i)) M)
