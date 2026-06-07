@@ -438,4 +438,29 @@ theorem Fsum_conv_expSum {x y : Q} (hxd : 0 < x.den) (hyd : 0 < y.den) (M : Nat)
     (Fsum_congr (fun m => expTerm_conv hxd hyd m) M)
     (Qeq_symm (expSum_eq_Fsum (add x y) M))
 
+/-- **The exact finite Cauchy product** `expSum x M · expSum y M ≈ expSum(x+y) M + corner`, where the
+    corner is the high part `Σᵢ Σ_{M−i<j≤M} (xⁱ/i!)(yʲ/j!)`. Assembled from `Fsum_mul_square`,
+    `Fsum_square_decomp`, `Fsum_triangle_reindex`, and `Fsum_conv_expSum`. -/
+theorem expSum_mul_eq {x y : Q} (hxd : 0 < x.den) (hyd : 0 < y.den) (M : Nat) :
+    Qeq (mul (expSum x M) (expSum y M))
+      (add (expSum (add x y) M)
+        (Fsum (fun i => Qsub (Fsum (fun j => mul (expTerm x i) (expTerm y j)) M)
+          (Fsum (fun j => mul (expTerm x i) (expTerm y j)) (M - i))) M)) := by
+  have ha : ∀ i, 0 < (expTerm x i).den := fun i => expTerm_den_pos hxd i
+  have hb : ∀ j, 0 < (expTerm y j).den := fun j => expTerm_den_pos hyd j
+  have hab : ∀ i j, 0 < (mul (expTerm x i) (expTerm y j)).den := fun i j => Qmul_den_pos (ha i) (hb j)
+  have hcorner : 0 < (Fsum (fun i => Qsub (Fsum (fun j => mul (expTerm x i) (expTerm y j)) M)
+      (Fsum (fun j => mul (expTerm x i) (expTerm y j)) (M - i))) M).den :=
+    Fsum_den_pos (fun i => Qsub_den_pos (Fsum_den_pos (fun j => hab i j) M)
+      (Fsum_den_pos (fun j => hab i j) (M - i))) M
+  refine Qeq_trans (Qmul_den_pos (Fsum_den_pos ha M) (Fsum_den_pos hb M))
+    (Qmul_congr (expSum_eq_Fsum x M) (expSum_eq_Fsum y M)) ?_
+  refine Qeq_trans (Fsum_den_pos (fun i => Fsum_den_pos (fun j => hab i j) M) M)
+    (Fsum_mul_square ha hb M) ?_
+  refine Qeq_trans (add_den_pos (Fsum_den_pos (fun i => Fsum_den_pos (fun j => hab i j) (M - i)) M) hcorner)
+    (Fsum_square_decomp hab M) ?_
+  refine Qeq_trans (add_den_pos (Fsum_den_pos (fun m => Fsum_den_pos (fun i => hab i (m - i)) m) M) hcorner)
+    (Qadd_congr (Fsum_triangle_reindex hab M) (Qeq_refl _)) ?_
+  exact Qadd_congr (Fsum_conv_expSum hxd hyd M) (Qeq_refl _)
+
 end UOR.Bridge.F1Square.Analysis
