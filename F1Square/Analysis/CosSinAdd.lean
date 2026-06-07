@@ -925,6 +925,26 @@ theorem Qsq_diff_le (a b : Q) (had : 0 < a.den) (hbd : 0 < b.den) :
   rw [Qabs_mul]
   exact Qmul_le_mul_left (Qabs_num_nonneg _) (Qabs_add_le a b)
 
+/-- **Product-of-squares difference**: `|(p·b)² − q²·d²| ≤ |b²|·|p²−q²| + |q²|·|b²−d²|` (over `Q`), via
+    `(pb)² − q²d² = b²(p²−q²) + q²(b²−d²)` and the triangle/`|·|`-multiplicativity. -/
+theorem Qprodsq_diff_le (p b q d : Q) (hpd : 0 < p.den) (hbd : 0 < b.den) (hqd : 0 < q.den) (hdd : 0 < d.den) :
+    Qle (Qabs (Qsub (mul (mul p b) (mul p b)) (mul (mul q q) (mul d d))))
+      (add (mul (Qabs (mul b b)) (Qabs (Qsub (mul p p) (mul q q))))
+        (mul (Qabs (mul q q)) (Qabs (Qsub (mul b b) (mul d d))))) := by
+  have hid : Qeq (Qsub (mul (mul p b) (mul p b)) (mul (mul q q) (mul d d)))
+      (add (mul (mul b b) (Qsub (mul p p) (mul q q))) (mul (mul q q) (Qsub (mul b b) (mul d d)))) := by
+    simp only [Qeq, Qsub, add, mul, neg]; push_cast; ring_uor
+  refine Qle_congr_left (Qabs_den_pos (add_den_pos (Qmul_den_pos (Qmul_den_pos hbd hbd)
+      (Qsub_den_pos (Qmul_den_pos hpd hpd) (Qmul_den_pos hqd hqd)))
+      (Qmul_den_pos (Qmul_den_pos hqd hqd) (Qsub_den_pos (Qmul_den_pos hbd hbd) (Qmul_den_pos hdd hdd)))))
+    (Qeq_symm (Qabs_Qeq hid)) ?_
+  refine Qle_trans (add_den_pos (Qabs_den_pos (Qmul_den_pos (Qmul_den_pos hbd hbd)
+      (Qsub_den_pos (Qmul_den_pos hpd hpd) (Qmul_den_pos hqd hqd))))
+      (Qabs_den_pos (Qmul_den_pos (Qmul_den_pos hqd hqd) (Qsub_den_pos (Qmul_den_pos hbd hbd) (Qmul_den_pos hdd hdd)))))
+    (Qabs_add_le _ _) ?_
+  rw [Qabs_mul (mul b b) (Qsub (mul p p) (mul q q)), Qabs_mul (mul q q) (Qsub (mul b b) (mul d d))]
+  exact Qle_refl _
+
 /-- The diagonal depth schedule `RaltReal_R x j = 2M² + 4(j+1)·RaltReal_K` is monotone in `j`. -/
 theorem RaltReal_R_mono (x : Real) {j k : Nat} (hjk : j ≤ k) : RaltReal_R x j ≤ RaltReal_R x k := by
   unfold RaltReal_R
