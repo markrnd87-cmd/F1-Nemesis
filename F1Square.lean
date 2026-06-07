@@ -53,6 +53,7 @@ import F1Square.Analysis.Euler
 import F1Square.Analysis.GammaAccel
 import F1Square.Analysis.LambdaOne
 import F1Square.Analysis.Binomial
+import F1Square.Analysis.ExpAdd
 import F1Square.Analysis.ComplexExp
 import F1Square.Li
 

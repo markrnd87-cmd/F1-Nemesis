@@ -642,6 +642,11 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qsub_add_left_cancel
 #print axioms Analysis.expSum_mul_le
 #print axioms Analysis.expSum_corner_le
+-- v0.15.0 — the exponential functional equation on ℝ (the diagonal lift of the Cauchy product).
+#print axioms Analysis.Qsub_add_self_left
+#print axioms Analysis.Qsub_num_nonneg
+#print axioms Analysis.exp_diag_gap
+#print axioms Analysis.Rexp_add
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one
