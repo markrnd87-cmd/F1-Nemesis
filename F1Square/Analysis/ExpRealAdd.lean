@@ -113,4 +113,26 @@ theorem Qprod_diff_le (A A' B B' : Q) (hAd : 0 < A.den) (hA'd : 0 < A'.den) (hBd
   rw [Qabs_mul B (Qsub A A'), Qabs_mul A' (Qsub B B')]
   exact Qle_refl _
 
+/-- **Factorial decay at the exp diagonal depth**: `2·(xBound x)^{R+1}·2(j+1) ≤ (R+1)!` at `R = RexpReal_R x j`. -/
+theorem RexpReal_trunc_decay (x : Real) (j : Nat) :
+    2 * npow (xBound x) (RexpReal_R x j + 1) * (2 * (j + 1)) ≤ fct (RexpReal_R x j + 1) := by
+  have hM : 0 < xBound x := xBound_pos x
+  have hK : npow (xBound x) (2 * xBound x + 1) ≤ RexpReal_K x := by unfold RexpReal_K; omega
+  have htr := trunc_reindex (xBound x) (2 * (j + 1)) (4 * (j + 1) * RexpReal_K x) hM (by
+    have h4 : 4 * (j + 1) * npow (xBound x) (2 * xBound x + 1) ≤ 4 * (j + 1) * RexpReal_K x :=
+      Nat.mul_le_mul (Nat.le_refl _) hK
+    rw [show 2 * (2 * (j + 1)) = 4 * (j + 1) from by omega]; omega)
+  have hd : 2 * xBound x + 1 + 4 * (j + 1) * RexpReal_K x = RexpReal_R x j + 1 := by unfold RexpReal_R; omega
+  rw [hd] at htr; exact htr
+
+/-- The exp diagonal truncation term as a rational bound: `2(xBound x)^{R+1}/(R+1)! ≤ 1/(2(j+1))`. -/
+theorem RexpReal_trunc_le (x : Real) (j : Nat) :
+    Qle (⟨(2 * npow (xBound x) (RexpReal_R x j + 1) : Int), fct (RexpReal_R x j + 1)⟩ : Q) ⟨1, 2 * (j + 1)⟩ := by
+  show (2 * npow (xBound x) (RexpReal_R x j + 1) : Int) * ((2 * (j + 1) : Nat) : Int)
+      ≤ (1 : Int) * ((fct (RexpReal_R x j + 1) : Nat) : Int)
+  have h := RexpReal_trunc_decay x j
+  have hI : ((2 * npow (xBound x) (RexpReal_R x j + 1) * (2 * (j + 1)) : Nat) : Int)
+      ≤ ((fct (RexpReal_R x j + 1) : Nat) : Int) := by exact_mod_cast h
+  push_cast at hI ⊢; omega
+
 end UOR.Bridge.F1Square.Analysis
