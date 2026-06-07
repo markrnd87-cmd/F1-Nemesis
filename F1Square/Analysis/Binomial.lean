@@ -320,4 +320,9 @@ theorem alternating_binomial (m : Nat) :
     simp only [Qeq]; rw [hnum]; simp
   exact Qeq_trans (qpow_den_pos (by decide) (m + 1)) (Qeq_symm hb) hz
 
+/-- The exponential partial sum as an `Fsum` of its terms (bridge to the finite-sum library). -/
+theorem expSum_eq_Fsum (q : Q) : ∀ N, Qeq (expSum q N) (Fsum (expTerm q) N)
+  | 0 => by show Qeq (⟨1, 1⟩ : Q) (mul ⟨1, 1⟩ ⟨1, 1⟩); decide
+  | (n + 1) => Qadd_congr (expSum_eq_Fsum q n) (Qeq_refl (expTerm q (n + 1)))
+
 end UOR.Bridge.F1Square.Analysis
