@@ -37,6 +37,69 @@ theorem choose_self : ∀ n, choose n n = 1
   | (n + 1) => by
       rw [choose_succ_succ, choose_self n, choose_eq_zero_of_lt (Nat.lt_succ_self n)]
 
+-- ===========================================================================
+-- A finite inclusive sum `Σ_{i=0}^{k} f i` over ℚ, with the algebra lemmas the binomial
+-- theorem's Pascal step needs (distribution, additivity, index shift).
+-- ===========================================================================
+
+/-- Finite inclusive sum `Σ_{i=0}^{k} f i`. -/
+def Fsum (f : Nat → Q) : Nat → Q
+  | 0 => f 0
+  | (k + 1) => add (Fsum f k) (f (k + 1))
+
+theorem Fsum_den_pos {f : Nat → Q} (hf : ∀ i, 0 < (f i).den) : ∀ k, 0 < (Fsum f k).den
+  | 0 => hf 0
+  | (k + 1) => add_den_pos (Fsum_den_pos hf k) (hf (k + 1))
+
+/-- Pointwise-equal summands give equal sums. -/
+theorem Fsum_congr {f g : Nat → Q} (h : ∀ i, Qeq (f i) (g i)) : ∀ k, Qeq (Fsum f k) (Fsum g k)
+  | 0 => h 0
+  | (k + 1) => Qadd_congr (Fsum_congr h k) (h (k + 1))
+
+/-- Reassociation `(a+b)+(c+d) ≈ (a+c)+(b+d)`. -/
+theorem Qadd_rearrange (a b c d : Q) : Qeq (add (add a b) (add c d)) (add (add a c) (add b d)) := by
+  simp only [Qeq, add]; push_cast; ring_uor
+
+/-- Distribution `c·(a+b) ≈ c·a + c·b`. -/
+theorem Qmul_add_left (c a b : Q) : Qeq (mul c (add a b)) (add (mul c a) (mul c b)) := by
+  simp only [Qeq, mul, add]; push_cast; ring_uor
+
+/-- Sums add termwise. -/
+theorem Fsum_add {f g : Nat → Q} (hf : ∀ i, 0 < (f i).den) (hg : ∀ i, 0 < (g i).den) :
+    ∀ k, Qeq (Fsum (fun i => add (f i) (g i)) k) (add (Fsum f k) (Fsum g k))
+  | 0 => Qeq_refl _
+  | (k + 1) =>
+      Qeq_trans
+        (add_den_pos (add_den_pos (Fsum_den_pos hf k) (Fsum_den_pos hg k))
+          (add_den_pos (hf (k + 1)) (hg (k + 1))))
+        (Qadd_congr (Fsum_add hf hg k) (Qeq_refl (add (f (k + 1)) (g (k + 1)))))
+        (Qadd_rearrange (Fsum f k) (Fsum g k) (f (k + 1)) (g (k + 1)))
+
+/-- A constant factor pulls out of a sum. -/
+theorem Fsum_mul_left {c : Q} {f : Nat → Q} (hcd : 0 < c.den) (hf : ∀ i, 0 < (f i).den) :
+    ∀ k, Qeq (Fsum (fun i => mul c (f i)) k) (mul c (Fsum f k))
+  | 0 => Qeq_refl _
+  | (k + 1) =>
+      Qeq_trans
+        (add_den_pos (Qmul_den_pos hcd (Fsum_den_pos hf k)) (Qmul_den_pos hcd (hf (k + 1))))
+        (Qadd_congr (Fsum_mul_left hcd hf k) (Qeq_refl (mul c (f (k + 1)))))
+        (Qeq_symm (Qmul_add_left c (Fsum f k) (f (k + 1))))
+
+/-- Index shift: `Σ_{i=0}^{k} f(i+1) ≈ (Σ_{i=0}^{k+1} f i) − f 0`. -/
+theorem Fsum_shift {f : Nat → Q} (hf : ∀ i, 0 < (f i).den) :
+    ∀ k, Qeq (Fsum (fun i => f (i + 1)) k) (Qsub (Fsum f (k + 1)) (f 0))
+  | 0 => by
+      show Qeq (f 1) (Qsub (add (f 0) (f 1)) (f 0))
+      simp only [Qeq, Qsub, add, neg]; push_cast; ring_uor
+  | (k + 1) =>
+      Qeq_trans
+        (add_den_pos (Qsub_den_pos (Fsum_den_pos hf (k + 1)) (hf 0)) (hf (k + 1 + 1)))
+        (Qadd_congr (Fsum_shift hf k) (Qeq_refl (f (k + 1 + 1))))
+        (by
+          show Qeq (add (Qsub (Fsum f (k + 1)) (f 0)) (f (k + 1 + 1)))
+            (Qsub (add (Fsum f (k + 1)) (f (k + 1 + 1))) (f 0))
+          simp only [Qeq, Qsub, add, neg]; push_cast; ring_uor)
+
 /-- **The factorial identity** `C(n,k)·k!·(n−k)! = n!` for `k ≤ n` — the divisibility heart of the
     binomial theorem. -/
 theorem choose_mul_fct_mul_fct : ∀ {n k : Nat}, k ≤ n →

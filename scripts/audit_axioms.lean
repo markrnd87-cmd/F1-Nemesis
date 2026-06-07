@@ -601,6 +601,13 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.choose_eq_zero_of_lt
 #print axioms Analysis.choose_self
 #print axioms Analysis.choose_mul_fct_mul_fct
+#print axioms Analysis.Fsum_den_pos
+#print axioms Analysis.Fsum_congr
+#print axioms Analysis.Qadd_rearrange
+#print axioms Analysis.Qmul_add_left
+#print axioms Analysis.Fsum_add
+#print axioms Analysis.Fsum_mul_left
+#print axioms Analysis.Fsum_shift
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one
