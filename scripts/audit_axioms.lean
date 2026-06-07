@@ -522,6 +522,17 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.gammaSeq_reg_le
 #print axioms Analysis.gammaSeq_regular
 
+-- v0.14.0 (wip) — accelerated γ (harmonic/telescoping): the artanh rational bounds.
+#print axioms Analysis.artTerm_num_nonneg
+#print axioms Analysis.artSum_step
+#print axioms Analysis.artSum_mono
+#print axioms Analysis.artSum_zero_eq
+#print axioms Analysis.artSum_ge_arg
+#print axioms Analysis.artTerm_le_geoTerm
+#print axioms Analysis.artSum_le_geoSum
+#print axioms Analysis.geoSum_cleared_le
+#print axioms Analysis.artSum_le_geo
+
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one
 #print axioms Li.template_liPositive
