@@ -140,6 +140,17 @@ theorem binTerm_zero_bot (x y : Q) (n : Nat) :
 theorem Qadd_zero_right (a : Q) : Qeq (add a ⟨0, 1⟩) a := by
   simp only [Qeq, add]; push_cast; ring_uor
 
+/-- `a + (b + c) ≈ b + (a + c)`. -/
+theorem Qadd_swap_left (a b c : Q) : Qeq (add a (add b c)) (add b (add a c)) := by
+  simp only [Qeq, add]; push_cast; ring_uor
+
+/-- Bounded congruence for `Fsum` (only needs equality up to the summation bound). -/
+theorem Fsum_congr_le {f g : Nat → Q} : ∀ {k : Nat}, (∀ i, i ≤ k → Qeq (f i) (g i)) →
+    Qeq (Fsum f k) (Fsum g k)
+  | 0, h => h 0 (Nat.le_refl 0)
+  | (k + 1), h =>
+      Qadd_congr (Fsum_congr_le (fun i hik => h i (Nat.le_succ_of_le hik))) (h (k + 1) (Nat.le_refl _))
+
 /-- **The per-term Pascal step** `binTerm (n+1) (i+1) ≈ x·binTerm n i + y·binTerm n (i+1)` (for `i ≤ n`;
     at `i = n` the second summand vanishes since `C(n,n+1) = 0`). -/
 theorem binTerm_succ {x y : Q} (hxd : 0 < x.den) (hyd : 0 < y.den) (n : Nat) : ∀ {i : Nat}, i ≤ n →
@@ -214,5 +225,56 @@ theorem choose_mul_fct_mul_fct : ∀ {n k : Nat}, k ≤ n →
             _ = ↑(fct (n + 1)) := by rw [← hFn1]
         rw [hsub, choose_succ_succ]
         exact_mod_cast keyZ
+
+/-- **The binomial theorem** `(x+y)ⁿ ≈ Σ_{i=0}^{n} C(n,i)·xⁱ·yⁿ⁻ⁱ`. -/
+theorem binomial {x y : Q} (hxd : 0 < x.den) (hyd : 0 < y.den) :
+    ∀ n, Qeq (qpow (add x y) n) (Fsum (binTerm x y n) n)
+  | 0 => by show Qeq (⟨1, 1⟩ : Q) (mul ⟨1, 1⟩ (mul ⟨1, 1⟩ ⟨1, 1⟩)); decide
+  | (n + 1) => by
+      have hbtd : ∀ i, 0 < (binTerm x y n i).den := binTerm_den_pos hxd hyd n
+      have hbt1 : ∀ i, 0 < (binTerm x y (n + 1) i).den := binTerm_den_pos hxd hyd (n + 1)
+      have hSd : 0 < (Fsum (binTerm x y n) n).den := Fsum_den_pos hbtd n
+      have hxbtd : ∀ i, 0 < (mul x (binTerm x y n i)).den := fun i => Qmul_den_pos hxd (hbtd i)
+      have hybtd : ∀ i, 0 < (mul y (binTerm x y n i)).den := fun i => Qmul_den_pos hyd (hbtd i)
+      -- the `mul x S` and `mul y S` denominators
+      have hxSd : 0 < (mul x (Fsum (binTerm x y n) n)).den := Qmul_den_pos hxd hSd
+      have hySd : 0 < (mul y (Fsum (binTerm x y n) n)).den := Qmul_den_pos hyd hSd
+      -- `Σ x·binTerm n ≈ x·S` and the y-part `binTerm(n+1) 0 + Σ y·binTerm n (·+1) ≈ y·S`
+      have h_x : Qeq (Fsum (fun i => mul x (binTerm x y n i)) n) (mul x (Fsum (binTerm x y n) n)) :=
+        Fsum_mul_left hxd hbtd n
+      have h_yfull : Qeq (Fsum (fun i => mul y (binTerm x y n i)) (n + 1)) (mul y (Fsum (binTerm x y n) n)) :=
+        Qeq_trans (add_den_pos hySd (by decide))
+          (Qadd_congr (Fsum_mul_left hyd hbtd n) (binTerm_top_zero x y n))
+          (Qadd_zero_right (mul y (Fsum (binTerm x y n) n)))
+      have h_ypart : Qeq (add (binTerm x y (n + 1) 0) (Fsum (fun i => mul y (binTerm x y n (i + 1))) n))
+          (mul y (Fsum (binTerm x y n) n)) :=
+        Qeq_trans (add_den_pos (hybtd 0) (Fsum_den_pos (fun i => hybtd (i + 1)) n))
+          (Qadd_congr (binTerm_zero_bot x y n) (Qeq_refl _))
+          (Qeq_trans (Fsum_den_pos hybtd (n + 1))
+            (Qeq_symm (Fsum_front hybtd n)) h_yfull)
+      -- the reindexed tail `Σ binTerm(n+1) (·+1) ≈ Σ x·binTerm n + Σ y·binTerm n (·+1)`
+      have h_tail : Qeq (Fsum (fun i => binTerm x y (n + 1) (i + 1)) n)
+          (add (Fsum (fun i => mul x (binTerm x y n i)) n)
+            (Fsum (fun i => mul y (binTerm x y n (i + 1))) n)) :=
+        Qeq_trans (Fsum_den_pos (fun i => add_den_pos (hxbtd i) (hybtd (i + 1))) n)
+          (Fsum_congr_le (fun i hi => binTerm_succ hxd hyd n hi))
+          (Fsum_add hxbtd (fun i => hybtd (i + 1)) n)
+      -- assemble: front-peel, congr the tail, swap, then collapse each side to `· S`
+      refine Qeq_trans (Qmul_den_pos (add_den_pos hxd hyd) hSd)
+        (Qmul_congr (Qeq_refl (add x y)) (binomial hxd hyd n)) ?_
+      -- goal: Qeq (mul (add x y) S) (Fsum (binTerm x y (n+1)) (n+1))  -- via Qeq_symm of the chain
+      refine Qeq_symm (Qeq_trans (add_den_pos (hbt1 0) (Fsum_den_pos (fun i => hbt1 (i + 1)) n))
+        (Fsum_front hbt1 n) ?_)
+      refine Qeq_trans (add_den_pos (hbt1 0)
+          (add_den_pos (Fsum_den_pos hxbtd n) (Fsum_den_pos (fun i => hybtd (i + 1)) n)))
+        (Qadd_congr (Qeq_refl _) h_tail) ?_
+      refine Qeq_trans (add_den_pos (Fsum_den_pos hxbtd n)
+          (add_den_pos (hbt1 0) (Fsum_den_pos (fun i => hybtd (i + 1)) n)))
+        (Qadd_swap_left (binTerm x y (n + 1) 0) (Fsum (fun i => mul x (binTerm x y n i)) n)
+          (Fsum (fun i => mul y (binTerm x y n (i + 1))) n)) ?_
+      -- goal: Qeq (add (Σ x·binTerm n) (add (binTerm(n+1) 0) (Σ y·binTerm n (·+1)))) (mul (add x y) S)
+      refine Qeq_trans (add_den_pos hxSd hySd) (Qadd_congr h_x h_ypart) ?_
+      -- goal: Qeq (add (mul x S) (mul y S)) (mul (add x y) S)
+      exact Qeq_symm (Qmul_add_right x y (Fsum (binTerm x y n) n))
 
 end UOR.Bridge.F1Square.Analysis
