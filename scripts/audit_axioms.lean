@@ -481,7 +481,9 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rarctan
 #print axioms Analysis.Qle_of_Qsub_le_Qsub_left
 #print axioms Analysis.Qle_of_Qsub_le_Qsub_right
+#print axioms Analysis.Rlt_Qbound_of_Rle_ofQ
 #print axioms Analysis.Pos_of_Rle_ofQ
+#print axioms Analysis.Rpi_lower
 #print axioms Analysis.Rle_Rneg
 #print axioms Analysis.Radd_le_add
 #print axioms Analysis.Rsub_le_sub

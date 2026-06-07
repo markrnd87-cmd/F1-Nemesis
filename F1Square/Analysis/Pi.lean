@@ -79,11 +79,10 @@ theorem Qle_of_Qsub_le_Qsub_right {x y u : Q} (hud : 0 < u.den)
       = y.num * (u.den : Int) + -u.num * (y.den : Int) := by ring_uor
   rw [e1, e2]; exact h
 
-/-- **Strict positivity from a rational lower bound**: if `c ≤ x` for a positive rational `c`
-    (`Rle (ofQ c) x`), then `Pos x`. The reusable keystone for every numeric positivity claim. -/
-theorem Pos_of_Rle_ofQ {c : Q} (hcn : 0 < c.num) (hcd : 0 < c.den) {x : Real}
-    (h : Rle (ofQ c hcd) x) : Pos x := by
-  refine ⟨3 * c.den, ?_⟩
+/-- The explicit positivity **witness** at index `3·c.den`, from a rational lower bound `c ≤ x`.
+    Exposed as data so `RlogPos` (which needs the witness index) can consume it without choice. -/
+theorem Rlt_Qbound_of_Rle_ofQ {c : Q} (hcn : 0 < c.num) (hcd : 0 < c.den) {x : Real}
+    (h : Rle (ofQ c hcd) x) : Qlt (Qbound (3 * c.den)) (x.seq (3 * c.den)) := by
   have hRle := h (3 * c.den)
   have hcdI : (1 : Int) ≤ (c.den : Int) := by exact_mod_cast hcd
   have hqI : (1 : Int) ≤ ((x.seq (3 * c.den)).den : Int) := by exact_mod_cast x.den_pos _
@@ -105,6 +104,11 @@ theorem Pos_of_Rle_ofQ {c : Q} (hcn : 0 < c.num) (hcd : 0 < c.den) {x : Real}
   push_cast
   push_cast at key
   omega
+
+/-- **Strict positivity from a rational lower bound**: if `c ≤ x` for a positive rational `c`
+    (`Rle (ofQ c) x`), then `Pos x`. The reusable keystone for every numeric positivity claim. -/
+theorem Pos_of_Rle_ofQ {c : Q} (hcn : 0 < c.num) (hcd : 0 < c.den) {x : Real}
+    (h : Rle (ofQ c hcd) x) : Pos x := ⟨3 * c.den, Rlt_Qbound_of_Rle_ofQ hcn hcd h⟩
 
 -- W = 1 − ρ² is positive when ρ.num.toNat < ρ.den (shared by the brackets).
 private theorem W_pos {ρ : Q} (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den) (hlt : ρ.num.toNat < ρ.den) :
@@ -332,9 +336,8 @@ theorem Rpi_regular : IsRegular Rpi_seq := by
 /-- **π**, via Machin: `π = 16·arctan(1/5) − 4·arctan(1/239)`. -/
 def Rpi : Real := ⟨Rpi_seq, Rpi_regular, Rpi_seq_den_pos⟩
 
-/-- **`Pos π`** — π > 0 (the lower bracket gives `π ≥ 16·(1/8) − 4·(1/5) = 6/5 > 0`). -/
-theorem Rpi_pos : Pos Rpi := by
-  refine Pos_of_Rle_ofQ (c := Qsub (mul ⟨16, 1⟩ ⟨1, 8⟩) (mul ⟨4, 1⟩ ⟨1, 5⟩)) (by decide) (by decide) ?_
+/-- **π ≥ 6/5**, the Machin lower bracket, as a real inequality (reused for `Pos π` and `log π`). -/
+theorem Rpi_lower : Rle (ofQ (Qsub (mul ⟨16, 1⟩ ⟨1, 8⟩) (mul ⟨4, 1⟩ ⟨1, 5⟩)) (by decide)) Rpi := by
   intro n
   have hcondA : Qle (qpow (⟨1, 2⟩ : Q) 5)
       (mul (Qsub (arctanSum ⟨1, 5⟩ 1) ⟨1, 8⟩) (Qsub ⟨1, 1⟩ (mul ⟨1, 2⟩ ⟨1, 2⟩))) := by decide
@@ -349,5 +352,17 @@ theorem Rpi_pos : Pos Rpi := by
   exact Qle_trans (Rpi_seq_den_pos n)
     (Qsub_le_2 (Qmul_le_mul_left (by decide) hL5) (Qmul_le_mul_left (by decide) hU239))
     (Qle_self_add (by show (0 : Int) ≤ 2; decide))
+
+/-- **`Pos π`** — π > 0. -/
+theorem Rpi_pos : Pos Rpi := Pos_of_Rle_ofQ (by decide) (by decide) Rpi_lower
+
+/-- **log 2** — `log` of the concrete positive real `2` (witness at index 0). -/
+def Rlog2 : Real := RlogPos (ofQ ⟨2, 1⟩ (by decide)) 0 (by decide)
+
+/-- **log π** — `log` of the constructive real `π` (positivity witness from the Machin lower bracket). -/
+def Rlog_pi : Real := RlogPos Rpi _ (Rlt_Qbound_of_Rle_ofQ (by decide) (by decide) Rpi_lower)
+
+/-- **log 4π** = `2·log 2 + log π` (value via `Radd`, no constant scaling needed). -/
+def Rlog4pi : Real := Radd (Radd Rlog2 Rlog2) Rlog_pi
 
 end UOR.Bridge.F1Square.Analysis
