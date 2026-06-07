@@ -708,6 +708,8 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.expTerm_Qeq
 #print axioms Analysis.expTerm_2MM
 #print axioms Analysis.truncCoef_QE
+#print axioms Analysis.uterm_le
+#print axioms Analysis.altErr_bound_decay
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one

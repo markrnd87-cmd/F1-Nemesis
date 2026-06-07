@@ -815,6 +815,105 @@ theorem truncCoef_QE (B c e E : Nat) (hB : 0 < B) (hE : 2 * B + 1 ≤ E)
   have h := truncCoef_Q B c e (E - (2 * B + 1)) hB hcond
   rw [hd] at h; exact h
 
+/-- **Corner-term bound**: `U · (cc·(M²)^E / E!) ≤ 1/(n+1)` at a deep exponent `E`, where `U = expM_U M² (2M²)`.
+    Bounds `U ≤ ⟨U.num.toNat,1⟩` then applies `truncCoef_QE` with coefficient `U.num.toNat·cc`. -/
+theorem uterm_le (M E n cc : Nat) (hm : 0 < M * M) (hE : 2 * (M * M) + 1 ≤ E)
+    (hc : (expM_U (M * M) (2 * (M * M))).num.toNat * cc * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        ≤ E - (2 * (M * M) + 1) + 1) :
+    Qle (mul (expM_U (M * M) (2 * (M * M))) ⟨(cc * npow (M * M) E : Int), fct E⟩) ⟨1, n + 1⟩ := by
+  have hU0 := expM_U_num_nonneg (M * M) (2 * (M * M))
+  have hUd := expM_U_den_pos (M * M) (2 * (M * M))
+  have hstep : Qle (mul (expM_U (M * M) (2 * (M * M))) ⟨(cc * npow (M * M) E : Int), fct E⟩)
+      (mul (⟨((expM_U (M * M) (2 * (M * M))).num.toNat : Int), 1⟩ : Q) ⟨(cc * npow (M * M) E : Int), fct E⟩) :=
+    Qmul_le_mul_right (Int.ofNat_nonneg _) (Q_le_num_toNat _ hU0 hUd)
+  have htrunc := truncCoef_QE (M * M) ((expM_U (M * M) (2 * (M * M))).num.toNat * cc) (n + 1) E hm hE hc
+  refine Qle_trans (Qmul_den_pos Nat.one_pos (fct_pos E)) hstep
+    (Qle_congr_left (fct_pos E) ?_ htrunc)
+  simp only [Qeq, mul]; push_cast; ring_uor
+
+set_option maxHeartbeats 1000000 in
+/-- **The Pythagorean error bound vanishes at a deep reference**: the `altErr_abs_le` majorant — at the
+    odd depth `2K+1`, with `M = xBound`-style modulus — is `≤ 5/(n+1)` once `K` exceeds the explicit
+    threshold (so `truncCoef_QE` applies to each of the five summands: the antidiagonal, two corners,
+    and the two `q²`-scaled corners). This converts the rational Pythagorean error into `Req` tolerance. -/
+theorem altErr_bound_decay (M K n : Nat) (hm : 0 < M * M)
+    (hK : (expM_U (M * M) (2 * (M * M))).num.toNat * 4 * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        + (expM_U (M * M) (2 * (M * M))).num.toNat * 2 * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        + (expM_U (M * M) (2 * (M * M))).num.toNat * (4 * (M * M)) * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        + (expM_U (M * M) (2 * (M * M))).num.toNat * (2 * (M * M)) * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        + (M * M) * (n + 1) * npow (2 * (M * M)) (2 * (2 * (M * M)) + 1)
+        + 2 * (M * M) ≤ K) :
+    Qle (add (mul ⟨((M * M : Nat) : Int), 1⟩
+          (expTerm (add (⟨(M * M : Int), 1⟩ : Q) ⟨(M * M : Int), 1⟩) (2 * K + 1)))
+        (add (add (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩)
+              (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M)))))
+          (mul ⟨((M * M : Nat) : Int), 1⟩
+            (add (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩)
+              (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M))))))))
+      ⟨5, n + 1⟩ := by
+  obtain ⟨g1, g2, g3, g4, g5, hg1, hg2, hg3, hg4, hg5⟩ :
+      ∃ g1 g2 g3 g4 g5,
+        (expM_U (M * M) (2 * (M * M))).num.toNat * 4 * (n + 1) * npow (M * M) (2 * (M * M) + 1) = g1 ∧
+        (expM_U (M * M) (2 * (M * M))).num.toNat * 2 * (n + 1) * npow (M * M) (2 * (M * M) + 1) = g2 ∧
+        (expM_U (M * M) (2 * (M * M))).num.toNat * (4 * (M * M)) * (n + 1) * npow (M * M) (2 * (M * M) + 1) = g3 ∧
+        (expM_U (M * M) (2 * (M * M))).num.toNat * (2 * (M * M)) * (n + 1) * npow (M * M) (2 * (M * M) + 1) = g4 ∧
+        (M * M) * (n + 1) * npow (2 * (M * M)) (2 * (2 * (M * M)) + 1) = g5 :=
+    ⟨_, _, _, _, _, rfl, rfl, rfl, rfl, rfl⟩
+  rw [hg1, hg2, hg3, hg4, hg5] at hK
+  have hUd := expM_U_den_pos (M * M) (2 * (M * M))
+  -- the five truncation conditions (each product is one summand of the threshold)
+  have hcc1 : (expM_U (M * M) (2 * (M * M))).num.toNat * 4 * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+      ≤ (K + 2) - (2 * (M * M) + 1) + 1 := by rw [hg1]; omega
+  have hcc2 : (expM_U (M * M) (2 * (M * M))).num.toNat * 2 * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+      ≤ (K + 1) - (2 * (M * M) + 1) + 1 := by rw [hg2]; omega
+  have hcc3 : (expM_U (M * M) (2 * (M * M))).num.toNat * (4 * (M * M)) * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+      ≤ (K + 2) - (2 * (M * M) + 1) + 1 := by rw [hg3]; omega
+  have hcc4 : (expM_U (M * M) (2 * (M * M))).num.toNat * (2 * (M * M)) * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+      ≤ (K + 1) - (2 * (M * M) + 1) + 1 := by rw [hg4]; omega
+  have hcc5 : (M * M) * (n + 1) * npow (2 * (M * M)) (2 * (2 * (M * M)) + 1)
+      ≤ (2 * K + 1) - (2 * (2 * (M * M)) + 1) + 1 := by rw [hg5]; omega
+  -- per-term bounds
+  have hc1 : Qle (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩) ⟨1, n + 1⟩ :=
+    uterm_le M (K + 2) n 4 hm (by omega) hcc1
+  have hc2 : Qle (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M)))) ⟨1, n + 1⟩ :=
+    Qle_congr_left (Qmul_den_pos hUd (fct_pos (K + 1)))
+      (mul_comm (expM_U (M * M) (2 * (M * M))) ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩)
+      (uterm_le M (K + 1) n 2 hm (by omega) hcc2)
+  have hMc1 : Qle (mul (⟨((M * M : Nat) : Int), 1⟩ : Q)
+      (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩)) ⟨1, n + 1⟩ :=
+    Qle_congr_left (Qmul_den_pos hUd (fct_pos (K + 2)))
+      (by simp only [Qeq, mul]; push_cast; ring_uor)
+      (uterm_le M (K + 2) n (4 * (M * M)) hm (by omega) hcc3)
+  have hMc2 : Qle (mul (⟨((M * M : Nat) : Int), 1⟩ : Q)
+      (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M))))) ⟨1, n + 1⟩ :=
+    Qle_congr_left (Qmul_den_pos hUd (fct_pos (K + 1)))
+      (by simp only [Qeq, mul]; push_cast; ring_uor)
+      (uterm_le M (K + 1) n (2 * (M * M)) hm (by omega) hcc4)
+  have hT1 : Qle (mul (⟨((M * M : Nat) : Int), 1⟩ : Q)
+      (expTerm (add (⟨(M * M : Int), 1⟩ : Q) ⟨(M * M : Int), 1⟩) (2 * K + 1))) ⟨1, n + 1⟩ := by
+    have hle1 : Qle (mul (⟨((M * M : Nat) : Int), 1⟩ : Q)
+        (expTerm (add (⟨(M * M : Int), 1⟩ : Q) ⟨(M * M : Int), 1⟩) (2 * K + 1)))
+        (mul (⟨((M * M : Nat) : Int), 1⟩ : Q) ⟨(npow (2 * (M * M)) (2 * K + 1) : Int), fct (2 * K + 1)⟩) :=
+      Qmul_le_mul_left (Int.ofNat_nonneg _) (Qeq_le (expTerm_2MM M (2 * K + 1)))
+    have htr := truncCoef_QE (2 * (M * M)) (M * M) (n + 1) (2 * K + 1) (by omega) (by omega) hcc5
+    refine Qle_trans (Qmul_den_pos Nat.one_pos (fct_pos (2 * K + 1))) hle1
+      (Qle_congr_left (fct_pos (2 * K + 1)) ?_ htr)
+    simp only [Qeq, mul]; push_cast; ring_uor
+  -- combine: BOUND ≤ ⟨1⟩ + ((⟨1⟩+⟨1⟩) + M²·(⟨1⟩+⟨1⟩)) ≤ ⟨5,n+1⟩
+  have hden1 : (0 : Nat) < (⟨1, n + 1⟩ : Q).den := Nat.succ_pos n
+  have hMcorner : Qle (mul (⟨((M * M : Nat) : Int), 1⟩ : Q)
+        (add (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩)
+          (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M))))))
+      (add ⟨1, n + 1⟩ ⟨1, n + 1⟩) := by
+    refine Qle_congr_left ?_ (Qeq_symm (Qmul_add_left (⟨((M * M : Nat) : Int), 1⟩ : Q)
+      (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩)
+      (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M)))))) (Qadd_le_add hMc1 hMc2)
+    exact add_den_pos (Qmul_den_pos Nat.one_pos (Qmul_den_pos hUd (fct_pos (K + 2))))
+      (Qmul_den_pos Nat.one_pos (Qmul_den_pos (fct_pos (K + 1)) hUd))
+  refine Qle_trans (add_den_pos hden1 (add_den_pos (add_den_pos hden1 hden1) (add_den_pos hden1 hden1)))
+    (Qadd_le_add hT1 (Qadd_le_add (Qadd_le_add hc1 hc2) hMcorner)) ?_
+  exact Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor)
+
 /-- **Squaring difference**: `|a² − b²| ≤ |a − b|·(|a| + |b|)` over `Q` (since `a²−b² = (a−b)(a+b)`).
     The vehicle for reconciling `(altSum R)²` to `(altSum R')²` once the partial sums are close. -/
 theorem Qsq_diff_le (a b : Q) (had : 0 < a.den) (hbd : 0 < b.den) :
