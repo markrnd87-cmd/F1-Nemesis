@@ -659,6 +659,11 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qadd_same_den
 #print axioms Analysis.Fsum_const_den
 #print axioms Analysis.qpow_neg_one_even
+#print axioms Analysis.qpow_neg_one_odd
+#print axioms Analysis.NFsum_neg
+#print axioms Analysis.binTerm_even
+#print axioms Analysis.binTerm_odd
+#print axioms Analysis.binom_even_odd_eq
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one

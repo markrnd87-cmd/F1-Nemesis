@@ -118,4 +118,73 @@ theorem qpow_neg_one_even : ∀ k, qpow (⟨-1, 1⟩ : Q) (2 * k) = ⟨1, 1⟩
       rw [show 2 * (k + 1) = 2 * k + 1 + 1 from by omega, qpow_succ, qpow_succ, qpow_neg_one_even k]
       rfl
 
+/-- `(−1)^{2k+1} = −1`. -/
+theorem qpow_neg_one_odd (k : Nat) : qpow (⟨-1, 1⟩ : Q) (2 * k + 1) = ⟨-1, 1⟩ := by
+  rw [qpow_succ, qpow_neg_one_even k]; rfl
+
+/-- `NFsum` distributes over negation. -/
+theorem NFsum_neg (f : Nat → Int) : ∀ k, NFsum (fun j => -(f j)) k = -(NFsum f k)
+  | 0 => rfl
+  | (k + 1) => by
+      show NFsum (fun j => -(f j)) k + -(f (k + 1)) = -(NFsum f k + f (k + 1))
+      rw [NFsum_neg f k]; omega
+
+/-- The alternating-binomial summand at an even index `2j` equals `+C(2m+2,2j)`. -/
+theorem binTerm_even (m j : Nat) (hj : j ≤ m + 1) :
+    Qeq (binTerm ⟨1, 1⟩ ⟨-1, 1⟩ (2 * m + 2) (2 * j)) ⟨(choose (2 * m + 2) (2 * j) : Int), 1⟩ := by
+  show Qeq (mul ⟨(choose (2 * m + 2) (2 * j) : Int), 1⟩
+      (mul (qpow (⟨1, 1⟩ : Q) (2 * j)) (qpow (⟨-1, 1⟩ : Q) ((2 * m + 2) - (2 * j)))))
+    ⟨(choose (2 * m + 2) (2 * j) : Int), 1⟩
+  rw [qpow_one_eq, show (2 * m + 2) - (2 * j) = 2 * (m + 1 - j) from by omega, qpow_neg_one_even]
+  simp only [Qeq, mul]; push_cast; ring_uor
+
+/-- The alternating-binomial summand at an odd index `2j+1` equals `−C(2m+2,2j+1)`. -/
+theorem binTerm_odd (m j : Nat) (hj : j ≤ m) :
+    Qeq (binTerm ⟨1, 1⟩ ⟨-1, 1⟩ (2 * m + 2) (2 * j + 1))
+      ⟨-(choose (2 * m + 2) (2 * j + 1) : Int), 1⟩ := by
+  show Qeq (mul ⟨(choose (2 * m + 2) (2 * j + 1) : Int), 1⟩
+      (mul (qpow (⟨1, 1⟩ : Q) (2 * j + 1)) (qpow (⟨-1, 1⟩ : Q) ((2 * m + 2) - (2 * j + 1)))))
+    ⟨-(choose (2 * m + 2) (2 * j + 1) : Int), 1⟩
+  rw [qpow_one_eq, show (2 * m + 2) - (2 * j + 1) = 2 * (m - j) + 1 from by omega, qpow_neg_one_odd]
+  simp only [Qeq, mul]; push_cast; ring_uor
+
+/-- **The even/odd binomial-sum equality** `Σ_{i≤m+1} C(2m+2,2i) = Σ_{i≤m} C(2m+2,2i+1)`, the
+    combinatorial heart of `cos² + sin² = 1`. Proof: split the alternating-binomial sum
+    `Σ_k (−1)^k C(2m+2,k) = 0` by parity (`Fsum_parity_split`); the even part is `+Σ C(·,2i)`, the
+    odd part is `−Σ C(·,2i+1)`, so the two are equal. -/
+theorem binom_even_odd_eq (m : Nat) :
+    NFsum (fun j => (choose (2 * m + 2) (2 * j) : Int)) (m + 1)
+      = NFsum (fun j => (choose (2 * m + 2) (2 * j + 1) : Int)) m := by
+  have ha : ∀ i, 0 < (binTerm (⟨1, 1⟩ : Q) ⟨-1, 1⟩ (2 * m + 2) i).den :=
+    fun i => binTerm_den_pos (by decide) (by decide) (2 * m + 2) i
+  have hsplit := Fsum_parity_split (binTerm (⟨1, 1⟩ : Q) ⟨-1, 1⟩ (2 * m + 2)) ha m
+  have hzero : Qeq (Fsum (binTerm (⟨1, 1⟩ : Q) ⟨-1, 1⟩ (2 * m + 2)) (2 * m + 2)) ⟨0, 1⟩ :=
+    alternating_binomial (2 * m + 1)
+  have heven : Qeq (Fsum (fun j => binTerm (⟨1, 1⟩ : Q) ⟨-1, 1⟩ (2 * m + 2) (2 * j)) (m + 1))
+      ⟨NFsum (fun j => (choose (2 * m + 2) (2 * j) : Int)) (m + 1), 1⟩ :=
+    Qeq_trans (Fsum_den_pos (f := fun j => (⟨(choose (2 * m + 2) (2 * j) : Int), 1⟩ : Q))
+        (fun _ => Nat.one_pos) (m + 1))
+      (Fsum_congr_le (fun j hj => binTerm_even m j hj))
+      (Fsum_const_den (fun j => (choose (2 * m + 2) (2 * j) : Int)) 1 Nat.one_pos (m + 1))
+  have hodd : Qeq (Fsum (fun j => binTerm (⟨1, 1⟩ : Q) ⟨-1, 1⟩ (2 * m + 2) (2 * j + 1)) m)
+      ⟨NFsum (fun j => -(choose (2 * m + 2) (2 * j + 1) : Int)) m, 1⟩ :=
+    Qeq_trans (Fsum_den_pos (f := fun j => (⟨-(choose (2 * m + 2) (2 * j + 1) : Int), 1⟩ : Q))
+        (fun _ => Nat.one_pos) m)
+      (Fsum_congr_le (fun j hj => binTerm_odd m j hj))
+      (Fsum_const_den (fun j => -(choose (2 * m + 2) (2 * j + 1) : Int)) 1 Nat.one_pos m)
+  -- add even + odd ≈ 0
+  have hsum0 : Qeq (add ⟨NFsum (fun j => (choose (2 * m + 2) (2 * j) : Int)) (m + 1), 1⟩
+      ⟨NFsum (fun j => -(choose (2 * m + 2) (2 * j + 1) : Int)) m, 1⟩) ⟨0, 1⟩ :=
+    Qeq_trans (add_den_pos (Fsum_den_pos (fun j => ha (2 * j)) (m + 1))
+        (Fsum_den_pos (fun j => ha (2 * j + 1)) m))
+      (Qeq_symm (Qadd_congr heven hodd))
+      (Qeq_trans (Fsum_den_pos ha (2 * m + 2)) (Qeq_symm hsplit) hzero)
+  have hSeq : Qeq (⟨NFsum (fun j => (choose (2 * m + 2) (2 * j) : Int)) (m + 1)
+      + NFsum (fun j => -(choose (2 * m + 2) (2 * j + 1) : Int)) m, 1⟩ : Q) ⟨0, 1⟩ :=
+    Qeq_trans (add_den_pos Nat.one_pos Nat.one_pos) (Qeq_symm (Qadd_same_den _ _ 1)) hsum0
+  have hS : NFsum (fun j => (choose (2 * m + 2) (2 * j) : Int)) (m + 1)
+      + NFsum (fun j => -(choose (2 * m + 2) (2 * j + 1) : Int)) m = 0 := by
+    have h := hSeq; unfold Qeq at h; simpa using h
+  rw [NFsum_neg] at hS; omega
+
 end UOR.Bridge.F1Square.Analysis
