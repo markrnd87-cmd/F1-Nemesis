@@ -693,6 +693,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qabs_add3_le
 #print axioms Analysis.Qabs_qsq_mul_le
 #print axioms Analysis.altPyth_dev_eq_err
+#print axioms Analysis.altErr_abs_le
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one

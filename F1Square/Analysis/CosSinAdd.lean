@@ -665,4 +665,44 @@ theorem altPyth_dev_eq_err {q : Q} (hqd : 0 < q.den) (N : Nat) :
     (QsubCongr (altPyth_partial hqd N) (Qeq_refl (⟨1, 1⟩ : Q)))
     (Qsub_add_left_cancel (⟨1, 1⟩ : Q) _)
 
+/-- **The ERR bound**: at `N = 2K+1` (with `|q| ≤ M`, `2M² ≤ K+2`), the Pythagorean error
+    `|ERR| ≤ M²·(antidiagonal) + cornerMertens₀ + M²·cornerMertens₁`, each summand `→ 0`. Combines
+    `Qabs_add3_le`, `Qabs_qsq_mul_le`, `altAntidiag_abs_le`, and `altCorner_mertens`. -/
+theorem altErr_abs_le {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨(M : Int), 1⟩)
+    (K : Nat) (hK : 2 * (M * M) ≤ K + 2) :
+    Qle (Qabs (add (mul (mul q q) (Fsum (fun i => mul (altTerm q 1 i) (altTerm q 1 (2 * K + 1 - i))) (2 * K + 1)))
+        (add (Fsum (fun i => Qsub (Fsum (fun j => mul (altTerm q 0 i) (altTerm q 0 j)) (2 * K + 1))
+              (Fsum (fun j => mul (altTerm q 0 i) (altTerm q 0 j)) (2 * K + 1 - i))) (2 * K + 1))
+          (mul (mul q q) (Fsum (fun i => Qsub (Fsum (fun j => mul (altTerm q 1 i) (altTerm q 1 j)) (2 * K + 1))
+              (Fsum (fun j => mul (altTerm q 1 i) (altTerm q 1 j)) (2 * K + 1 - i))) (2 * K + 1))))))
+      (add (mul ⟨((M * M : Nat) : Int), 1⟩
+          (expTerm (add (⟨(M * M : Int), 1⟩ : Q) ⟨(M * M : Int), 1⟩) (2 * K + 1)))
+        (add (add (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩)
+              (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M)))))
+          (mul ⟨((M * M : Nat) : Int), 1⟩
+            (add (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩)
+              (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M)))))))) := by
+  have ha0 : ∀ i, 0 < (altTerm q 0 i).den := altTerm_den_pos hqd 0
+  have ha1 : ∀ i, 0 < (altTerm q 1 i).den := altTerm_den_pos hqd 1
+  have hsd : 0 < (Fsum (fun i => mul (altTerm q 1 i) (altTerm q 1 (2 * K + 1 - i))) (2 * K + 1)).den :=
+    Fsum_den_pos (fun i => Qmul_den_pos (ha1 i) (ha1 (2 * K + 1 - i))) (2 * K + 1)
+  have hAd : 0 < (mul (mul q q) (Fsum (fun i => mul (altTerm q 1 i) (altTerm q 1 (2 * K + 1 - i))) (2 * K + 1))).den :=
+    Qmul_den_pos (Qmul_den_pos hqd hqd) hsd
+  have hBd : 0 < (Fsum (fun i => Qsub (Fsum (fun j => mul (altTerm q 0 i) (altTerm q 0 j)) (2 * K + 1))
+      (Fsum (fun j => mul (altTerm q 0 i) (altTerm q 0 j)) (2 * K + 1 - i))) (2 * K + 1)).den :=
+    Fsum_den_pos (fun i => Qsub_den_pos (Fsum_den_pos (fun j => Qmul_den_pos (ha0 i) (ha0 j)) (2 * K + 1))
+      (Fsum_den_pos (fun j => Qmul_den_pos (ha0 i) (ha0 j)) (2 * K + 1 - i))) (2 * K + 1)
+  have hCsd : 0 < (Fsum (fun i => Qsub (Fsum (fun j => mul (altTerm q 1 i) (altTerm q 1 j)) (2 * K + 1))
+      (Fsum (fun j => mul (altTerm q 1 i) (altTerm q 1 j)) (2 * K + 1 - i))) (2 * K + 1)).den :=
+    Fsum_den_pos (fun i => Qsub_den_pos (Fsum_den_pos (fun j => Qmul_den_pos (ha1 i) (ha1 j)) (2 * K + 1))
+      (Fsum_den_pos (fun j => Qmul_den_pos (ha1 i) (ha1 j)) (2 * K + 1 - i))) (2 * K + 1)
+  have hCd : 0 < (mul (mul q q) (Fsum (fun i => Qsub (Fsum (fun j => mul (altTerm q 1 i) (altTerm q 1 j)) (2 * K + 1))
+      (Fsum (fun j => mul (altTerm q 1 i) (altTerm q 1 j)) (2 * K + 1 - i))) (2 * K + 1))).den :=
+    Qmul_den_pos (Qmul_den_pos hqd hqd) hCsd
+  refine Qle_trans (add_den_pos (Qabs_den_pos hAd) (add_den_pos (Qabs_den_pos hBd) (Qabs_den_pos hCd)))
+    (Qabs_add3_le _ _ _ hAd hBd hCd) ?_
+  refine Qadd_le_add (Qabs_qsq_mul_le hqd hq hsd (altAntidiag_abs_le hqd hq 1 (2 * K + 1)))
+    (Qadd_le_add (altCorner_mertens hqd hq 0 K hK)
+      (Qabs_qsq_mul_le hqd hq hCsd (altCorner_mertens hqd hq 1 K hK)))
+
 end UOR.Bridge.F1Square.Analysis
