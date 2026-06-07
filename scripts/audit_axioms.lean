@@ -699,6 +699,8 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.diagU_le
 #print axioms Analysis.n_le_RaltReal_R
 #print axioms Analysis.Rsin_sq_diag_le
+#print axioms Analysis.Q_den_mono
+#print axioms Analysis.Rcos_sq_add_sin_sq
 #print axioms Analysis.Rmul4_rearrange
 #print axioms Analysis.Rsin_sq_eq
 #print axioms Analysis.altSum_reconcile
