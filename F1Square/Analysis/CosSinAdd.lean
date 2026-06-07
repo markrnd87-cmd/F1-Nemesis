@@ -93,4 +93,29 @@ theorem Fsum_parity_split (a : Nat → Q) (ha : ∀ i, 0 < (a i).den) :
         (Qadd_perm4 (Fsum (fun j => a (2 * j)) (m + 1)) (Fsum (fun j => a (2 * j + 1)) m)
           (a (2 * m + 2 + 1)) (a (2 * m + 2 + 2)))
 
+/-- Integer running sum (the numerator sum for a constant-denominator `Fsum`). -/
+def NFsum (f : Nat → Int) : Nat → Int
+  | 0 => f 0
+  | (k + 1) => NFsum f k + f (k + 1)
+
+/-- `⟨a,D⟩ + ⟨b,D⟩ ≈ ⟨a+b,D⟩`. -/
+theorem Qadd_same_den (a b : Int) (D : Nat) : Qeq (add (⟨a, D⟩ : Q) ⟨b, D⟩) ⟨a + b, D⟩ := by
+  simp only [Qeq, add]; push_cast; ring_uor
+
+/-- A constant-denominator finite sum collapses to a single fraction. -/
+theorem Fsum_const_den (f : Nat → Int) (D : Nat) (hD : 0 < D) :
+    ∀ k, Qeq (Fsum (fun i => (⟨f i, D⟩ : Q)) k) ⟨NFsum f k, D⟩
+  | 0 => Qeq_refl _
+  | (k + 1) =>
+      Qeq_trans (add_den_pos (show 0 < (⟨NFsum f k, D⟩ : Q).den from hD) hD)
+        (Qadd_congr (Fsum_const_den f D hD k) (Qeq_refl (⟨f (k + 1), D⟩ : Q)))
+        (Qadd_same_den (NFsum f k) (f (k + 1)) D)
+
+/-- `(−1)^{2k} = 1`. -/
+theorem qpow_neg_one_even : ∀ k, qpow (⟨-1, 1⟩ : Q) (2 * k) = ⟨1, 1⟩
+  | 0 => rfl
+  | (k + 1) => by
+      rw [show 2 * (k + 1) = 2 * k + 1 + 1 from by omega, qpow_succ, qpow_succ, qpow_neg_one_even k]
+      rfl
+
 end UOR.Bridge.F1Square.Analysis
