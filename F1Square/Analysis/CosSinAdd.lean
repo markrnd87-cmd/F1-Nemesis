@@ -724,4 +724,22 @@ theorem Rsin_sq_eq (x : Real) :
     Req (Rmul (Rsin x) (Rsin x)) (Rmul (Rmul x x) (Rmul (RsinAux x) (RsinAux x))) :=
   Rmul4_rearrange x (RsinAux x) x (RsinAux x)
 
+/-- **The diagonal reconciliation**: two alt-series partial sums at *different arguments and depths*
+    differ by a depth tail plus an argument-Lipschitz term:
+    `|altSum a off R − altSum b off R'| ≤ 2(M²)^{R'+1}/(R'+1)! + LipS(M²,R')·|−a² − (−b²)|`
+    (for `R' ≤ R`, `2M² ≤ R'+2`, `|a|,|b| ≤ M`). Triangle through `altSum a off R'`:
+    `altSum_trunc_bound` (depth) + `altSum_Lip_le` (argument). -/
+theorem altSum_reconcile {a b : Q} {M : Nat} (had : 0 < a.den) (hbd : 0 < b.den)
+    (ha : Qle (Qabs a) ⟨(M : Int), 1⟩) (hb : Qle (Qabs b) ⟨(M : Int), 1⟩) (off : Nat)
+    {R R' : Nat} (hRR' : R' ≤ R) (hR'2 : 2 * (M * M) ≤ R' + 2) :
+    Qle (Qabs (Qsub (altSum a off R) (altSum b off R')))
+      (add ⟨(2 * npow (M * M) (R' + 1) : Int), fct (R' + 1)⟩
+        (mul (LipS (M * M) R') (Qabs (Qsub (neg (mul a a)) (neg (mul b b)))))) := by
+  refine Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (altSum_den_pos had off R)
+      (altSum_den_pos had off R'))) (Qabs_den_pos (Qsub_den_pos (altSum_den_pos had off R')
+      (altSum_den_pos hbd off R'))))
+    (Qabs_sub_triangle (altSum_den_pos had off R) (altSum_den_pos had off R')
+      (altSum_den_pos hbd off R')) ?_
+  exact Qadd_le_add (altSum_trunc_bound had ha off hR'2 hRR') (altSum_Lip_le had hbd ha hb off R')
+
 end UOR.Bridge.F1Square.Analysis
