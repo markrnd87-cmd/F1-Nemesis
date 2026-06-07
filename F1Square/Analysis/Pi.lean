@@ -53,6 +53,32 @@ theorem Qle_of_Qsub_le_Qsub_left {u a b : Q} (hud : 0 < u.den)
       = u.num * (b.den : Int) + -b.num * (u.den : Int) := by ring_uor
   rw [e1, e2]; exact h
 
+-- The ℤ core of right-subtraction cancellation.
+private theorem sub_le_core_r (xn yn un xd yd ud : Int) (hud : 1 ≤ ud)
+    (h : (xn * ud - un * xd) * (yd * ud) ≤ (yn * ud - un * yd) * (xd * ud)) : xn * yd ≤ yn * xd := by
+  have key : (yn * xd - xn * yd) * (ud * ud)
+      = (yn * ud - un * yd) * (xd * ud) - (xn * ud - un * xd) * (yd * ud) := by ring_uor
+  have hnn : 0 ≤ (yn * xd - xn * yd) * (ud * ud) := by omega
+  have hud2 : (0 : Int) < ud * ud := Int.mul_pos (by omega) (by omega)
+  have hz : 0 * (ud * ud) ≤ (yn * xd - xn * yd) * (ud * ud) := by rw [Int.zero_mul]; exact hnn
+  have := Int.le_of_mul_le_mul_right hz hud2
+  omega
+
+/-- Right-subtraction cancellation: `x − u ≤ y − u  ⟹  x ≤ y`. -/
+theorem Qle_of_Qsub_le_Qsub_right {x y u : Q} (hud : 0 < u.den)
+    (h : Qle (Qsub x u) (Qsub y u)) : Qle x y := by
+  have hudI : (1 : Int) ≤ (u.den : Int) := by exact_mod_cast hud
+  show x.num * (y.den : Int) ≤ y.num * (x.den : Int)
+  apply sub_le_core_r x.num y.num u.num (x.den : Int) (y.den : Int) (u.den : Int) hudI
+  simp only [Qle, Qsub, add, neg] at h
+  show (x.num * (u.den : Int) - u.num * (x.den : Int)) * ((y.den : Int) * (u.den : Int))
+      ≤ (y.num * (u.den : Int) - u.num * (y.den : Int)) * ((x.den : Int) * (u.den : Int))
+  have e1 : (x.num * (u.den : Int) - u.num * (x.den : Int))
+      = x.num * (u.den : Int) + -u.num * (x.den : Int) := by ring_uor
+  have e2 : (y.num * (u.den : Int) - u.num * (y.den : Int))
+      = y.num * (u.den : Int) + -u.num * (y.den : Int) := by ring_uor
+  rw [e1, e2]; exact h
+
 /-- **Strict positivity from a rational lower bound**: if `c ≤ x` for a positive rational `c`
     (`Rle (ofQ c) x`), then `Pos x`. The reusable keystone for every numeric positivity claim. -/
 theorem Pos_of_Rle_ofQ {c : Q} (hcn : 0 < c.num) (hcd : 0 < c.den) {x : Real}
@@ -133,6 +159,39 @@ theorem Rarctan_ge (t : Q) (htd : 0 < t.den) {ρ : Q} (hρ0 : 0 ≤ ρ.num) (hρ
     have hcancel := Qle_of_Qsub_le_Qsub_left (Qmul_den_pos h1d hWd) hmain'
     exact Qmul_le_cancel_right hWn hWd hcancel
   exact Qle_trans hRd hpt (Qle_self_add (by show (0 : Int) ≤ 2; decide))
+
+/-- **Upper bracket**: a rational `U` with `(U − arctanSum t 0)·(1−ρ²) ≥ ρ³` is `≥ arctan t`. -/
+theorem Rarctan_le (t : Q) (htd : 0 < t.den) {ρ : Q} (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den)
+    (hlt : ρ.num.toNat < ρ.den) (htρ : Qle (Qabs t) ρ) {U : Q} (hUd : 0 < U.den)
+    (hcond : Qle (qpow ρ 3) (mul (Qsub U (arctanSum t 0)) (Qsub ⟨1, 1⟩ (mul ρ ρ)))) :
+    Rle (Rarctan t htd hρ0 hρd hlt htρ) (ofQ U hUd) := by
+  have hWn : 0 < (Qsub (⟨1, 1⟩ : Q) (mul ρ ρ)).num := W_pos hρ0 hρd hlt
+  have hWd : 0 < (Qsub (⟨1, 1⟩ : Q) (mul ρ ρ)).den := Qsub_den_pos Nat.one_pos (Nat.mul_pos hρd hρd)
+  have hWnn : 0 ≤ (Qsub (⟨1, 1⟩ : Q) (mul ρ ρ)).num := Int.le_of_lt hWn
+  intro n
+  have hRd : 0 < (arctanSum t (Rartanh_R ρ n)).den := arctanSum_den_pos htd _
+  have h0d : 0 < (arctanSum t 0).den := arctanSum_den_pos htd 0
+  have hpt : Qle (arctanSum t (Rartanh_R ρ n)) U := by
+    have hsign : Qle (Qsub (arctanSum t (Rartanh_R ρ n)) (arctanSum t 0))
+        (Qabs (Qsub (arctanSum t (Rartanh_R ρ n)) (arctanSum t 0))) := Qle_self_Qabs _
+    have htrunc := arctanSum_trunc htd hρ0 hρd htρ hWnn (a := 0) (b := Rartanh_R ρ n)
+      (Nat.zero_le _)
+    have hmain : Qle (mul (Qsub (arctanSum t (Rartanh_R ρ n)) (arctanSum t 0))
+          (Qsub ⟨1, 1⟩ (mul ρ ρ)))
+        (mul (Qsub U (arctanSum t 0)) (Qsub ⟨1, 1⟩ (mul ρ ρ))) :=
+      Qle_trans (Qmul_den_pos (Qabs_den_pos (Qsub_den_pos hRd h0d)) hWd)
+        (Qmul_le_mul_right hWnn hsign)
+        (Qle_trans (qpow_den_pos hρd _) htrunc hcond)
+    have hmain' : Qle (Qsub (mul (arctanSum t (Rartanh_R ρ n)) (Qsub ⟨1, 1⟩ (mul ρ ρ)))
+          (mul (arctanSum t 0) (Qsub ⟨1, 1⟩ (mul ρ ρ))))
+        (Qsub (mul U (Qsub ⟨1, 1⟩ (mul ρ ρ))) (mul (arctanSum t 0) (Qsub ⟨1, 1⟩ (mul ρ ρ)))) :=
+      Qle_trans (Qmul_den_pos (Qsub_den_pos hRd h0d) hWd)
+        (Qeq_le (Qeq_symm (Qmul_sub_right _ _ _)))
+        (Qle_trans (Qmul_den_pos (Qsub_den_pos hUd h0d) hWd) hmain
+          (Qeq_le (Qmul_sub_right _ _ _)))
+    have hcancel := Qle_of_Qsub_le_Qsub_right (Qmul_den_pos h0d hWd) hmain'
+    exact Qmul_le_cancel_right hWn hWd hcancel
+  exact Qle_trans hUd hpt (Qle_self_add (by show (0 : Int) ≤ 2; decide))
 
 /-- `arctan(1/5)` (radius 1/2). -/
 def Ratan5 : Real :=
