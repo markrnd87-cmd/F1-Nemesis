@@ -407,4 +407,19 @@ theorem altCorner_factored {q : Q} (hqd : 0 < q.den) (off N : Nat) :
     (QsubCongr (Fsum_mul_left (ha i) ha N) (Fsum_mul_left (ha i) ha (N - i)))
     (Qeq_symm (Qmul_sub_distrib (altTerm q off i) (Fsum (altTerm q off) N) (Fsum (altTerm q off) (N - i))))
 
+/-- `|corner| ≤ Σᵢ |altTermᵢ · (altSum N − altSum(N−i))|` — the triangle inequality applied to the
+    factored corner, reducing the signed-corner bound to a sum of absolute values. -/
+theorem altCorner_abs_le {q : Q} (hqd : 0 < q.den) (off N : Nat) :
+    Qle (Qabs (Fsum (fun i => Qsub (Fsum (fun j => mul (altTerm q off i) (altTerm q off j)) N)
+          (Fsum (fun j => mul (altTerm q off i) (altTerm q off j)) (N - i))) N))
+      (Fsum (fun i => Qabs (mul (altTerm q off i)
+          (Qsub (Fsum (altTerm q off) N) (Fsum (altTerm q off) (N - i))))) N) := by
+  have ha : ∀ i, 0 < (altTerm q off i).den := altTerm_den_pos hqd off
+  have hfactterm_den : ∀ i, 0 < (mul (altTerm q off i)
+      (Qsub (Fsum (altTerm q off) N) (Fsum (altTerm q off) (N - i)))).den :=
+    fun i => Qmul_den_pos (ha i) (Qsub_den_pos (Fsum_den_pos ha N) (Fsum_den_pos ha (N - i)))
+  exact Qle_congr_left (Qabs_den_pos (Fsum_den_pos hfactterm_den N))
+    (Qeq_symm (Qabs_Qeq (altCorner_factored hqd off N)))
+    (Fsum_abs_le hfactterm_den N)
+
 end UOR.Bridge.F1Square.Analysis
