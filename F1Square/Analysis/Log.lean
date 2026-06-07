@@ -934,7 +934,15 @@ theorem tmap_M_eq {M : Q} (hMd : 0 < M.den) (hMn : 0 ≤ M.num) :
     Int.toNat_of_nonneg (show (0 : Int) ≤ M.num * 1 + 1 * (M.den : Int) by omega)]
   ring_uor
 
-/-- **`log` on a positive, `[1/M, M]`-bounded real**: `Rlog x = 2·artanh((x−1)/(x+1))`. -/
+/-- **`log` of a real presented with a rational modulus `1/M ≤ x ≤ M`** (`M ≥ 1`):
+    `Rlog x M = 2·artanh((x−1)/(x+1))`.
+
+    The modulus is taken as *data*, not hidden: the hypotheses constrain every approximant
+    (`0 < xₙ`, `xₙ ≤ M`, `1 ≤ xₙ·M`), which pins the value into `[1/M, M] ⊂ (0,∞)`. This is the
+    mathematically correct constructive formulation — `log` has **no** uniform modulus of continuity
+    on all of `(0,∞)` (it blows up at `0`), so a positivity/boundedness modulus is *necessary*, not a
+    shortcoming. Every positive real admits such a presentation (its tail is eventually trapped in some
+    `[1/M, M]`); `Rlog_two_ok` below exhibits the interface concretely on `x ≡ 2`. -/
 def Rlog (x : Real) (M : Q) (hMd : 0 < M.den) (hMge : Qle (⟨1, 1⟩ : Q) M)
     (hxpos : ∀ n, 0 < (x.seq n).num) (hhi : ∀ n, Qle (x.seq n) M)
     (hlo : ∀ n, Qle (⟨1, 1⟩ : Q) (mul (x.seq n) M)) : Real := by
@@ -977,5 +985,126 @@ def Rlog (x : Real) (M : Q) (hMd : 0 < M.den) (hMge : Qle (⟨1, 1⟩ : Q) M)
       (Qeq_le (tmap_M_eq hMd hMn))
   exact Rmul (ofQ ⟨2, 1⟩ (by decide))
     (Rartanh ⟨Rlog_seq x, Rlog_regular x hxpos, hden⟩ _ hρ0 hρd hlt hb)
+
+/-- The constant presentation `x ≡ 2`, a concrete positive real. -/
+def twoReal : Real := ofQ ⟨2, 1⟩ (by decide)
+
+/-- **Non-vacuity of `Rlog`**: the modulus interface is genuinely satisfiable. For the constant
+    presentation `x ≡ 2` with `M = 2`, all of `Rlog`'s hypotheses hold by computation — so
+    `Rlog twoReal 2 …` is a concretely constructed real (the constructive `log 2`). -/
+theorem Rlog_two_ok :
+    (0 < (⟨2, 1⟩ : Q).den) ∧ Qle (⟨1, 1⟩ : Q) ⟨2, 1⟩
+    ∧ (∀ n, 0 < (twoReal.seq n).num)
+    ∧ (∀ n, Qle (twoReal.seq n) ⟨2, 1⟩)
+    ∧ (∀ n, Qle (⟨1, 1⟩ : Q) (mul (twoReal.seq n) ⟨2, 1⟩)) :=
+  ⟨by decide, by decide,
+   fun _ => show (0 : Int) < (⟨2, 1⟩ : Q).num by decide,
+   fun _ => show Qle (⟨2, 1⟩ : Q) ⟨2, 1⟩ by decide,
+   fun _ => show Qle (⟨1, 1⟩ : Q) (mul (⟨2, 1⟩ : Q) ⟨2, 1⟩) by decide⟩
+
+-- ===========================================================================
+-- RlogPos:  log on a positive real, positivity-AS-DATA (same idiom as Rinv).
+-- The modulus 1/M ≤ x ≤ M is DERIVED from the positivity witness, not demanded
+-- of the caller: the witness floors x by L = δ/2 > 0 on its tail (Rinv_lb), and
+-- regularity from index 0 caps it by x₀+2 — so the reindexed presentation lands
+-- in [1/M, M] for M = |x₀| + 2 + 1/L, and feeds the Rlog engine directly.
+-- ===========================================================================
+
+/-- `a ≤ a + b` for `b ≥ 0`. -/
+theorem Qle_add_right_nonneg {a b : Q} (hb : 0 ≤ b.num) : Qle a (add a b) := by
+  show a.num * ((a.den * b.den : Nat) : Int)
+      ≤ (a.num * (b.den : Int) + b.num * (a.den : Int)) * (a.den : Int)
+  have hd : (a.num * (b.den : Int) + b.num * (a.den : Int)) * (a.den : Int)
+        - a.num * ((a.den * b.den : Nat) : Int) = b.num * ((a.den : Int) * (a.den : Int)) := by
+    push_cast; ring_uor
+  have hnn : 0 ≤ b.num * ((a.den : Int) * (a.den : Int)) :=
+    Int.mul_nonneg hb (Int.mul_nonneg (Int.ofNat_nonneg _) (Int.ofNat_nonneg _))
+  omega
+
+/-- `b ≤ a + b` for `a ≥ 0`. -/
+theorem Qle_add_left_nonneg {a b : Q} (ha : 0 ≤ a.num) : Qle b (add a b) := by
+  show b.num * ((a.den * b.den : Nat) : Int)
+      ≤ (a.num * (b.den : Int) + b.num * (a.den : Int)) * (b.den : Int)
+  have hd : (a.num * (b.den : Int) + b.num * (a.den : Int)) * (b.den : Int)
+        - b.num * ((a.den * b.den : Nat) : Int) = a.num * ((b.den : Int) * (b.den : Int)) := by
+    push_cast; ring_uor
+  have hnn : 0 ≤ a.num * ((b.den : Int) * (b.den : Int)) :=
+    Int.mul_nonneg ha (Int.mul_nonneg (Int.ofNat_nonneg _) (Int.ofNat_nonneg _))
+  omega
+
+/-- `Qbound` is antitone: a later index gives a smaller bound. -/
+theorem Qbound_anti {a b : Nat} (h : a ≤ b) : Qle (Qbound b) (Qbound a) := by
+  show (1 : Int) * ((a + 1 : Nat) : Int) ≤ 1 * ((b + 1 : Nat) : Int)
+  push_cast; omega
+
+/-- Reindexing a regular sequence by any `g` with `n ≤ g n` stays regular. -/
+theorem reindex_regular (x : Real) (g : Nat → Nat) (hg : ∀ n, n ≤ g n) :
+    IsRegular (fun n => x.seq (g n)) := fun j m =>
+  Qle_trans (add_den_pos (Qbound_den_pos (g j)) (Qbound_den_pos (g m)))
+    (x.reg (g j) (g m)) (Qadd_le_add (Qbound_anti (hg j)) (Qbound_anti (hg m)))
+
+/-- The log reindex from a positivity witness: `g(n) = 2(n+1) + 2·δ.den` — past the tail floor
+    `2·δ.den` (so `x_{g n} ≥ L > 0`, by `Rinv_lb`) and `≥ n` (so the presentation stays regular). -/
+def RlogPosR (x : Real) (k : Nat) (n : Nat) : Nat := 2 * (n + 1) + 2 * (Rdelta x k).den
+
+theorem RlogPosR_tail (x : Real) (k : Nat) (n : Nat) : 2 * (Rdelta x k).den ≤ RlogPosR x k n := by
+  unfold RlogPosR; omega
+
+theorem RlogPosR_self (x : Real) (k : Nat) (n : Nat) : n ≤ RlogPosR x k n := by
+  unfold RlogPosR; omega
+
+/-- Upper bound: every approximant satisfies `x_m ≤ x₀ + 2` (regularity from index 0). -/
+theorem Rlog_ub (x : Real) (m : Nat) : Qle (x.seq m) (add (x.seq 0) ⟨2, 1⟩) := by
+  refine Qle_trans (add_den_pos (x.den_pos 0) (add_den_pos (Qbound_den_pos m) (Qbound_den_pos 0)))
+    (Qle_add_of_Qabs_sub (x.den_pos m) (x.den_pos 0)
+      (add_den_pos (Qbound_den_pos m) (Qbound_den_pos 0)) (x.reg m 0))
+    (Qadd_le_add (Qle_refl _) ?_)
+  show Qle (add (Qbound m) (Qbound 0)) ⟨2, 1⟩
+  simp only [Qle, add, Qbound]; push_cast; omega
+
+/-- **`log` of a positive real, positivity-as-data** (the same idiom as `Rinv`): from a witness `k`
+    with `x_k > 1/(k+1)`, `RlogPos x k = log x` — the rational modulus `1/M ≤ x ≤ M` is *derived*
+    (`M = |x₀| + 2 + 1/L`, `L = δ/2` the witness floor), not demanded of the caller. No reindex of the
+    value: the diagonal is shifted only past the floor, so it presents the same real `x`. -/
+def RlogPos (x : Real) (k : Nat) (hk : Qlt (Qbound k) (x.seq k)) : Real := by
+  have hLn : 0 < (RL x k).num := RL_num_pos hk
+  have hLd : 0 < (RL x k).den := RL_den_pos
+  have hLinvn : 0 < (Qinv (RL x k)).num := Qinv_num_pos hLd
+  have hLinvd : 0 < (Qinv (RL x k)).den := Qinv_den_pos hLn
+  have hAd : 0 < (add (Qabs (x.seq 0)) ⟨2, 1⟩).den :=
+    add_den_pos (Qabs_den_pos (x.den_pos 0)) Nat.one_pos
+  have hAn : 0 ≤ (add (Qabs (x.seq 0)) ⟨2, 1⟩).num := by
+    simp only [add, Qabs]
+    have h1 := Int.ofNat_nonneg (x.seq 0).num.natAbs
+    have h2 := Int.ofNat_nonneg (x.seq 0).den
+    push_cast; omega
+  have h1A : Qle (⟨1, 1⟩ : Q) (add (Qabs (x.seq 0)) ⟨2, 1⟩) := by
+    simp only [Qle, add, Qabs]
+    have h1 := Int.ofNat_nonneg (x.seq 0).num.natAbs
+    have h2 := Int.ofNat_nonneg (x.seq 0).den
+    push_cast; omega
+  exact Rlog
+    ⟨fun n => x.seq (RlogPosR x k n), reindex_regular x (RlogPosR x k) (RlogPosR_self x k),
+      fun n => x.den_pos _⟩
+    (add (add (Qabs (x.seq 0)) ⟨2, 1⟩) (Qinv (RL x k)))
+    (add_den_pos hAd hLinvd)
+    (Qle_trans hAd h1A (Qle_add_right_nonneg (Int.le_of_lt hLinvn)))
+    (fun n => Rinv_num_pos hk (RlogPosR_tail x k n))
+    (by
+      intro n
+      exact Qle_trans (add_den_pos (x.den_pos 0) Nat.one_pos)
+        (Rlog_ub x (RlogPosR x k n))
+        (Qle_trans hAd (Qadd_le_add (Qle_self_Qabs (x.seq 0)) (Qle_refl _))
+          (Qle_add_right_nonneg (Int.le_of_lt hLinvn))))
+    (by
+      intro n
+      have hqn : 0 < (x.seq (RlogPosR x k n)).num := Rinv_num_pos hk (RlogPosR_tail x k n)
+      have hqd : 0 < (x.seq (RlogPosR x k n)).den := x.den_pos _
+      have hqL : Qle (RL x k) (x.seq (RlogPosR x k n)) := Rinv_lb hk (RlogPosR_tail x k n)
+      exact Qle_trans (Qmul_den_pos hLd hLinvd)
+        (Qeq_le (Qeq_symm (Qmul_Qinv hLn)))
+        (Qle_trans (Qmul_den_pos hqd hLinvd)
+          (Qmul_le_mul hLd hqd hLinvd (Int.le_of_lt hLn) (Int.le_of_lt hLinvn) hqL (Qle_refl _))
+          (Qmul_le_mul_left (Int.le_of_lt hqn) (Qle_add_left_nonneg hAn))))
 
 end UOR.Bridge.F1Square.Analysis

@@ -6,14 +6,18 @@ All notable changes to this project are documented here. The format is based on
 
 ## [0.13.0] - 2026-06-07
 
-### Added — the transcendentals on ℝ: `cos`, `sin`, and `log` on all positive reals (pure Lean 4, no Mathlib, no `sorry`)
+### Added — the transcendentals on ℝ: `cos`, `sin`, and `log` on positive reals (pure Lean 4, no Mathlib, no `sorry`)
 - **`cos` / `sin` on ℝ** (`F1Square/Analysis/CosSin.lean`) — the alternating power series as a directly
   Bishop-regular diagonal `RaltReal x off = ⟨Σ (−x²)ⁿ/(2n+off)!⟩`. The alternating term is dominated by
   the exponential of `M²` (`altTerm_abs_le`, `fct_mono`, `qsq_abs_le`), giving the truncation bound
   `altSum_trunc_bound` (geometric/factorial tail) and the Lipschitz bound `altSum_Lip_le`; the diagonal
   is regular (`RaltReal_regular`). `Rcos = RaltReal x 0`, `Rsin = x · RaltReal x 1`.
-- **`log` on every positive real** (`F1Square/Analysis/Log.lean`) — `Rlog x M = 2·artanh((x−1)/(x+1))`
-  for a positive real with rational bounds `1/M ≤ x ≤ M`:
+- **`log` on positive reals, positivity-as-data** (`F1Square/Analysis/Log.lean`) —
+  `RlogPos x k = 2·artanh((x−1)/(x+1))` from a positivity witness `x_k > 1/(k+1)`, the *same* idiom as
+  the reciprocal `Rinv`: the rational modulus `1/M ≤ x ≤ M` (`M = |x₀| + 2 + 1/L`, `L = δ/2` the witness
+  floor via `Rinv_lb`) is **derived**, not demanded of the caller. (Constructively a modulus *is*
+  necessary — `log` has no uniform modulus of continuity on `(0,∞)`.) The explicit-modulus engine
+  `Rlog x M` takes `M` directly (`Rlog_two_ok` exhibits it on `x ≡ 2`):
   - **`artanh` on every `[−ρ,ρ]`, `ρ<1`** (`Rartanh`): the odd series `Σ t^{2n+1}/(2n+1)` as a regular
     diagonal, via the geometric telescoping `geo_diff_bound`, the truncation `artSum_trunc`, the
     Lipschitz `artSum_Lip_le` (with `geoEven_bound`), and the **general Bernoulli reindex**

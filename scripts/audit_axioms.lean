@@ -461,6 +461,15 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rlog_regular
 #print axioms Analysis.tmap_M_eq
 #print axioms Analysis.Rlog
+#print axioms Analysis.Rlog_two_ok
+#print axioms Analysis.Qle_add_right_nonneg
+#print axioms Analysis.Qle_add_left_nonneg
+#print axioms Analysis.Qbound_anti
+#print axioms Analysis.reindex_regular
+#print axioms Analysis.RlogPosR_tail
+#print axioms Analysis.RlogPosR_self
+#print axioms Analysis.Rlog_ub
+#print axioms Analysis.RlogPos
 
 -- v0.10.0 — the λₙ / RH proof boundary (analytic face), locked faithfully.
 #print axioms Li.Pos_one

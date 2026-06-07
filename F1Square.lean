@@ -265,11 +265,15 @@ def f1SquareStatus : F1SquareStatus := {
 --   exp on ℝ (diagonal)        ← Analysis.{RexpReal = ⟨S_{x_{Rj}}(Rj)⟩ₙ, RexpReal_regular}, built from the
 --                               rational bounds expSum_trunc_bound (geometric tail), expSum_Lip_le +
 --                               LipS_le_U (Lipschitz), fct_ge_geom (factorial growth) — all axiom-clean
--- v0.13.0 (the transcendentals on ℝ: cos, sin, and log on all positive reals):
+-- v0.13.0 (the transcendentals on ℝ: cos, sin, and log on positive reals (positivity-as-data)):
 --   cos / sin on ℝ             ← Analysis.{Rcos = RaltReal x 0, Rsin = Rmul x (RaltReal x 1)}, the
 --                               alternating series with base −q² dominated by exp(M²) (altSum_trunc_bound,
 --                               altSum_Lip_le, fct_mono)
---   log on positive reals      ← Analysis.{Rlog x M = 2·artanh((x−1)/(x+1)) for 1/M ≤ x ≤ M}, built on the
+--   log on positive reals      ← Analysis.{RlogPos x k hk = 2·artanh((x−1)/(x+1)), positivity-AS-DATA — the
+--                               SAME idiom as the reciprocal Rinv: from a witness x_k > 1/(k+1), the modulus
+--                               1/M ≤ x ≤ M is DERIVED (M = |x₀| + 2 + 1/L, L = δ/2 the witness floor via
+--                               Rinv_lb), not demanded of the caller. The engine Rlog x M takes the modulus
+--                               explicitly (Rlog_two_ok exhibits it on x ≡ 2)}, built on the
 --                               complete artanh diagonal Rartanh (artanh on every [−ρ,ρ], ρ<1), via the
 --                               geometric tail (artSum_trunc), artanh Lipschitz (artSum_Lip_le), the general
 --                               Bernoulli reindex (qpow_geom_bound), and the t-map q↦(q−1)/(q+1) with its
@@ -437,12 +441,15 @@ example :
 
 /-- Elaboration-checked witness binding the v0.13.0 transcendentals: `cos` and `sin` (the alternating
     diagonal `RaltReal x off`) are genuinely constructed reals — their diagonal sequences are
-    Bishop-regular; and `log` on every positive, `[1/M, M]`-bounded real (`Rlog x M`) is a genuinely
-    constructed real, its diagonal `t.seq n = (x_{2(n+1)}−1)/(x_{2(n+1)}+1)` Bishop-regular. All
-    axiom-clean, no `sorry`; the t-map range bound keeps the artanh argument inside `[−ρ,ρ]`, `ρ<1`. -/
+    Bishop-regular; and `log` on positive reals is genuine **positivity-as-data**: from a witness
+    `x_k > 1/(k+1)`, `RlogPos x k` derives the modulus `1/M ≤ x ≤ M` and yields a constructed real
+    (third clause: `log 2` via this path, on the concrete positive real `2`). All axiom-clean, no
+    `sorry`; the t-map range bound keeps the artanh argument inside `[−ρ,ρ]`, `ρ<1`. -/
 example :
     (∀ x : Analysis.Real, ∀ off : Nat, Analysis.IsRegular (Analysis.RaltReal_seq x off))
-    ∧ (∀ x : Analysis.Real, (∀ n, 0 < (x.seq n).num) → Analysis.IsRegular (Analysis.Rlog_seq x)) :=
-  ⟨Analysis.RaltReal_regular, Analysis.Rlog_regular⟩
+    ∧ (∀ x : Analysis.Real, (∀ n, 0 < (x.seq n).num) → Analysis.IsRegular (Analysis.Rlog_seq x))
+    ∧ Analysis.IsRegular (Analysis.RlogPos Analysis.twoReal 0 (by decide)).seq :=
+  ⟨Analysis.RaltReal_regular, Analysis.Rlog_regular,
+   (Analysis.RlogPos Analysis.twoReal 0 (by decide)).reg⟩
 
 end UOR.Bridge.F1Square

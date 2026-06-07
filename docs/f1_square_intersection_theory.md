@@ -546,10 +546,12 @@ canonical forms, realizations, no Mathlib — one brick per release:
   Three rational bounds make it rigorous: a geometric **truncation** tail `2Mᵃ⁺¹/(a+1)!`, a uniform
   **Lipschitz** bound, and a **factorial-growth** estimate converting the tail to a `1/(j+1)` reindex —
   all axiom-clean.
-- **v0.13.0 (done):** the **transcendentals on ℝ** — `cos`, `sin`, and `log` on all positive reals.
+- **v0.13.0 (done):** the **transcendentals on ℝ** — `cos`, `sin`, and `log` on positive reals (positivity-as-data).
   `cos`/`sin` (`CosSin.lean`) are the alternating diagonal `Σ(−x²)ⁿ/(2n+off)!`, the alternating term
   dominated by `exp(M²)` (factorial vs. geometric), with `Rcos = RaltReal x 0`, `Rsin = x·RaltReal x 1`.
-  `log` (`Log.lean`) is `Rlog x M = 2·artanh((x−1)/(x+1))` for a positive real with rational bounds
+  `log` (`Log.lean`) is positivity-as-data (the same idiom as the reciprocal `Rinv`): `RlogPos x k` from a
+  witness `x_k > 1/(k+1)` **derives** the rational modulus `1/M ≤ x ≤ M` and returns `2·artanh((x−1)/(x+1))`;
+  equivalently the explicit-modulus engine `Rlog x M` takes a real presented with a rational modulus
   `1/M ≤ x ≤ M`: the artanh odd series `Σ t^{2n+1}/(2n+1)` is built as a regular diagonal on every
   `[−ρ,ρ]` (`ρ<1`) — geometric telescoping + truncation + Lipschitz, with a **general Bernoulli reindex**
   `ρᵐ ≤ q/(q+m(q−p))` taming the geometric tail — and composed with the Möbius **t-map** `q↦(q−1)/(q+1)`
