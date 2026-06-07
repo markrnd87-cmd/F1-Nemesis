@@ -496,4 +496,26 @@ theorem altTail_deep_le {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q) �
   rw [he]
   exact Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor)
 
+/-- `x − y ≤ x` for `y ≥ 0` (local copy; `Log.Qsub_le_self` isn't imported here). -/
+theorem Qsub_le_self_loc {a b : Q} (hb : 0 ≤ b.num) : Qle (Qsub a b) a := by
+  show (a.num * (b.den : Int) + (-b.num) * (a.den : Int)) * (a.den : Int)
+      ≤ a.num * ((a.den * b.den : Nat) : Int)
+  have key : a.num * ((a.den * b.den : Nat) : Int)
+      = (a.num * (b.den : Int) + (-b.num) * (a.den : Int)) * (a.den : Int)
+        + b.num * ((a.den : Int) * (a.den : Int)) := by push_cast; ring_uor
+  have hnn : 0 ≤ b.num * ((a.den : Int) * (a.den : Int)) :=
+    Int.mul_nonneg hb (Int.mul_nonneg (Int.ofNat_nonneg _) (Int.ofNat_nonneg _))
+  omega
+
+/-- **Uniform gap bound**: any alt-series gap `|Σ_{a<j≤b} altTermⱼ|` is `≤ expM_U(M²)(2M²)`. -/
+theorem altGap_le_U {q : Q} {M : Nat} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨(M : Int), 1⟩)
+    (off : Nat) {a b : Nat} (hab : a ≤ b) :
+    Qle (Qabs (Qsub (Fsum (altTerm q off) b) (Fsum (altTerm q off) a)))
+      (expM_U (M * M) (2 * (M * M))) := by
+  rw [← altSum_eq_Fsum, ← altSum_eq_Fsum]
+  exact Qle_trans (Qsub_den_pos (expSumM_den_pos (M * M) b) (expSumM_den_pos (M * M) a))
+    (altSum_abs_diff_le hqd hq off hab)
+    (Qle_trans (expSumM_den_pos (M * M) b)
+      (Qsub_le_self_loc (expSumM_num_nonneg (M * M) a)) (expSumM_le_U (M * M) b))
+
 end UOR.Bridge.F1Square.Analysis
