@@ -678,6 +678,8 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.altPyth_partial
 #print axioms Analysis.altCorner_factored
 #print axioms Analysis.altCorner_abs_le
+#print axioms Analysis.qpow_natBase
+#print axioms Analysis.expTerm_natBase
 #print axioms Analysis.altSum_eq_Fsum
 #print axioms Analysis.expSumM_eq_Fsum
 #print axioms Analysis.altAbsSum_le_U

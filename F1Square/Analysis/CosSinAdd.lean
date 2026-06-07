@@ -422,6 +422,23 @@ theorem altCorner_abs_le {q : Q} (hqd : 0 < q.den) (off N : Nat) :
     (Qeq_symm (Qabs_Qeq (altCorner_factored hqd off N)))
     (Fsum_abs_le hfactterm_den N)
 
+/-- `(↑m)ⁱ = ↑(mⁱ)` as a rational (`qpow` of a natural base). -/
+theorem qpow_natBase (m : Nat) : ∀ i, Qeq (qpow (⟨(m : Int), 1⟩ : Q) i) ⟨(npow m i : Int), 1⟩
+  | 0 => Qeq_refl _
+  | (i + 1) => by
+      refine Qeq_trans (Qmul_den_pos Nat.one_pos Nat.one_pos)
+        (Qmul_congr (Qeq_refl _) (qpow_natBase m i)) ?_
+      show Qeq (mul (⟨(m : Int), 1⟩ : Q) ⟨(npow m i : Int), 1⟩) ⟨(npow m (i + 1) : Int), 1⟩
+      rw [npow_succ]; simp only [Qeq, mul]; push_cast; ring_uor
+
+/-- `expTerm` of a natural base `m` is `mⁱ/i!`. -/
+theorem expTerm_natBase (m : Nat) (i : Nat) :
+    Qeq (expTerm (⟨(m : Int), 1⟩ : Q) i) ⟨(npow m i : Int), fct i⟩ := by
+  refine Qeq_trans (Qmul_den_pos Nat.one_pos (fct_pos i))
+    (Qmul_congr (qpow_natBase m i) (Qeq_refl (⟨1, fct i⟩ : Q))) ?_
+  show Qeq (mul (⟨(npow m i : Int), 1⟩ : Q) ⟨1, fct i⟩) ⟨(npow m i : Int), fct i⟩
+  simp only [Qeq, mul]; push_cast; ring_uor
+
 /-- The alternating partial sum is the `Fsum` of its terms (bridge between `altSum` and the `Fsum` library). -/
 theorem altSum_eq_Fsum (q : Q) (off : Nat) : ∀ N, altSum q off N = Fsum (altTerm q off) N
   | 0 => rfl
