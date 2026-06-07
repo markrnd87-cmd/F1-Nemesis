@@ -474,6 +474,25 @@ theorem Fsum_conv_expSum {x y : Q} (hxd : 0 < x.den) (hyd : 0 < y.den) (M : Nat)
     (Fsum_congr (fun m => expTerm_conv hxd hyd m) M)
     (Qeq_symm (expSum_eq_Fsum (add x y) M))
 
+/-- **The square Cauchy decomposition** (generic): `(Σ_{i≤N} aᵢ)² ≈ Σ_{m≤N} (Σ_{i≤m} aᵢ·a_{m−i}) + corner`
+    — the antidiagonal convolution sum plus the high corner. Generalizes `expSum_mul_eq` to any term
+    sequence (used for the `cos²`/`sin²` Cauchy products). -/
+theorem Fsum_sq_cauchy {a : Nat → Q} (ha : ∀ i, 0 < (a i).den) (N : Nat) :
+    Qeq (mul (Fsum a N) (Fsum a N))
+      (add (Fsum (fun m => Fsum (fun i => mul (a i) (a (m - i))) m) N)
+        (Fsum (fun i => Qsub (Fsum (fun j => mul (a i) (a j)) N)
+          (Fsum (fun j => mul (a i) (a j)) (N - i))) N)) := by
+  have hg : ∀ i j, 0 < (mul (a i) (a j)).den := fun i j => Qmul_den_pos (ha i) (ha j)
+  have hcorner : 0 < (Fsum (fun i => Qsub (Fsum (fun j => mul (a i) (a j)) N)
+      (Fsum (fun j => mul (a i) (a j)) (N - i))) N).den :=
+    Fsum_den_pos (fun i => Qsub_den_pos (Fsum_den_pos (fun j => hg i j) N)
+      (Fsum_den_pos (fun j => hg i j) (N - i))) N
+  refine Qeq_trans (Fsum_den_pos (fun i => Fsum_den_pos (fun j => hg i j) N) N)
+    (Fsum_mul_square ha ha N) ?_
+  refine Qeq_trans (add_den_pos (Fsum_den_pos (fun i => Fsum_den_pos (fun j => hg i j) (N - i)) N) hcorner)
+    (Fsum_square_decomp hg N) ?_
+  exact Qadd_congr (Fsum_triangle_reindex hg N) (Qeq_refl _)
+
 /-- **The exact finite Cauchy product** `expSum x M · expSum y M ≈ expSum(x+y) M + corner`, where the
     corner is the high part `Σᵢ Σ_{M−i<j≤M} (xⁱ/i!)(yʲ/j!)`. Assembled from `Fsum_mul_square`,
     `Fsum_square_decomp`, `Fsum_triangle_reindex`, and `Fsum_conv_expSum`. -/

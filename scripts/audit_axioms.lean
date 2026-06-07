@@ -637,6 +637,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qmul_sub_distrib
 #print axioms Analysis.QnegCongr
 #print axioms Analysis.QsubCongr
+#print axioms Analysis.Fsum_sq_cauchy
 #print axioms Analysis.expSum_mul_eq
 #print axioms Analysis.expSum_corner_factored
 #print axioms Analysis.Qsub_add_left_cancel
