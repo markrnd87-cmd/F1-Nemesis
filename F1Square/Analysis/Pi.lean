@@ -119,6 +119,44 @@ private theorem W_pos {ρ : Q} (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den) (hlt : 
       = (ρ.den : Int) * (ρ.den : Int) - 2 * (ρ.den : Int) + 1 := by ring_uor
   push_cast; omega
 
+-- ===========================================================================
+-- Order toolkit: ℝ addition/negation/subtraction are monotone (reusable for λ₁).
+-- ===========================================================================
+
+-- ℤ core of negation antitonicity.
+private theorem neg_le_core (an ad bn bd s : Int)
+    (h : an * (bd * s) ≤ (bn * s + 2 * bd) * ad) :
+    (-bn) * (ad * s) ≤ (-an * s + 2 * ad) * bd := by
+  have e : (-an * s + 2 * ad) * bd - (-bn) * (ad * s)
+      = (bn * s + 2 * bd) * ad - an * (bd * s) := by ring_uor
+  omega
+
+/-- ℝ negation is antitone: `a ≤ b ⟹ −b ≤ −a`. -/
+theorem Rle_Rneg {a b : Real} (h : Rle a b) : Rle (Rneg b) (Rneg a) := by
+  intro n
+  have hh := h n
+  show Qle (neg (b.seq n)) (add (neg (a.seq n)) ⟨2, n + 1⟩)
+  simp only [Qle, neg, add] at hh ⊢
+  have hc := neg_le_core (a.seq n).num (a.seq n).den (b.seq n).num (b.seq n).den ((n : Int) + 1) ?_
+  · push_cast at hc ⊢; omega
+  · push_cast at hh ⊢; omega
+
+/-- ℝ addition is monotone. -/
+theorem Radd_le_add {a a' b b' : Real} (ha : Rle a a') (hb : Rle b b') :
+    Rle (Radd a b) (Radd a' b') := by
+  intro n
+  show Qle (add (a.seq (2 * n + 1)) (b.seq (2 * n + 1)))
+    (add (add (a'.seq (2 * n + 1)) (b'.seq (2 * n + 1))) ⟨2, n + 1⟩)
+  have hsum := Qadd_le_add (ha (2 * n + 1)) (hb (2 * n + 1))
+  refine Qle_congr_right ?_ ?_ hsum
+  · exact add_den_pos (add_den_pos (a'.den_pos (2 * n + 1)) (Nat.succ_pos _))
+      (add_den_pos (b'.den_pos (2 * n + 1)) (Nat.succ_pos _))
+  · simp only [Qeq, add]; push_cast; ring_uor
+
+/-- ℝ subtraction is monotone: `a' ≤ a` and `b ≤ b' ⟹ a' − b' ≤ a − b`. -/
+theorem Rsub_le_sub {a a' b b' : Real} (ha : Rle a' a) (hb : Rle b b') :
+    Rle (Rsub a' b') (Rsub a b) := Radd_le_add ha (Rle_Rneg hb)
+
 /-- **Lower bracket**: a rational `L` with `(arctanSum t 1 − L)·(1−ρ²) ≥ ρ⁵` is `≤ arctan t`. -/
 theorem Rarctan_ge (t : Q) (htd : 0 < t.den) {ρ : Q} (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den)
     (hlt : ρ.num.toNat < ρ.den) (htρ : Qle (Qabs t) ρ) {L : Q} (hLd : 0 < L.den)
