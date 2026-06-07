@@ -390,6 +390,13 @@ theorem Fsum_swap {g : Nat → Nat → Q} (hg : ∀ i j, 0 < (g i j).den) (N : N
         (Qadd_congr (Fsum_swap hg N M) (Qeq_refl (Fsum (fun j => g (M + 1) j) N)))
         (Qeq_symm (Fsum_add (fun j => Fsum_den_pos (fun i => hg i j) M) (fun j => hg (M + 1) j) N))
 
+/-- A finite sum of non-negative terms grows with its length. -/
+theorem Fsum_mono_len {f : Nat → Q} (hf0 : ∀ i, 0 ≤ (f i).num) (hfd : ∀ i, 0 < (f i).den)
+    {M N : Nat} (hMN : M ≤ N) : Qle (Fsum f M) (Fsum f N) := by
+  induction hMN with
+  | refl => exact Qle_refl _
+  | @step N' _ ih => exact Qle_trans (Fsum_den_pos hfd N') ih (Qle_self_add (hf0 (N' + 1)))
+
 /-- Triangle inequality for finite sums: `|Σ fᵢ| ≤ Σ |fᵢ|`. -/
 theorem Fsum_abs_le {f : Nat → Q} (hf : ∀ i, 0 < (f i).den) :
     ∀ M, Qle (Qabs (Fsum f M)) (Fsum (fun i => Qabs (f i)) M)
