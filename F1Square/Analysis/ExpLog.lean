@@ -1531,6 +1531,26 @@ theorem kdbl_sq_id (m : Nat) :
   exact Qeq_trans (Qsub_den_pos (Qmul_den_pos Nat.one_pos (hk' m))
       (Qsub_den_pos (twoFone_den m) (Qmul_den_pos Nat.one_pos (htk m)))) hLHS hfin
 
+/-- **Power addition** `cⁱ⁺ʲ = cⁱ·cʲ` (induction on `i` via `fmul_assoc`). -/
+theorem fpow_add {c : Nat → Q} (hc : ∀ i, 0 < (c i).den) : ∀ (i j k : Nat),
+    Qeq (fpow c (i + j) k) (fmul (fpow c i) (fpow c j) k)
+  | 0, j, k => by
+      rw [Nat.zero_add]
+      show Qeq (fpow c j k) (fmul fone (fpow c j) k)
+      exact Qeq_symm (Qeq_trans (fmul_den_pos (fun _ => fpow_den_pos hc j _)
+        (fun _ => fone_den_pos _) k)
+        (fmul_comm fone (fpow c j) (fun _ => fone_den_pos _) (fun _ => fpow_den_pos hc j _) k)
+        (fmul_one (fpow c j) (fun _ => fpow_den_pos hc j _) k))
+  | (i + 1), j, k => by
+      have hid : i + 1 + j = (i + j) + 1 := by omega
+      rw [hid]
+      show Qeq (fmul c (fpow c (i + j)) k) (fmul (fmul c (fpow c i)) (fpow c j) k)
+      refine Qeq_trans (fmul_den_pos hc (fun _ => fmul_den_pos (fun _ => fpow_den_pos hc i _)
+          (fun _ => fpow_den_pos hc j _) _) k)
+        (fmul_congr_right (fun l => fpow_add hc i j l) k) ?_
+      exact Qeq_symm (fmul_assoc c (fpow c i) (fpow c j) hc (fun _ => fpow_den_pos hc i _)
+        (fun _ => fpow_den_pos hc j _) k)
+
 /-- **The artanh ODE** `(1−t²)·artanh' = 1` at the coefficient level. -/
 theorem artanh_ode (k : Nat) : Qeq (fmul oneMinusSq gcoef k) (fone k) :=
   Qeq_trans (add_den_pos (fmul_den_pos (fun i => fsmono_den Nat.one_pos 0 i) (fun _ => gcoef_den _) k)
