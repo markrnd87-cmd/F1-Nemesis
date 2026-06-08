@@ -1551,6 +1551,32 @@ theorem fpow_add {c : Nat → Q} (hc : ∀ i, 0 < (c i).den) : ∀ (i j k : Nat)
       exact Qeq_symm (fmul_assoc c (fpow c i) (fpow c j) hc (fun _ => fpow_den_pos hc i _)
         (fun _ => fpow_den_pos hc j _) k)
 
+/-- `fcomp` distributes over addition (outer argument). -/
+theorem fcomp_add {a b c : Nat → Q} (ha : ∀ i, 0 < (a i).den) (hb : ∀ i, 0 < (b i).den)
+    (hc : ∀ i, 0 < (c i).den) (k : Nat) :
+    Qeq (fcomp (fun i => add (a i) (b i)) c k) (add (fcomp a c k) (fcomp b c k)) := by
+  show Qeq (Fsum (fun m => mul (add (a m) (b m)) (fpow c m k)) k)
+    (add (Fsum (fun m => mul (a m) (fpow c m k)) k) (Fsum (fun m => mul (b m) (fpow c m k)) k))
+  refine Qeq_trans (Fsum_den_pos (fun m => add_den_pos (Qmul_den_pos (ha m) (fpow_den_pos hc m k))
+      (Qmul_den_pos (hb m) (fpow_den_pos hc m k))) k)
+    (Fsum_congr (fun m => Qmul_add_right (a m) (b m) (fpow c m k)) k)
+    (Fsum_add (fun m => Qmul_den_pos (ha m) (fpow_den_pos hc m k))
+      (fun m => Qmul_den_pos (hb m) (fpow_den_pos hc m k)) k)
+
+/-- `fcomp fone c = fone` (composing the unit). -/
+theorem fcomp_fone {c : Nat → Q} (hc : ∀ i, 0 < (c i).den) (k : Nat) :
+    Qeq (fcomp fone c k) (fone k) := by
+  show Qeq (Fsum (fun m => mul (fone m) (fpow c m k)) k) (fone k)
+  have hg : ∀ m, 0 < (mul (fone m) (fpow c m k)).den :=
+    fun m => Qmul_den_pos (fone_den_pos m) (fpow_den_pos hc m k)
+  have hz : ∀ m, m ≠ 0 → Qeq (mul (fone m) (fpow c m k)) ⟨0, 1⟩ := by
+    intro m hm
+    have he : fone m = ⟨0, 1⟩ := by unfold fone; rw [if_neg hm]
+    rw [he]; simp [Qeq, mul]
+  have hg0 : Qeq (mul (fone 0) (fpow c 0 k)) (fone k) := by
+    show Qeq (mul ⟨1, 1⟩ (fone k)) (fone k); simp [Qeq, mul]
+  exact Qeq_trans (hg 0) (Fsum_single hg hz (Nat.zero_le k)) hg0
+
 /-- **The artanh ODE** `(1−t²)·artanh' = 1` at the coefficient level. -/
 theorem artanh_ode (k : Nat) : Qeq (fmul oneMinusSq gcoef k) (fone k) :=
   Qeq_trans (add_den_pos (fmul_den_pos (fun i => fsmono_den Nat.one_pos 0 i) (fun _ => gcoef_den _) k)
