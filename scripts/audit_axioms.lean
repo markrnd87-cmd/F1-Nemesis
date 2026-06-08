@@ -948,3 +948,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.qpow_mul
 #print axioms Analysis.qpow_two_nat
 #print axioms Analysis.fpow_kdbl_term_bound
+#print axioms Analysis.Fsum_abs_diff_le

@@ -413,6 +413,28 @@ theorem Fsum_le_Fsum {f g : Nat → Q} (h : ∀ i, Qle (f i) (g i)) : ∀ M, Qle
   | 0 => h 0
   | (M + 1) => Qadd_le_add (Fsum_le_Fsum h M) (h (M + 1))
 
+/-- **Gap domination** (the general `artSum_abs_diff_le`): if `|fₖ| ≤ gₖ` then the partial-sum gap of `f`
+    is dominated by the gap of `g`. -/
+theorem Fsum_abs_diff_le {f g : Nat → Q} (hf : ∀ i, 0 < (f i).den) (hg : ∀ i, 0 < (g i).den)
+    (hfg : ∀ i, Qle (Qabs (f i)) (g i)) {a b : Nat} (hab : a ≤ b) :
+    Qle (Qabs (Qsub (Fsum f b) (Fsum f a))) (Qsub (Fsum g b) (Fsum g a)) := by
+  induction hab with
+  | refl =>
+      have h := Qsub_self_num (Fsum f a)
+      have h' := Qsub_self_num (Fsum g a)
+      unfold Qle Qabs; rw [h, h']; simp
+  | @step k _ ih =>
+      have hstep : Qle (Qabs (Qsub (Fsum f (k + 1)) (Fsum f a)))
+          (add (Qabs (Qsub (Fsum f k) (Fsum f a))) (Qabs (f (k + 1)))) :=
+        Qle_congr_left (Qabs_den_pos (add_den_pos (Qsub_den_pos (Fsum_den_pos hf k)
+            (Fsum_den_pos hf a)) (hf (k + 1))))
+          (Qeq_symm (Qabs_Qeq (Qsub_add_right (Fsum f k) (f (k + 1)) (Fsum f a)))) (Qabs_add_le _ _)
+      refine Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (Fsum_den_pos hf k) (Fsum_den_pos hf a)))
+          (Qabs_den_pos (hf (k + 1)))) hstep
+        (Qle_trans (add_den_pos (Qsub_den_pos (Fsum_den_pos hg k) (Fsum_den_pos hg a)) (hg (k + 1)))
+          (Qadd_le_add ih (hfg (k + 1)))
+          (Qeq_le (Qeq_symm (Qsub_add_right (Fsum g k) (g (k + 1)) (Fsum g a)))))
+
 /-- **Geometric bound on evaluation**: if `|cₖ| ≤ B` and `|w| ≤ ρ`, then `|eval c w M| ≤ Σ_{k≤M} B·ρᵏ`. -/
 theorem peval_abs_bound (c : Nat → Q) (hc : ∀ k, 0 < (c k).den) (w : Q) (hwd : 0 < w.den)
     {B ρ : Q} (hBd : 0 < B.den) (hρd : 0 < ρ.den) (hB : ∀ k, Qle (Qabs (c k)) B)
