@@ -2531,6 +2531,17 @@ theorem q_conv (ρ w : Q) (hρd : 0 < ρ.den) (hwd : 0 < w.den) (hw : Qle (Qabs 
       (Qadd_le_add (Qabs_kdbl_qpow_le ρ w hρd hwd hw N (N + 2))
         (Qabs_kdbl_qpow_le ρ w hρd hwd hw (N + 1) (N + 3)))
 
+/-- `|a − b| ≤ |a| + |b|`. -/
+theorem Qabs_sub_le_add (a b : Q) : Qle (Qabs (Qsub a b)) (add (Qabs a) (Qabs b)) := by
+  show Qle (Qabs (add a (neg b))) (add (Qabs a) (Qabs b))
+  have h := Qabs_add_le a (neg b); rw [Qabs_neg b] at h; exact h
+
+/-- The recursion algebra `(q·pm − cor) − u·um = q·(pm − um) + ((q−u)·um − cor)`. -/
+theorem e_rec_alg (q pm um u cor : Q) :
+    Qeq (Qsub (Qsub (mul q pm) cor) (mul u um))
+      (add (mul q (Qsub pm um)) (Qsub (mul (Qsub q u) um) cor)) := by
+  simp only [Qeq, mul, add, Qsub, neg]; push_cast; ring_uor
+
 /-- Bounded termwise sum monotonicity (`f ≤ g` for `i ≤ M`). -/
 theorem Fsum_le_Fsum_le {f g : Nat → Q} :
     ∀ {M}, (∀ i, i ≤ M → Qle (f i) (g i)) → Qle (Fsum f M) (Fsum g M)

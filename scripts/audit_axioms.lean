@@ -974,3 +974,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qabs_kdbl_qpow_le
 #print axioms Analysis.q_conv
 #print axioms Analysis.uval_abs_le
+#print axioms Analysis.Qabs_sub_le_add
+#print axioms Analysis.e_rec_alg
