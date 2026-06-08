@@ -384,4 +384,32 @@ theorem dgeom_ode (k : Nat) : Qeq (fderiv dgeom k) (fmul dexpderiv dgeom k) := b
         simp only [Qeq, add, mul]; push_cast; omega
   exact Qeq_trans Nat.one_pos hLHS (Qeq_symm hRHS)
 
+-- ===========================================================================
+-- Power-series evaluation  peval c w N = Σ_{k≤N} cₖ wᵏ, and the target side.
+-- ===========================================================================
+
+/-- **Partial evaluation** of a formal power series `c` at `w`: `Σ_{k=0}^N cₖ·wᵏ`. -/
+def peval (c : Nat → Q) (w : Q) (N : Nat) : Q := Fsum (fun k => mul (c k) (qpow w k)) N
+
+theorem peval_den_pos {c : Nat → Q} {w : Q} (hc : ∀ k, 0 < (c k).den) (hwd : 0 < w.den) (N : Nat) :
+    0 < (peval c w N).den := Fsum_den_pos (fun k => Qmul_den_pos (hc k) (qpow_den_pos hwd k)) N
+
+/-- **The target side**: the geometric-coefficient evaluation is `2·(Σ_{k≤N} wᵏ) − 1`. With
+    `gPow_telescope` this gives `peval dgeom w N · (1−w) → (1+w)` — the closed form `(1+w)/(1−w)`. -/
+theorem peval_dgeom (w : Q) (hwd : 0 < w.den) :
+    ∀ N, Qeq (peval dgeom w N) (Qsub (mul ⟨2, 1⟩ (gPow w N)) ⟨1, 1⟩)
+  | 0 => by
+      show Qeq (mul (dgeom 0) (qpow w 0)) (Qsub (mul ⟨2, 1⟩ (gPow w 0)) ⟨1, 1⟩)
+      show Qeq (mul (dgeom 0) ⟨1, 1⟩) (Qsub (mul ⟨2, 1⟩ ⟨1, 1⟩) ⟨1, 1⟩)
+      decide
+  | (N + 1) => by
+      show Qeq (add (peval dgeom w N) (mul (dgeom (N + 1)) (qpow w (N + 1))))
+        (Qsub (mul ⟨2, 1⟩ (add (gPow w N) (qpow w (N + 1)))) ⟨1, 1⟩)
+      have hd : dgeom (N + 1) = ⟨2, 1⟩ := by unfold dgeom; rw [if_neg (by omega)]
+      rw [hd]
+      refine Qeq_trans (add_den_pos (Qsub_den_pos (Qmul_den_pos (by decide) (gPow_den_pos hwd N)) Nat.one_pos)
+          (Qmul_den_pos (by decide) (qpow_den_pos hwd (N + 1))))
+        (Qadd_congr (peval_dgeom w hwd N) (Qeq_refl _)) ?_
+      simp only [Qeq, mul, Qsub, add, neg]; push_cast; ring_uor
+
 end UOR.Bridge.F1Square.Analysis
