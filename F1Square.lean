@@ -491,4 +491,16 @@ example :
 example : Analysis.Pos Analysis.Rlambda1 ∧ f1SquareStatus.liPositivityHolds = none :=
   ⟨Analysis.Rlambda1_pos, rfl⟩
 
+/-- Elaboration-checked witness binding the v0.15.0 complex analytic engine (exponential core): the
+    real exponential is a genuine **homomorphism** — `exp(x+y) ≈ exp x · exp y` for all constructive
+    reals (`RexpReal_add`) — and the complex `nˢ` carries the **modulus identity** `|nˢ|² = (exp(Re s·log n))²`
+    (`ncpow_normSq`, the analytic payoff of `cos²+sin² ≈ 1`). Both choice-free and `sorry`-free. This is
+    the exponential core of stage A; ζ for complex `s` is gated on `exp∘log = id` (the v0.15.x series) and
+    the crux stays open — `liPositivityHolds = none`. -/
+example :
+    (∀ x y : Analysis.Real, Analysis.Req (Analysis.RexpReal (Analysis.Radd x y))
+        (Analysis.Rmul (Analysis.RexpReal x) (Analysis.RexpReal y)))
+      ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Analysis.RexpReal_add, rfl⟩
+
 end UOR.Bridge.F1Square

@@ -30,28 +30,53 @@ stop sign — the focus is always the **construction of the F1 square**, to comp
 
 ---
 
-## v0.15.0 — (A) The complex analytic engine
+## v0.15.0 — (A) The complex analytic engine: exponential core **[shipped]**
 
-Lift the analytic substrate from ℝ to ℂ and build ζ for complex argument in the convergent regime.
+Lift the analytic substrate from ℝ to ℂ and make `exp` a homomorphism — the prerequisite that the rest of
+stage A (ζ for complex argument) builds on. **Shipped:**
 
-- `Analysis/ComplexExp.lean` — `Cexp z = exp(re z)·(cos(im z) + i·sin(im z))` from `RexpReal/Rcos/Rsin`;
-  principal `Clog` on `Re > 0`; `ncpow n s = Cexp (s · log n)` (`nˢ`, positive-integer base — the only
-  base ζ needs, so full multi-branch `Clog` is off the critical path).
-- `Analysis/ExpAdd.lean` — **the keystone** (discovered dependency): the exponential/trig **functional
-  equation** via the Cauchy product + binomial theorem from scratch (`exp(x+y) ≈ exp x · exp y`;
-  `cos²+sin² ≈ 1`), giving the bounds `|cos| ≤ 1`, `|sin| ≤ 1`. Required for the `Czeta` modulus and
-  reused for `Γ` in v0.16.0. The substrate had no addition formula / Cauchy product / binomial / trig
-  bounds, so this is a genuine from-scratch build (binomial theorem → double-sum Cauchy product →
-  error bound → lift to reals), the technical core of stage A.
-- `Analysis/ZetaC.lean` — `Czeta s` for `Re(s) > 1` via `Σ n^{-s}` with a rigorous complex tail bound
-  (`|n^{-s}| = n^{-Re s}`, mirroring `Zeta.lean`); the modulus `|n^{-s}| ≤ n^{-Re s}` uses `|cos|,|sin| ≤ 1`.
-- `Analysis/Mangoldt.lean` — von Mangoldt `Λ` and the explicit-formula **prime side**
-  `Σ_p Σ_k log p · h(k log p)` as a real (finite, intrinsically computable).
-- Realize the **Bombieri–Lagarias `λₙ = λₙ^{arith} + λₙ^{∞}` for `n = 1`** as a theorem (uses the
-  `γ`/`log 4π`/`λ₁` built in v0.14.0), promoting `Li.LiDecomposition` from inhabited-interface to a proven
-  instance.
-- **De-hedges:** "ζ only at integer `s ≥ 2`" → "ζ(s), complex `s`, `Re(s) > 1`"; `LiDecomposition` (n=1).
-- **Stays open:** critical strip, zeros, crux.
+- `Analysis/ComplexExp.lean` — `Cexp z = exp(re z)·(cos(im z) + i·sin(im z))` from `RexpReal/Rcos/Rsin`,
+  with the component identities and `Cexp 0 ≈ 1` (`Cexp_zero`, `RexpReal_zero`, `Rcos_zero`, `Rsin_zero`).
+- `Analysis/CosSinAdd.lean`, `Analysis/CosSinBound.lean` — **the trigonometric keystone** `cos² + sin² ≈ 1`
+  (`Rcos_sq_add_sin_sq`) via the trig Cauchy product from scratch, giving `|cos| ≤ 1`, `|sin| ≤ 1`.
+- `Analysis/ExpRealAdd.lean` — **the exponential keystone** `RexpReal_add` (`exp(x+y) ≈ exp x · exp y` on
+  all of ℝ), the roadmap's technical core of stage A: the signed Cauchy-product functional equation
+  (`expSum_add_le_signed`) lifted to the diagonal through a deep reference depth (`rexp_add_gap`,
+  `RexpReal_add_aux`, `rexp_factor_reconcile`), plus the reusable ζ-tail toolkit (corner bound,
+  reconciliation, uniform partial-sum bound, factorial decay).
+- `Analysis/ComplexMod.lean`, `Analysis/ComplexPow.lean` — `nˢ` (`ncpow n s = Cexp(s·log n)`, positive-integer
+  base) and the **modulus identity** `|Cexp z|² = (exp Re z)²` (`Cexp_normSq`) / `|nˢ|² = (exp(Re s·log n))²`
+  (`ncpow_normSq`), the analytic payoff of `cos² + sin² = 1`.
+- **De-hedges:** "exp/cos/sin without addition laws" → "exp is a homomorphism; `|cos|,|sin| ≤ 1`; the complex
+  exponential and `nˢ` with their modulus".
+- **Stays open:** ζ at complex `s` (the convergence gate `exp∘log = id`, see v0.15.1); critical strip; zeros; crux.
+
+## The v0.15.x series — (A, continued) completing ζ for complex argument
+
+Stage A's remaining original goals (ζ for `Re s > 1`, the prime side, the `n = 1` decomposition) are gated on
+a single **discovered dependency**: convergence of `Σ n^{-s}` needs `|n^{-s}| = n^{-Re s}`, i.e.
+`exp(log n) = n`. Because `log` is built independently as `2·artanh((x−1)/(x+1))`, this is **not**
+definitional, and every elementary route (`exp(t) ≥ 1+t` + multiplicativity via `RexpReal_add` + the two-sided
+exp bounds) only *squeezes* `1 + log x ≤ exp(log x) ≤ 1/(1−log x)` — never pinning equality (iterated squaring
+amplifies the second-order error). The honest conclusion: `exp∘log = id` requires a genuine **power-series
+composition** (compose the exp factorial series with the artanh geometric series ⇒ `exp(2·artanh w) =
+(1+w)/(1−w)`), a from-scratch build of its own. It is scoped as its own release so the shipped exponential
+core is not held hostage to it.
+
+- **v0.15.1 — `exp∘log = id` (the power-series composition gate).** Build `exp(log x) ≈ x` (equivalently
+  `exp(2·artanh w) = (1+w)/(1−w)`). `log` multiplicativity `log(ab) = log a + log b` (artanh addition formula
+  + `RexpReal_add`) reduces it to a base identity, but that base needs the composition. Research-grade in this
+  from-scratch setting; **honesty gate** — if it does not close axiom-clean, the ζ-complex tail (v0.15.2) ships
+  its convergence as a documented interface, never faked.
+- **v0.15.2 — real powers `nᶜ` + `Analysis/ZetaC.lean`.** `exp(c·log n) = nᶜ` (v0.15.1 + `RexpReal_add`), the
+  tail bound `|n^{-s}| = n^{-Re s}` (uses `|cos|,|sin| ≤ 1`, shipped), and `Czeta s` for `Re(s) > 1` as
+  `Σ n^{-s}` with a rigorous complex tail, mirroring `Zeta.lean`. **De-hedges:** "ζ only at integer `s ≥ 2`"
+  → "ζ(s), complex `s`, `Re(s) > 1`".
+- **v0.15.3 — `Analysis/Mangoldt.lean` + the `n = 1` decomposition.** von Mangoldt `Λ` and the
+  explicit-formula **prime side** `Σ_p Σ_k log p · h(k log p)` as a real (finite for compactly-supported `h`),
+  and the **Bombieri–Lagarias `λₙ = λₙ^{arith} + λₙ^{∞}` for `n = 1`** as a theorem (uses the `γ`/`log 4π`/`λ₁`
+  of v0.14.0), promoting `Li.LiDecomposition` from inhabited-interface to a proven instance.
+- **Stays open across v0.15.x:** critical strip, zeros, crux.
 
 ## v0.16.0 — (B) Analytic continuation & higher Li coefficients
 
