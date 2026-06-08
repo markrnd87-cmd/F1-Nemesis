@@ -868,3 +868,9 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.fcomp_congr_left
 #print axioms Analysis.Fsum_sub
 #print axioms Analysis.fmul_sub_left
+#print axioms Analysis.Qeq_of_Qsub_zero
+#print axioms Analysis.oneMinusSq_eval2
+#print axioms Analysis.oneMinusSq_eval0
+#print axioms Analysis.oneMinusSq_eval1
+#print axioms Analysis.oneMinusSq_zero_cancel
+#print axioms Analysis.fmul_oneMinusSq_cancel
