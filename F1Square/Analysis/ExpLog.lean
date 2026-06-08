@@ -290,4 +290,40 @@ theorem fmul_assoc (a b c : Nat → Q) (ha : ∀ i, 0 < (a i).den) (hb : ∀ i, 
     (Qeq_trans (Fsum_den_pos (fun i => Fsum_den_pos (fun j => hg i j) (k - i)) k)
       (Qeq_symm (Fsum_triangle_reindex hg k)) (Qeq_symm hRHS))
 
+/-- The formal power-series unit `1`: coefficient `1` at degree `0`, else `0`. -/
+def fone (k : Nat) : Q := if k = 0 then ⟨1, 1⟩ else ⟨0, 1⟩
+
+theorem fone_den_pos (k : Nat) : 0 < (fone k).den := by unfold fone; split <;> exact Nat.one_pos
+
+/-- A finite sum of zeros is zero. -/
+theorem Fsum_zeros : ∀ k, Qeq (Fsum (fun _ => (⟨0, 1⟩ : Q)) k) ⟨0, 1⟩
+  | 0 => Qeq_refl _
+  | (k + 1) => by
+      show Qeq (add (Fsum (fun _ => (⟨0, 1⟩ : Q)) k) ⟨0, 1⟩) ⟨0, 1⟩
+      exact Qeq_trans (Fsum_den_pos (fun _ => Nat.one_pos) k)
+        (Qadd_zero_right _) (Fsum_zeros k)
+
+/-- **The unit law for the formal Cauchy product**: `a·1 ≈ a`. -/
+theorem fmul_one (a : Nat → Q) (ha : ∀ i, 0 < (a i).den) (k : Nat) : Qeq (fmul a fone k) (a k) := by
+  cases k with
+  | zero =>
+      show Qeq (mul (a 0) (fone 0)) (a 0)
+      show Qeq (mul (a 0) ⟨1, 1⟩) (a 0)
+      simp only [Qeq, mul]; push_cast; ring_uor
+  | succ n =>
+      show Qeq (add (Fsum (fun i => mul (a i) (fone (n + 1 - i))) n)
+        (mul (a (n + 1)) (fone (n + 1 - (n + 1))))) (a (n + 1))
+      have hzeros : Qeq (Fsum (fun i => mul (a i) (fone (n + 1 - i))) n) ⟨0, 1⟩ := by
+        refine Qeq_trans (Fsum_den_pos (fun _ => Nat.one_pos) n)
+          (Fsum_congr_le (fun i hi => ?_)) (Fsum_zeros n)
+        have hne : n + 1 - i ≠ 0 := by omega
+        show Qeq (mul (a i) (fone (n + 1 - i))) ⟨0, 1⟩
+        unfold fone; rw [if_neg hne]; simp only [Qeq, mul]; push_cast; ring_uor
+      refine Qeq_trans (add_den_pos Nat.one_pos (Qmul_den_pos (ha (n + 1)) (fone_den_pos _)))
+        (Qadd_congr hzeros (Qeq_refl _)) ?_
+      refine Qeq_trans (Qmul_den_pos (ha (n + 1)) (fone_den_pos _)) (Qzero_add _) ?_
+      rw [Nat.sub_self]
+      show Qeq (mul (a (n + 1)) ⟨1, 1⟩) (a (n + 1))
+      simp only [Qeq, mul]; push_cast; ring_uor
+
 end UOR.Bridge.F1Square.Analysis

@@ -808,3 +808,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.fmul_comm
 #print axioms Analysis.Qmul_assoc
 #print axioms Analysis.fmul_assoc
+#print axioms Analysis.fone_den_pos
+#print axioms Analysis.Fsum_zeros
+#print axioms Analysis.fmul_one
