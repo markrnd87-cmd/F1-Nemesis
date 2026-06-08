@@ -462,4 +462,72 @@ theorem peval_mul (a b : Nat → Q) {w : Q} (ha : ∀ i, 0 < (a i).den) (hb : �
     (Qadd_congr (Fsum_triangle_reindex hg M) (Qeq_refl _)) ?_
   exact Qadd_congr (Fsum_congr (fun m => peval_conv a b ha hb hwd m) M) (Qeq_refl _)
 
+-- ===========================================================================
+-- The new (research-validated) route to exp∘log = id:
+--   functional equation + O(u²) + integer-division limit.
+-- Brick (A): the exp quadratic remainder  |expSum q N − (1+q)| ≤ |q|²·(M-series).
+-- ===========================================================================
+
+/-- **Per-term quadratic bound**: `|qⁱ/i!| ≤ |q|²·(1/i!)` for `i ≥ 2`, `|q| ≤ 1`. Since `|q|ⁱ =
+    |q|²·|q|^{i−2} ≤ |q|²` (`qpow_add` + `qpow_le_one`). -/
+theorem expTerm_quad {q : Q} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨1, 1⟩) {i : Nat} (hi : 2 ≤ i) :
+    Qle (Qabs (expTerm q i)) (mul (mul (Qabs q) (Qabs q)) ⟨1, fct i⟩) := by
+  have habs : Qeq (Qabs (expTerm q i)) (mul (qpow (Qabs q) i) ⟨1, fct i⟩) := by
+    show Qeq (Qabs (mul (qpow q i) ⟨1, fct i⟩)) (mul (qpow (Qabs q) i) ⟨1, fct i⟩)
+    rw [Qabs_mul]
+    exact Qmul_congr (qpow_abs q i) (Qeq_refl _)
+  -- qpow |q| i = qpow |q| 2 · qpow |q| (i−2) ≤ qpow |q| 2 · 1 ≈ |q|²
+  have hsplit : Qeq (qpow (Qabs q) i) (mul (qpow (Qabs q) 2) (qpow (Qabs q) (i - 2))) := by
+    have hid : 2 + (i - 2) = i := by omega
+    have h := qpow_add (Qabs q) (Qabs_den_pos hqd) 2 (i - 2)
+    rw [hid] at h; exact h
+  have hle1 : Qle (qpow (Qabs q) (i - 2)) ⟨1, 1⟩ :=
+    qpow_le_one (Qabs_num_nonneg q) (Qabs_den_pos hqd) hq (i - 2)
+  have hpow : Qle (qpow (Qabs q) i) (mul (Qabs q) (Qabs q)) := by
+    refine Qle_trans (Qmul_den_pos (qpow_den_pos (Qabs_den_pos hqd) 2) (qpow_den_pos (Qabs_den_pos hqd) (i - 2)))
+      (Qeq_le hsplit) ?_
+    refine Qle_trans (Qmul_den_pos (qpow_den_pos (Qabs_den_pos hqd) 2) Nat.one_pos)
+      (Qmul_le_mul_left (qpow_nonneg (Qabs_num_nonneg q) 2) hle1) (Qeq_le ?_)
+    show Qeq (mul (qpow (Qabs q) 2) ⟨1, 1⟩) (mul (Qabs q) (Qabs q))
+    show Qeq (mul (mul (Qabs q) (mul (Qabs q) ⟨1, 1⟩)) ⟨1, 1⟩) (mul (Qabs q) (Qabs q))
+    simp only [Qeq, mul]; push_cast; ring_uor
+  refine Qle_trans (Qmul_den_pos (qpow_den_pos (Qabs_den_pos hqd) i) (fct_pos i)) (Qeq_le habs) ?_
+  exact Qmul_le_mul_right (by show (0:Int) ≤ 1; decide) hpow
+
+/-- `|q|²·S ≥ 0`. -/
+theorem Qsq_mul_nonneg (q s : Q) (hs : 0 ≤ s.num) : Qle (⟨0, 1⟩ : Q) (mul (mul (Qabs q) (Qabs q)) s) := by
+  have h : (0 : Int) ≤ (Qabs q).num * (Qabs q).num * s.num :=
+    Int.mul_nonneg (Int.mul_nonneg (Qabs_num_nonneg q) (Qabs_num_nonneg q)) hs
+  simp only [Qle, mul]; omega
+
+/-- **The exp quadratic remainder** (brick A): `|expSum q (N+1) − (1+q)| ≤ |q|²·(Σ_{i≤N+1} 1/i!)`
+    for `|q| ≤ 1`. The remainder past the linear term `1 + q` is second-order, by `expTerm_quad`. -/
+theorem expSum_quad {q : Q} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨1, 1⟩) :
+    ∀ N, Qle (Qabs (Qsub (expSum q (N + 1)) (add ⟨1, 1⟩ q)))
+      (mul (mul (Qabs q) (Qabs q)) (expSumM 1 (N + 1)))
+  | 0 => by
+      have h0 : Qeq (Qsub (expSum q 1) (add ⟨1, 1⟩ q)) ⟨0, 1⟩ := by
+        show Qeq (Qsub (add (⟨1, 1⟩ : Q) (mul (mul q ⟨1, 1⟩) ⟨1, 1⟩)) (add ⟨1, 1⟩ q)) ⟨0, 1⟩
+        simp only [Qeq, Qsub, add, neg, mul]; push_cast; ring_uor
+      refine Qle_trans (b := (⟨0, 1⟩ : Q)) Nat.one_pos
+        (Qeq_le (Qeq_trans Nat.one_pos (Qabs_Qeq h0) (Qeq_refl _)))
+        (Qsq_mul_nonneg q (expSumM 1 1) (by decide))
+  | (N + 1) => by
+      show Qle (Qabs (Qsub (add (expSum q (N + 1)) (expTerm q (N + 1 + 1))) (add ⟨1, 1⟩ q)))
+        (mul (mul (Qabs q) (Qabs q)) (add (expSumM 1 (N + 1)) ⟨(npow 1 (N + 1 + 1) : Int), fct (N + 1 + 1)⟩))
+      have hrw : Qeq (Qsub (add (expSum q (N + 1)) (expTerm q (N + 1 + 1))) (add ⟨1, 1⟩ q))
+          (add (Qsub (expSum q (N + 1)) (add ⟨1, 1⟩ q)) (expTerm q (N + 1 + 1))) := by
+        simp only [Qeq, Qsub, add, neg]; push_cast; ring_uor
+      refine Qle_congr_left (Qabs_den_pos (add_den_pos (Qsub_den_pos (expSum_den_pos hqd (N + 1))
+          (add_den_pos Nat.one_pos hqd)) (expTerm_den_pos hqd (N + 1 + 1))))
+        (Qeq_symm (Qabs_Qeq hrw)) ?_
+      refine Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (expSum_den_pos hqd (N + 1))
+          (add_den_pos Nat.one_pos hqd))) (Qabs_den_pos (expTerm_den_pos hqd (N + 1 + 1))))
+        (Qabs_add_le _ _) ?_
+      refine Qle_trans (add_den_pos (Qmul_den_pos (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hqd))
+          (expSumM_den_pos 1 (N + 1))) (Qmul_den_pos (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hqd)) (fct_pos _)))
+        (Qadd_le_add (expSum_quad hqd hq N) (expTerm_quad hqd hq (by omega : 2 ≤ N + 1 + 1))) (Qeq_le ?_)
+      rw [npow_one]
+      simp only [Qeq, mul, add]; push_cast; ring_uor
+
 end UOR.Bridge.F1Square.Analysis
