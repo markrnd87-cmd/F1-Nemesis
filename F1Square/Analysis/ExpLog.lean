@@ -3616,4 +3616,12 @@ theorem Rartanh_congr (t t' : Real) (ρ : Q) (hρ0 : 0 ≤ ρ.num) (hρd : 0 < �
   show (2 * 2 : Int) * ((n + 1 : Nat) : Int) ≤ (4 : Int) * ((1 * (Rartanh_R ρ n + 1) : Nat) : Int)
   push_cast; omega
 
+/-- **Cleared `uval` difference**: `(uval a − uval b)·(1+a²)(1+b²) = 2(a−b)(1−ab)`. -/
+theorem uval_diff_cleared (a b : Q) :
+    Qeq (mul (Qsub (uval a) (uval b)) (mul (add ⟨1, 1⟩ (mul a a)) (add ⟨1, 1⟩ (mul b b))))
+      (mul ⟨2, 1⟩ (mul (Qsub a b) (Qsub ⟨1, 1⟩ (mul a b)))) := by
+  simp only [Qeq, uval, mul, add, Qsub, neg]
+  push_cast [Int.natAbs_mul_self']
+  ring_uor
+
 end UOR.Bridge.F1Square.Analysis
