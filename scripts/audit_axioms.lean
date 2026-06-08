@@ -798,3 +798,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.gPow_den_pos
 #print axioms Analysis.gPow_num_nonneg
 #print axioms Analysis.gPow_telescope
+#print axioms Analysis.Qzero_add
+#print axioms Analysis.fderiv_den_pos
+#print axioms Analysis.fmul_den_pos
+#print axioms Analysis.fderiv_fmul
