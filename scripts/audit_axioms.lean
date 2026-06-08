@@ -1037,3 +1037,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.tmap_sq_uval
 #print axioms Analysis.tmap_lip
 #print axioms Analysis.tsq_uvalReal_via
+#print axioms Analysis.Rlog_double_algebra

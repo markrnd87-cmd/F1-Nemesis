@@ -3998,4 +3998,13 @@ theorem tsq_uvalReal_via (Y tY2 uY : Real) (ρ : Q) (hρd : 0 < ρ.den) (hρ1 : 
   show Qeq (mul ⟨4, 1⟩ (mul ⟨2, 1⟩ (add (Qbound n) (Qbound n)))) (⟨16, n + 1⟩ : Q)
   simp only [Qeq, mul, add, Qbound]; push_cast; ring_uor
 
+/-- **Log-doubling, algebraic assembly**: for `X = Rartanh t_Y`, `Xdbl = Rartanh(uvalReal t_Y)`,
+    `R2 = Rartanh t_{Y²}` (all at the common radius `σ = ρ_{M²}`), given the doubling `Radd X X ≈ Xdbl`
+    and `Xdbl ≈ R2` (= `Rartanh_congr` of `(a)`), we get `Radd (c·X) (c·X) ≈ c·R2`, i.e.
+    `Rlog Y + Rlog Y ≈ Rlog (Y²)` once `c = ofQ 2`. Pure ℝ-algebra: `Rmul_distrib` + `Rmul_congr`. -/
+theorem Rlog_double_algebra (c X Xdbl R2 : Real) (hdbl : Req (Radd X X) Xdbl) (hcong : Req Xdbl R2) :
+    Req (Radd (Rmul c X) (Rmul c X)) (Rmul c R2) :=
+  Req_trans (Req_symm (Rmul_distrib c X X))
+    (Rmul_congr (Req_refl c) (Req_trans hdbl hcong))
+
 end UOR.Bridge.F1Square.Analysis
