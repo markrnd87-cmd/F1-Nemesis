@@ -2330,6 +2330,19 @@ theorem corner_inner_eq (w : Q) (hwd : 0 < w.den) (m M i : Nat) :
     (Qeq_symm (Qmul_sub_left_loc (mul (kdbl i) (qpow w i))
       (peval (fpow kdbl m) w M) (peval (fpow kdbl m) w (M - i))))
 
+/-- The inner value `u = 2w/(1+w²)` as a rational. -/
+def uval (w : Q) : Q := ⟨2 * w.num * (w.den : Int), w.num.natAbs * w.num.natAbs + w.den * w.den⟩
+
+theorem uval_den_pos (w : Q) (hwd : 0 < w.den) : 0 < (uval w).den := by
+  show 0 < w.num.natAbs * w.num.natAbs + w.den * w.den
+  have : 0 < w.den * w.den := Nat.mul_pos hwd hwd
+  omega
+
+/-- The defining relation `(1+w²)·u = 2w`. -/
+theorem uval_rel (w : Q) (hwd : 0 < w.den) :
+    Qeq (mul (add ⟨1, 1⟩ (mul w w)) (uval w)) (mul ⟨2, 1⟩ w) := by
+  simp only [Qeq, mul, add, uval]; push_cast; rw [Int.natAbs_mul_self' w.num]; ring_uor
+
 /-- `wᵏ·w² = w^{k+2}`. -/
 theorem qpow_mul_sq (w : Q) (hwd : 0 < w.den) (k : Nat) :
     Qeq (mul (qpow w k) (mul w w)) (qpow w (k + 2)) :=

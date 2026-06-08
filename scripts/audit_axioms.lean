@@ -968,3 +968,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.add_rearrange
 #print axioms Analysis.qpow_mul_sq
 #print axioms Analysis.kdbl_innerval
+#print axioms Analysis.uval
+#print axioms Analysis.uval_den_pos
+#print axioms Analysis.uval_rel
