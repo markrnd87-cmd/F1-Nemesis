@@ -2330,6 +2330,18 @@ theorem corner_inner_eq (w : Q) (hwd : 0 < w.den) (m M i : Nat) :
     (Qeq_symm (Qmul_sub_left_loc (mul (kdbl i) (qpow w i))
       (peval (fpow kdbl m) w M) (peval (fpow kdbl m) w (M - i))))
 
+/-- `|kdbl_a·wᵇ| ≤ 2·ρᵇ` for `|w| ≤ ρ`. -/
+theorem Qabs_kdbl_qpow_le (ρ w : Q) (hρd : 0 < ρ.den) (hwd : 0 < w.den) (hw : Qle (Qabs w) ρ)
+    (a b : Nat) : Qle (Qabs (mul (kdbl a) (qpow w b))) (mul ⟨2, 1⟩ (qpow ρ b)) :=
+  Qle_trans (Qmul_den_pos (Qabs_den_pos (kdbl_den a)) (Qabs_den_pos (qpow_den_pos hwd b)))
+    (Qeq_le (by rw [Qabs_mul]; exact Qeq_refl _ :
+      Qeq (Qabs (mul (kdbl a) (qpow w b))) (mul (Qabs (kdbl a)) (Qabs (qpow w b)))))
+    (Qmul_le_mul (Qabs_den_pos (kdbl_den a)) (by decide) (Qabs_den_pos (qpow_den_pos hwd b))
+      (Qabs_num_nonneg _) (Qabs_num_nonneg _) (fabs_kdbl_le2 a)
+      (Qle_trans (qpow_den_pos (Qabs_den_pos hwd) b) (Qeq_le (qpow_abs w b))
+        (qpow_base_mono (Qabs_den_pos hwd) hρd (Qabs_num_nonneg w) hw b)))
+
+
 /-- The inner value `u = 2w/(1+w²)` as a rational. -/
 def uval (w : Q) : Q := ⟨2 * w.num * (w.den : Int), w.num.natAbs * w.num.natAbs + w.den * w.den⟩
 
@@ -2432,6 +2444,61 @@ theorem kdbl_innerval (w : Q) (hwd : 0 < w.den) : ∀ N,
       refine Qadd_congr (Qeq_refl _) ?_
       exact Qeq_trans (add_den_pos Nat.one_pos (add_den_pos hB hD))
         (Qadd_congr hAC (Qeq_refl _)) (Qzero_add _)
+
+/-- **Inner-value convergence**: `|peval(kdbl,w,N+1) − u| ≤ 2ρ^{N+2} + 2ρ^{N+3} → 0`. -/
+theorem q_conv (ρ w : Q) (hρd : 0 < ρ.den) (hwd : 0 < w.den) (hw : Qle (Qabs w) ρ) (N : Nat) :
+    Qle (Qabs (Qsub (peval kdbl w (N + 1)) (uval w)))
+      (add (mul ⟨2, 1⟩ (qpow ρ (N + 2))) (mul ⟨2, 1⟩ (qpow ρ (N + 3)))) := by
+  have hSden : 0 < (add (⟨1, 1⟩ : Q) (mul w w)).den := add_den_pos Nat.one_pos (Qmul_den_pos hwd hwd)
+  have hSnn : 0 ≤ (add (⟨1, 1⟩ : Q) (mul w w)).num := by
+    show 0 ≤ 1 * ((w.den * w.den : Nat) : Int) + (w.num * w.num) * 1
+    have h1 : (0 : Int) ≤ ((w.den * w.den : Nat) : Int) := Int.ofNat_nonneg _
+    have h2 : (0 : Int) ≤ w.num * w.num := by rw [← Int.natAbs_mul_self]; exact Int.ofNat_nonneg _
+    omega
+  have hqd : 0 < (Qsub (peval kdbl w (N + 1)) (uval w)).den :=
+    Qsub_den_pos (peval_den_pos (fun i => kdbl_den i) hwd (N + 1)) (uval_den_pos w hwd)
+  have hBDd : 0 < (add (mul (kdbl N) (qpow w (N + 2))) (mul (kdbl (N + 1)) (qpow w (N + 3)))).den :=
+    add_den_pos (Qmul_den_pos (kdbl_den N) (qpow_den_pos hwd (N + 2)))
+      (Qmul_den_pos (kdbl_den (N + 1)) (qpow_den_pos hwd (N + 3)))
+  -- (1+w²)·(q−u) ≈ BD
+  have hident : Qeq (mul (add ⟨1, 1⟩ (mul w w)) (Qsub (peval kdbl w (N + 1)) (uval w)))
+      (add (mul (kdbl N) (qpow w (N + 2))) (mul (kdbl (N + 1)) (qpow w (N + 3)))) :=
+    Qeq_trans (Qsub_den_pos (Qmul_den_pos hSden (peval_den_pos (fun i => kdbl_den i) hwd (N + 1)))
+        (Qmul_den_pos hSden (uval_den_pos w hwd)))
+      (Qmul_sub_left_loc (add ⟨1, 1⟩ (mul w w)) (peval kdbl w (N + 1)) (uval w))
+      (Qeq_trans (Qsub_den_pos (add_den_pos (Qmul_den_pos Nat.one_pos hwd) hBDd)
+          (Qmul_den_pos Nat.one_pos hwd))
+        (Qsub_congr
+          (Qeq_trans (Qmul_den_pos (peval_den_pos (fun i => kdbl_den i) hwd (N + 1)) hSden)
+            (Qmul_comm (add ⟨1, 1⟩ (mul w w)) (peval kdbl w (N + 1))) (kdbl_innerval w hwd N))
+          (uval_rel w hwd))
+        (Qsub_add_cancel (mul ⟨2, 1⟩ w)
+          (add (mul (kdbl N) (qpow w (N + 2))) (mul (kdbl (N + 1)) (qpow w (N + 3))))))
+  -- |q−u| ≤ |(1+w²)(q−u)| = |BD| ≤ bound
+  have habs : Qeq (mul (Qabs (Qsub (peval kdbl w (N + 1)) (uval w))) (add ⟨1, 1⟩ (mul w w)))
+      (Qabs (add (mul (kdbl N) (qpow w (N + 2))) (mul (kdbl (N + 1)) (qpow w (N + 3))))) :=
+    Qeq_trans (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hSden))
+      (Qmul_congr (Qeq_refl _) (Qeq_symm (Qabs_of_nonneg hSnn)))
+      (Qeq_trans (Qabs_den_pos (Qmul_den_pos hqd hSden))
+        (by rw [Qabs_mul]; exact Qeq_refl _ :
+          Qeq (mul (Qabs (Qsub (peval kdbl w (N + 1)) (uval w))) (Qabs (add ⟨1, 1⟩ (mul w w))))
+            (Qabs (mul (Qsub (peval kdbl w (N + 1)) (uval w)) (add ⟨1, 1⟩ (mul w w)))))
+        (Qeq_trans (Qabs_den_pos (Qmul_den_pos hSden hqd))
+          (Qabs_Qeq (Qmul_comm (Qsub (peval kdbl w (N + 1)) (uval w)) (add ⟨1, 1⟩ (mul w w))))
+          (Qabs_Qeq hident)))
+  refine Qle_trans (Qabs_den_pos hBDd) ?_ ?_
+  · -- |q−u| ≤ |BD|
+    refine Qle_trans (Qmul_den_pos (Qabs_den_pos hqd) Nat.one_pos)
+      (Qeq_le (Qeq_symm (mul_one (Qabs (Qsub (peval kdbl w (N + 1)) (uval w)))))) ?_
+    exact Qle_trans (Qmul_den_pos (Qabs_den_pos hqd) hSden)
+      (Qmul_le_mul_left (Qabs_num_nonneg _) (Qle_add_right_nonneg ((by rw [← Int.natAbs_mul_self]; exact Int.ofNat_nonneg _ : (0:Int) ≤ w.num * w.num))))
+      (Qeq_le habs)
+  · -- |BD| ≤ 2ρ^{N+2} + 2ρ^{N+3}
+    exact Qle_trans (add_den_pos (Qabs_den_pos (Qmul_den_pos (kdbl_den N) (qpow_den_pos hwd (N + 2))))
+        (Qabs_den_pos (Qmul_den_pos (kdbl_den (N + 1)) (qpow_den_pos hwd (N + 3)))))
+      (Qabs_add_le _ _)
+      (Qadd_le_add (Qabs_kdbl_qpow_le ρ w hρd hwd hw N (N + 2))
+        (Qabs_kdbl_qpow_le ρ w hρd hwd hw (N + 1) (N + 3)))
 
 /-- Bounded termwise sum monotonicity (`f ≤ g` for `i ≤ M`). -/
 theorem Fsum_le_Fsum_le {f g : Nat → Q} :
