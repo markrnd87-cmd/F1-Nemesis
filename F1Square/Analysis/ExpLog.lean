@@ -3851,4 +3851,17 @@ theorem Rartanh_double_real_via (t X Y : Real) (ρ σ : Q) (hρd : 0 < ρ.den) (
     (Qeq_le (Qadd_same_den_loc ((8 * ρ.den : Nat) : Int) (2 * (σ.den : Int) + 16) (n + 1))) ?_
   apply Qeq_le; simp only [Qeq]; push_cast; ring_uor
 
+/-- **`Q` left-cancellation**: `c·A ≈ c·B` with `0 < c.num`, `0 < c.den` gives `A ≈ B`. -/
+theorem Qmul_cancel_left {c A B : Q} (hcn : 0 < c.num) (hcd : 0 < c.den)
+    (h : Qeq (mul c A) (mul c B)) : Qeq A B := by
+  have hP : (0 : Int) < c.num * (c.den : Int) := Int.mul_pos hcn (by exact_mod_cast hcd)
+  simp only [Qeq, mul] at h
+  simp only [Qeq]
+  refine Int.eq_of_mul_eq_mul_left (a := c.num * (c.den : Int)) (by omega) ?_
+  rw [show (c.num * (c.den : Int)) * (A.num * (B.den : Int))
+        = (c.num * A.num) * ((c.den * B.den : Nat) : Int) from by push_cast; ring_uor,
+    show (c.num * (c.den : Int)) * (B.num * (A.den : Int))
+        = (c.num * B.num) * ((c.den * A.den : Nat) : Int) from by push_cast; ring_uor]
+  exact h
+
 end UOR.Bridge.F1Square.Analysis

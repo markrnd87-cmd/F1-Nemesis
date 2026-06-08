@@ -1032,3 +1032,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Dterm_recip
 #print axioms Analysis.artSum_uval_argdiff
 #print axioms Analysis.Rartanh_double_real_via
+#print axioms Analysis.Qmul_cancel_left
