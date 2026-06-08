@@ -3398,4 +3398,17 @@ theorem DN_pow_le (ρ w : Q) (N : Nat) (hρd : 0 < ρ.den) (hρ0 : 0 ≤ ρ.num)
     (Qmul_le_mul_left (by decide) (Qmul_le_mul_right hQ8nn hcst2)) ?_
   exact Qeq_le (Qmul_congr (Qeq_refl _) hcomb)
 
+/-- **Geometric ⇒ reciprocal**: for `0 ≤ η < 1` and `n+1 ≤ M`, `qpow η M ≤ η.den/(n+1)`. The bridge from
+    `qpow_geom_bound` (denominator linear in `M`) to the `C/(n+1)` form `Req_of_lin_bound` consumes. -/
+theorem qpow_le_recip {η : Q} (hη0 : 0 ≤ η.num) (hηd : 0 < η.den) (hlt : η.num.toNat < η.den)
+    {M n : Nat} (hMn : n + 1 ≤ M) : Qle (qpow η M) (⟨(η.den : Int), n + 1⟩ : Q) := by
+  have hk : 1 ≤ η.den - η.num.toNat := by omega
+  have hMk : M * 1 ≤ M * (η.den - η.num.toNat) := Nat.mul_le_mul_left M hk
+  have hden : n + 1 ≤ η.den + M * (η.den - η.num.toNat) := by omega
+  refine Qle_trans (by omega : 0 < η.den + M * (η.den - η.num.toNat))
+    (qpow_geom_bound hη0 hηd (Nat.le_of_lt hlt) M) ?_
+  show (η.den : Int) * ((n + 1 : Nat) : Int)
+    ≤ (η.den : Int) * ((η.den + M * (η.den - η.num.toNat) : Nat) : Int)
+  exact Int.mul_le_mul_of_nonneg_left (by exact_mod_cast hden) (by exact_mod_cast Nat.zero_le η.den)
+
 end UOR.Bridge.F1Square.Analysis

@@ -1013,3 +1013,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.two_pow_2Nplus2
 #print axioms Analysis.Qmul_8rearr
 #print axioms Analysis.DN_pow_le
+#print axioms Analysis.qpow_le_recip
