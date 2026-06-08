@@ -965,3 +965,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Fsum_le_Fsum_le
 #print axioms Analysis.corner_bound
 #print axioms Analysis.kdbl_period
+#print axioms Analysis.add_rearrange
+#print axioms Analysis.qpow_mul_sq
+#print axioms Analysis.kdbl_innerval

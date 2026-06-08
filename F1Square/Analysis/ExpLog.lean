@@ -2330,6 +2330,13 @@ theorem corner_inner_eq (w : Q) (hwd : 0 < w.den) (m M i : Nat) :
     (Qeq_symm (Qmul_sub_left_loc (mul (kdbl i) (qpow w i))
       (peval (fpow kdbl m) w M) (peval (fpow kdbl m) w (M - i))))
 
+/-- `wᵏ·w² = w^{k+2}`. -/
+theorem qpow_mul_sq (w : Q) (hwd : 0 < w.den) (k : Nat) :
+    Qeq (mul (qpow w k) (mul w w)) (qpow w (k + 2)) :=
+  Qeq_trans (Qmul_den_pos (qpow_den_pos hwd k) (qpow_den_pos hwd 2))
+    (Qmul_congr (Qeq_refl _) (by simp [Qeq, mul, qpow] : Qeq (mul w w) (qpow w 2)))
+    (Qeq_symm (qpow_add w hwd k 2))
+
 /-- Period-4 cancellation: `kdbl N + kdbl (N+2) = 0`. -/
 theorem kdbl_period (N : Nat) : Qeq (add (kdbl N) (kdbl (N + 2))) ⟨0, 1⟩ := by
   by_cases h1 : N % 4 = 1
@@ -2343,6 +2350,75 @@ theorem kdbl_period (N : Nat) : Qeq (add (kdbl N) (kdbl (N + 2))) ⟨0, 1⟩ := 
     · rw [show kdbl N = ⟨0, 1⟩ from by unfold kdbl; rw [if_neg h1, if_neg h3],
           show kdbl (N + 2) = ⟨0, 1⟩ from by unfold kdbl; rw [if_neg (by omega), if_neg (by omega)]]
       decide
+
+/-- Sum rearrange `(A+B)+(C+D) = (A+C)+(B+D)`. -/
+theorem add_rearrange (A B C D : Q) : Qeq (add (add A B) (add C D)) (add (add A C) (add B D)) := by
+  simp only [Qeq, add]; push_cast; ring_uor
+
+/-- **The inner-value telescope**: `(1+w²)·peval(kdbl,w,N+1) = 2w + (kdbl_N·w^{N+2} + kdbl_{N+1}·w^{N+3})`.
+    The boundary → 0, so `peval(kdbl,w,·) → 2w/(1+w²)`. -/
+theorem kdbl_innerval (w : Q) (hwd : 0 < w.den) : ∀ N,
+    Qeq (mul (peval kdbl w (N + 1)) (add ⟨1, 1⟩ (mul w w)))
+      (add (mul ⟨2, 1⟩ w)
+        (add (mul (kdbl N) (qpow w (N + 2))) (mul (kdbl (N + 1)) (qpow w (N + 3)))))
+  | 0 => by
+      show Qeq (mul (add (mul (kdbl 0) (qpow w 0)) (mul (kdbl 1) (qpow w 1))) (add ⟨1, 1⟩ (mul w w)))
+        (add (mul ⟨2, 1⟩ w) (add (mul (kdbl 0) (qpow w 2)) (mul (kdbl 1) (qpow w 3))))
+      rw [show kdbl 0 = (⟨0, 1⟩ : Q) from by decide, show kdbl 1 = (⟨2, 1⟩ : Q) from by decide]
+      simp only [Qeq, mul, add, qpow]; push_cast; ring_uor
+  | (N + 1) => by
+      have hP : 0 < (peval kdbl w (N + 1)).den := peval_den_pos (fun i => kdbl_den i) hwd (N + 1)
+      have hS : 0 < (add (⟨1, 1⟩ : Q) (mul w w)).den := add_den_pos Nat.one_pos (Qmul_den_pos hwd hwd)
+      have hQt : 0 < (mul (kdbl (N + 2)) (qpow w (N + 2))).den :=
+        Qmul_den_pos (kdbl_den (N + 2)) (qpow_den_pos hwd (N + 2))
+      have hw2 : 0 < (mul w w).den := Qmul_den_pos hwd hwd
+      -- expand Q_term·S = kdbl_{N+2}·w^{N+2} + kdbl_{N+2}·w^{N+4}
+      have hPS : Qeq (mul (qpow w (N + 2)) (add ⟨1, 1⟩ (mul w w)))
+          (add (qpow w (N + 2)) (qpow w (N + 4))) :=
+        Qeq_trans (add_den_pos (Qmul_den_pos (qpow_den_pos hwd (N + 2)) Nat.one_pos)
+            (Qmul_den_pos (qpow_den_pos hwd (N + 2)) hw2))
+          (Qmul_add_left (qpow w (N + 2)) ⟨1, 1⟩ (mul w w))
+          (Qadd_congr (mul_one (qpow w (N + 2))) (qpow_mul_sq w hwd (N + 2)))
+      have hQexp : Qeq (mul (mul (kdbl (N + 2)) (qpow w (N + 2))) (add ⟨1, 1⟩ (mul w w)))
+          (add (mul (kdbl (N + 2)) (qpow w (N + 2))) (mul (kdbl (N + 2)) (qpow w (N + 4)))) :=
+        Qeq_trans (Qmul_den_pos (kdbl_den (N + 2)) (Qmul_den_pos (qpow_den_pos hwd (N + 2)) hS))
+          (Qmul_assoc (kdbl (N + 2)) (qpow w (N + 2)) (add ⟨1, 1⟩ (mul w w)))
+          (Qeq_trans (Qmul_den_pos (kdbl_den (N + 2))
+              (add_den_pos (qpow_den_pos hwd (N + 2)) (qpow_den_pos hwd (N + 4))))
+            (Qmul_congr (Qeq_refl _) hPS)
+            (Qmul_add_left (kdbl (N + 2)) (qpow w (N + 2)) (qpow w (N + 4))))
+      have hA : 0 < (mul (kdbl N) (qpow w (N + 2))).den := Qmul_den_pos (kdbl_den N) (qpow_den_pos hwd (N + 2))
+      have hB : 0 < (mul (kdbl (N + 1)) (qpow w (N + 3))).den :=
+        Qmul_den_pos (kdbl_den (N + 1)) (qpow_den_pos hwd (N + 3))
+      have hC : 0 < (mul (kdbl (N + 2)) (qpow w (N + 2))).den := hQt
+      have hD : 0 < (mul (kdbl (N + 2)) (qpow w (N + 4))).den :=
+        Qmul_den_pos (kdbl_den (N + 2)) (qpow_den_pos hwd (N + 4))
+      have h2w : 0 < (mul (⟨2, 1⟩ : Q) w).den := Qmul_den_pos Nat.one_pos hwd
+      -- A + C ≈ 0  (period cancellation)
+      have hAC : Qeq (add (mul (kdbl N) (qpow w (N + 2))) (mul (kdbl (N + 2)) (qpow w (N + 2)))) ⟨0, 1⟩ :=
+        Qeq_trans (Qmul_den_pos (add_den_pos (kdbl_den N) (kdbl_den (N + 2))) (qpow_den_pos hwd (N + 2)))
+          (Qeq_symm (Qmul_add_right (kdbl N) (kdbl (N + 2)) (qpow w (N + 2))))
+          (Qeq_trans (Qmul_den_pos Nat.one_pos (qpow_den_pos hwd (N + 2)))
+            (Qmul_congr (kdbl_period N) (Qeq_refl _)) (mul_left_zero _))
+      -- assemble
+      show Qeq (mul (add (peval kdbl w (N + 1)) (mul (kdbl (N + 2)) (qpow w (N + 2))))
+          (add ⟨1, 1⟩ (mul w w)))
+        (add (mul ⟨2, 1⟩ w) (add (mul (kdbl (N + 1)) (qpow w (N + 3)))
+          (mul (kdbl (N + 2)) (qpow w (N + 4)))))
+      refine Qeq_trans (add_den_pos (Qmul_den_pos hP hS) (Qmul_den_pos hQt hS))
+        (Qmul_add_right (peval kdbl w (N + 1)) (mul (kdbl (N + 2)) (qpow w (N + 2)))
+          (add ⟨1, 1⟩ (mul w w))) ?_
+      refine Qeq_trans (add_den_pos (add_den_pos h2w (add_den_pos hA hB)) (add_den_pos hC hD))
+        (Qadd_congr (kdbl_innerval w hwd N) hQexp) ?_
+      refine Qeq_trans (add_den_pos h2w (add_den_pos (add_den_pos hA hB) (add_den_pos hC hD)))
+        (Qadd_assoc3 _ _ _) ?_
+      refine Qeq_trans (add_den_pos h2w (add_den_pos (add_den_pos hA hC) (add_den_pos hB hD)))
+        (Qadd_congr (Qeq_refl _) (add_rearrange (mul (kdbl N) (qpow w (N + 2)))
+          (mul (kdbl (N + 1)) (qpow w (N + 3))) (mul (kdbl (N + 2)) (qpow w (N + 2)))
+          (mul (kdbl (N + 2)) (qpow w (N + 4))))) ?_
+      refine Qadd_congr (Qeq_refl _) ?_
+      exact Qeq_trans (add_den_pos Nat.one_pos (add_den_pos hB hD))
+        (Qadd_congr hAC (Qeq_refl _)) (Qzero_add _)
 
 /-- Bounded termwise sum monotonicity (`f ≤ g` for `i ≤ M`). -/
 theorem Fsum_le_Fsum_le {f g : Nat → Q} :
