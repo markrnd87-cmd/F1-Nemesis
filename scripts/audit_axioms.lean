@@ -1003,3 +1003,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.DN_geom_le
 #print axioms Analysis.qpow_double
 #print axioms Analysis.qpow_mono_exp
+#print axioms Analysis.qpow_const_nat
+#print axioms Analysis.qpow_const_combine

@@ -3207,4 +3207,21 @@ theorem qpow_mono_exp {η : Q} (hη0 : 0 ≤ η.num) (hηd : 0 < η.den) (hη1 :
         (Qmul_le_mul_right (qpow_nonneg hη0 (a + d)) hη1)
         (Qeq_le (Qone_mul _))) ih
 
+/-- `qpow ⟨c,1⟩ k = ⟨cᵏ,1⟩`. -/
+theorem qpow_const_nat (c : Int) : ∀ k, Qeq (qpow (⟨c, 1⟩ : Q) k) (⟨c ^ k, 1⟩ : Q)
+  | 0 => Qeq_refl _
+  | (k + 1) => by
+    show Qeq (mul (⟨c, 1⟩ : Q) (qpow ⟨c, 1⟩ k)) ⟨c ^ (k + 1), 1⟩
+    refine Qeq_trans (Qmul_den_pos Nat.one_pos Nat.one_pos)
+      (Qmul_congr (Qeq_refl _) (qpow_const_nat c k)) ?_
+    show Qeq (mul (⟨c, 1⟩ : Q) ⟨c ^ k, 1⟩) ⟨c ^ (k + 1), 1⟩
+    simp only [Qeq, mul]; rw [Int.pow_succ]; push_cast; ring_uor
+
+/-- **Geometric constant absorption**: `qpow ρ k · ⟨cᵏ,1⟩ ≈ qpow (ρ·c) k`. -/
+theorem qpow_const_combine (c : Int) (ρ : Q) (hρd : 0 < ρ.den) (k : Nat) :
+    Qeq (mul (qpow ρ k) (⟨c ^ k, 1⟩ : Q)) (qpow (mul ρ ⟨c, 1⟩) k) := by
+  refine Qeq_trans (Qmul_den_pos (qpow_den_pos hρd k) (qpow_den_pos Nat.one_pos k))
+    (Qmul_congr (Qeq_refl _) (Qeq_symm (qpow_const_nat c k))) ?_
+  exact Qeq_symm (qpow_mul ρ ⟨c, 1⟩ hρd Nat.one_pos k)
+
 end UOR.Bridge.F1Square.Analysis
