@@ -1001,3 +1001,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.corner_sum_final
 #print axioms Analysis.T_le
 #print axioms Analysis.DN_geom_le
+#print axioms Analysis.qpow_double

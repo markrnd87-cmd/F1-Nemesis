@@ -3183,4 +3183,16 @@ theorem DN_geom_le (ρ w : Q) (N : Nat) (hρd : 0 < ρ.den) (hρ0 : 0 ≤ ρ.num
     (Fsum_le_congr (fun _ _ => T_le ρ w hρd hρ0 hwd hw h2ρ hρ4 N)) ?_
   exact Qeq_le (Fsum_const_eq _ hCd (2 * N + 1))
 
+/-- **Exponent halving**: `qpow x (2N) ≈ qpow (x²) N`. -/
+theorem qpow_double (x : Q) (hxd : 0 < x.den) :
+    ∀ N, Qeq (qpow x (2 * N)) (qpow (mul x x) N)
+  | 0 => Qeq_refl _
+  | (N + 1) => by
+    have e : 2 * (N + 1) = 2 * N + 1 + 1 := by omega
+    rw [e]
+    show Qeq (mul x (mul x (qpow x (2 * N)))) (mul (mul x x) (qpow (mul x x) N))
+    exact Qeq_trans (Qmul_den_pos hxd (Qmul_den_pos hxd (qpow_den_pos (Qmul_den_pos hxd hxd) N)))
+      (Qmul_congr (Qeq_refl x) (Qmul_congr (Qeq_refl x) (qpow_double x hxd N)))
+      (Qeq_symm (Qmul_assoc x x (qpow (mul x x) N)))
+
 end UOR.Bridge.F1Square.Analysis
