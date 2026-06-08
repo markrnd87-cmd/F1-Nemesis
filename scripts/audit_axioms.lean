@@ -942,3 +942,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.geoTerm_tel
 #print axioms Analysis.geoSum_telescope
 #print axioms Analysis.geoSum_tel_le
+#print axioms Analysis.fabs_kdbl_le2
+#print axioms Analysis.pow2_sum

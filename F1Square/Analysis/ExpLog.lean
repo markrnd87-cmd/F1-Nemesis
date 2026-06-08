@@ -2059,6 +2059,28 @@ theorem peval_fcomp_swap (a b : Nat → Q) (ha : ∀ i, 0 < (a i).den) (hb : ∀
     (Fsum_congr (fun k => Qmul_assoc (a m) (fpow b m k) (qpow w k)) M)
     (Fsum_mul_left (ha m) (fun k => Qmul_den_pos (fpow_den_pos hb m k) (qpow_den_pos hwd k)) M)
 
+/-- Every `|kdbl|` coefficient is `≤ 2`. -/
+theorem fabs_kdbl_le2 (i : Nat) : Qle (fabs kdbl i) ⟨2, 1⟩ := by
+  show Qle (Qabs (kdbl i)) ⟨2, 1⟩
+  by_cases h1 : i % 4 = 1
+  · rw [show kdbl i = ⟨2, 1⟩ from by unfold kdbl; rw [if_pos h1]]; decide
+  · by_cases h3 : i % 4 = 3
+    · rw [show kdbl i = ⟨-2, 1⟩ from by unfold kdbl; rw [if_neg h1, if_pos h3]]; decide
+    · rw [show kdbl i = ⟨0, 1⟩ from by unfold kdbl; rw [if_neg h1, if_neg h3]]; decide
+
+/-- The integer geometric sum `Σ_{j≤k} 2ʲ = 2^{k+1} − 1`. -/
+theorem pow2_sum : ∀ k, Qeq (Fsum (fun j => (⟨(2 : Int) ^ j, 1⟩ : Q)) k) ⟨(2 : Int) ^ (k + 1) - 1, 1⟩
+  | 0 => by decide
+  | (k + 1) => by
+      show Qeq (add (Fsum (fun j => (⟨(2 : Int) ^ j, 1⟩ : Q)) k) ⟨(2 : Int) ^ (k + 1), 1⟩)
+        ⟨(2 : Int) ^ (k + 1 + 1) - 1, 1⟩
+      refine Qeq_trans (add_den_pos Nat.one_pos Nat.one_pos) (Qadd_congr (pow2_sum k) (Qeq_refl _)) ?_
+      show Qeq (add (⟨(2 : Int) ^ (k + 1) - 1, 1⟩ : Q) ⟨(2 : Int) ^ (k + 1), 1⟩)
+        ⟨(2 : Int) ^ (k + 1 + 1) - 1, 1⟩
+      simp only [Qeq, add]
+      rw [show (2 : Int) ^ (k + 1 + 1) = 2 ^ (k + 1) * 2 from by rw [Int.pow_succ]]
+      push_cast; ring_uor
+
 /-- Per-term geometric telescope: `ρ^{2N+1}·(1−ρ²) = ρ^{2N+1} − ρ^{2N+3}`. -/
 theorem geoTerm_tel (ρ : Q) (hρd : 0 < ρ.den) (N : Nat) :
     Qeq (mul (geoTerm ρ N) (Qsub ⟨1, 1⟩ (mul ρ ρ)))
