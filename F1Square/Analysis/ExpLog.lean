@@ -3931,4 +3931,71 @@ theorem tmap_lip (a b : Q) (had : 0 < a.den) (hbd : 0 < b.den) (ha1 : 0 < (add a
   rw [Qabs_mul, show Qabs (⟨2, 1⟩ : Q) = ⟨2, 1⟩ from rfl]
   exact Qle_refl _
 
+/-- **(a) the two `Rartanh` arguments of the log-doubling agree** — `tmap((Y²).seq) ≈ uval(tmap(Y.seq))`
+    pointwise, i.e. the `t`-real of `Y²` equals `uvalReal` of the `t`-real of `Y`. Per index: rewrite
+    `tmap((Y²).seq) = tmap((Y.seq R₂)²) ≈ uval(tmap(Y.seq R₂))` (`tmap_sq_uval`), then
+    `|uval(tmap(Y.seq R₂)) − uval(tmap(Y.seq R₃))| ≤ 4·2·|Y.seq R₂ − Y.seq R₃| ≤ 16/(n+1)` via
+    `uval_lip`, `tmap_lip`, `Y`-regularity, `Ridx_ge`. `ρ` bounds `tmap(Y.seq ·)` (`= ρ_M` from `Rlog`). -/
+theorem tsq_uvalReal_via (Y tY2 uY : Real) (ρ : Q) (hρd : 0 < ρ.den) (hρ1 : Qle ρ ⟨1, 1⟩)
+    (hYpos : ∀ n, 0 < (Y.seq n).num) (hbt : ∀ m, Qle (Qabs (tmap (Y.seq m))) ρ)
+    (htY2seq : ∀ n, tY2.seq n = tmap ((Rmul Y Y).seq (Rlog_R n)))
+    (huYseq : ∀ n, uY.seq n = uval (tmap (Y.seq (Rlog_R (4 * n + 3))))) :
+    Req tY2 uY := by
+  have hYd : ∀ m, 0 < (Y.seq m).den := fun m => Y.den_pos m
+  have hca : ∀ m, 0 < (add (Y.seq m) ⟨1, 1⟩).num := by
+    intro m; have h := hYpos m; have h2 := Int.ofNat_nonneg (Y.seq m).den
+    show 0 < (Y.seq m).num * 1 + 1 * ((Y.seq m).den : Int); omega
+  have hcge : ∀ m, Qle (⟨1, 1⟩ : Q) (add (Y.seq m) ⟨1, 1⟩) := by
+    intro m; have h := hYpos m; have h2 := Int.ofNat_nonneg (Y.seq m).den
+    simp only [Qle, add, mul]; push_cast; omega
+  have hca2 : ∀ m, 0 < (add (mul (Y.seq m) (Y.seq m)) ⟨1, 1⟩).num := by
+    intro m
+    have h1 : 0 ≤ (Y.seq m).num * (Y.seq m).num := by
+      rw [← Int.natAbs_mul_self]; exact Int.ofNat_nonneg _
+    have h2 : 0 < (((Y.seq m).den * (Y.seq m).den : Nat) : Int) := by
+      exact_mod_cast Nat.mul_pos (hYd m) (hYd m)
+    show 0 < (Y.seq m).num * (Y.seq m).num * 1 + 1 * (((Y.seq m).den * (Y.seq m).den : Nat) : Int)
+    omega
+  have htmd : ∀ m, 0 < (tmap (Y.seq m)).den := fun m =>
+    Qmul_den_pos (Qsub_den_pos (hYd m) Nat.one_pos) (Qinv_den_pos (hca m))
+  refine Req_of_lin_bound (C := 16) ?_
+  intro n
+  rw [htY2seq n, huYseq n]
+  show Qle (Qabs (Qsub (tmap (mul (Y.seq (Ridx Y Y (Rlog_R n))) (Y.seq (Ridx Y Y (Rlog_R n)))))
+      (uval (tmap (Y.seq (Rlog_R (4 * n + 3))))))) (⟨16, n + 1⟩ : Q)
+  -- Step A: tmap(mul a a) ≈ uval(tmap a)
+  refine Qle_trans (Qabs_den_pos (Qsub_den_pos (uval_den_pos _ (htmd _)) (uval_den_pos _ (htmd _))))
+    (Qeq_le (Qabs_Qeq (Qsub_congr
+      (tmap_sq_uval (Y.seq (Ridx Y Y (Rlog_R n))) (hYd _) (hca _) (hca2 _)) (Qeq_refl _)))) ?_
+  -- Step B: uval_lip (radius ρ)
+  refine Qle_trans (Qmul_den_pos Nat.one_pos (Qabs_den_pos (Qsub_den_pos (htmd _) (htmd _))))
+    (uval_lip ρ (tmap (Y.seq (Ridx Y Y (Rlog_R n)))) (tmap (Y.seq (Rlog_R (4 * n + 3))))
+      hρd hρ1 (htmd _) (htmd _) (hbt _) (hbt _)) ?_
+  -- Step C: tmap_lip
+  refine Qle_trans (Qmul_den_pos Nat.one_pos (Qmul_den_pos Nat.one_pos
+      (Qabs_den_pos (Qsub_den_pos (hYd _) (hYd _)))))
+    (Qmul_le_mul_left (by decide) (tmap_lip (Y.seq (Ridx Y Y (Rlog_R n)))
+      (Y.seq (Rlog_R (4 * n + 3))) (hYd _) (hYd _) (hca _) (hca _) (hcge _) (hcge _))) ?_
+  -- Step D: Y-regularity
+  refine Qle_trans (Qmul_den_pos Nat.one_pos (Qmul_den_pos Nat.one_pos
+      (add_den_pos (Qbound_den_pos _) (Qbound_den_pos _))))
+    (Qmul_le_mul_left (by decide) (Qmul_le_mul_left (by decide)
+      (Y.reg (Ridx Y Y (Rlog_R n)) (Rlog_R (4 * n + 3))))) ?_
+  -- Step E: Qbound bounds + final equality
+  have hR2 : Qle (Qbound (Ridx Y Y (Rlog_R n))) (Qbound n) := by
+    show (1 : Int) * ((n + 1 : Nat) : Int) ≤ 1 * ((Ridx Y Y (Rlog_R n) + 1 : Nat) : Int)
+    have hge := Ridx_ge Y Y (Rlog_R n)
+    have hr : n ≤ Rlog_R n := by unfold Rlog_R; omega
+    rw [Int.one_mul, Int.one_mul]; exact_mod_cast (show n + 1 ≤ Ridx Y Y (Rlog_R n) + 1 by omega)
+  have hR3 : Qle (Qbound (Rlog_R (4 * n + 3))) (Qbound n) := by
+    show (1 : Int) * ((n + 1 : Nat) : Int) ≤ 1 * ((Rlog_R (4 * n + 3) + 1 : Nat) : Int)
+    have hr : n ≤ Rlog_R (4 * n + 3) := by unfold Rlog_R; omega
+    rw [Int.one_mul, Int.one_mul]; exact_mod_cast (show n + 1 ≤ Rlog_R (4 * n + 3) + 1 by omega)
+  refine Qle_trans (Qmul_den_pos Nat.one_pos (Qmul_den_pos Nat.one_pos
+      (add_den_pos (Qbound_den_pos n) (Qbound_den_pos n))))
+    (Qmul_le_mul_left (by decide) (Qmul_le_mul_left (by decide) (Qadd_le_add hR2 hR3))) ?_
+  apply Qeq_le
+  show Qeq (mul ⟨4, 1⟩ (mul ⟨2, 1⟩ (add (Qbound n) (Qbound n)))) (⟨16, n + 1⟩ : Q)
+  simp only [Qeq, mul, add, Qbound]; push_cast; ring_uor
+
 end UOR.Bridge.F1Square.Analysis
