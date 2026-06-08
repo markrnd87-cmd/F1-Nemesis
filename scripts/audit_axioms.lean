@@ -792,3 +792,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.rexp_add_gap
 #print axioms Analysis.RexpReal_add_aux
 #print axioms Analysis.RexpReal_add
+-- v0.15.1 (wip) — toward exp∘log = id: exp respects ≈, and the reciprocal law.
+#print axioms Analysis.RexpReal_congr
+#print axioms Analysis.RexpReal_mul_neg
