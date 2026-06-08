@@ -1023,3 +1023,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qadd_same_den
 #print axioms Analysis.Rartanh_double_via
 #print axioms Analysis.Rartanh_double_rat
+#print axioms Analysis.geoEvenSum_num_nonneg
+#print axioms Analysis.geoEvenSum_le_two

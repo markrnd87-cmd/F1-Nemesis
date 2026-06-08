@@ -3569,4 +3569,22 @@ theorem Rartanh_double_rat (ρ w σ : Q) (hρd : 0 < ρ.den) (hρ0 : 0 ≤ ρ.nu
     (fun j => RartanhAtQ_seq w hwd σ hσ0 hσd hσlt hbw j)
     (fun j => RartanhAtQ_seq (uval w) huvd σ hσ0 hσd hσlt hbu j)
 
+/-- `0 ≤ geoEvenSum ρ N` for `0 ≤ ρ`. -/
+theorem geoEvenSum_num_nonneg {ρ : Q} (hρ0 : 0 ≤ ρ.num) : ∀ N, 0 ≤ (geoEvenSum ρ N).num
+  | 0 => qpow_nonneg hρ0 0
+  | (n + 1) => Qadd_num_nonneg_loc (geoEvenSum_num_nonneg hρ0 n) (qpow_nonneg hρ0 _)
+
+/-- **Uniform even-geometric bound**: `geoEvenSum ρ N ≤ 2` for all `N` (`ρ ≤ 1/2`, so `1−ρ² ≥ 1/2`).
+    From `geoEven_eq` (`E_N·(1−ρ²) = 1 − ρ^{2N+2} ≤ 1`) via `mul_div2`. -/
+theorem geoEvenSum_le_two {ρ : Q} (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den)
+    (hρ2 : Qle (⟨1, 2⟩ : Q) (Qsub ⟨1, 1⟩ (mul ρ ρ))) (N : Nat) : Qle (geoEvenSum ρ N) ⟨2, 1⟩ := by
+  have hsd : 0 < (Qsub (⟨1, 1⟩ : Q) (mul ρ ρ)).den := Qsub_den_pos Nat.one_pos (Qmul_den_pos hρd hρd)
+  have hab : Qle (mul (geoEvenSum ρ N) (Qsub ⟨1, 1⟩ (mul ρ ρ))) ⟨1, 1⟩ :=
+    Qle_trans (add_den_pos (Qmul_den_pos (geoEvenSum_den_pos hρd N) hsd) (qpow_den_pos hρd _))
+      (Qle_self_add (qpow_nonneg hρ0 (2 * N + 2)))
+      (Qeq_le (geoEven_eq hρd N))
+  refine Qle_trans (Qmul_den_pos Nat.one_pos Nat.one_pos)
+    (mul_div2 (geoEvenSum_num_nonneg hρ0 N) (geoEvenSum_den_pos hρd N) hsd Nat.one_pos hρ2 hab) ?_
+  exact Qeq_le (mul_one ⟨2, 1⟩)
+
 end UOR.Bridge.F1Square.Analysis
