@@ -659,7 +659,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qadd_perm
 #print axioms Analysis.Qadd_perm4
 #print axioms Analysis.Fsum_parity_split
-#print axioms Analysis.Qadd_same_den
+#print axioms Analysis.Qadd_same_den_loc
 #print axioms Analysis.Fsum_const_den
 #print axioms Analysis.qpow_neg_one_even
 #print axioms Analysis.qpow_neg_one_odd
@@ -1019,3 +1019,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.peval_kdbl_abs_le_one
 #print axioms Analysis.DN_recip
 #print axioms Analysis.Qadd_self
+#print axioms Analysis.RartanhAtQ_seq
+#print axioms Analysis.Qadd_same_den

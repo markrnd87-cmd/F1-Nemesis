@@ -3471,4 +3471,19 @@ theorem DN_recip (ρ w : Q) (N n : Nat) (hρd : 0 < ρ.den) (hρ0 : 0 ≤ ρ.num
 theorem Qadd_self (x : Q) : Qeq (add x x) (mul ⟨2, 1⟩ x) := by
   simp only [Qeq, add, mul]; push_cast; ring_uor
 
+/-- `⟨a,d⟩ + ⟨b,d⟩ ≈ ⟨a+b,d⟩` (same denominator). -/
+theorem Qadd_same_den_loc (a b : Int) (d : Nat) :
+    Qeq (add (⟨a, d⟩ : Q) (⟨b, d⟩ : Q)) (⟨a + b, d⟩ : Q) := by
+  simp only [Qeq, add]; push_cast; ring_uor
+
+/-- `Rartanh` of a constant rational real (clean wrapper taking the single bound `|v| ≤ ρ`). -/
+def RartanhAtQ (v : Q) (hvd : 0 < v.den) (ρ : Q) (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den)
+    (hlt : ρ.num.toNat < ρ.den) (hb : Qle (Qabs v) ρ) : Real :=
+  Rartanh (ofQ v hvd) ρ hρ0 hρd hlt (fun _ => hb)
+
+/-- The diagonal of `RartanhAtQ` is `artSum v` at the `Rartanh` modulus. -/
+theorem RartanhAtQ_seq (v : Q) (hvd : 0 < v.den) (ρ : Q) (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den)
+    (hlt : ρ.num.toNat < ρ.den) (hb : Qle (Qabs v) ρ) (j : Nat) :
+    (RartanhAtQ v hvd ρ hρ0 hρd hlt hb).seq j = artSum v (Rartanh_R ρ j) := rfl
+
 end UOR.Bridge.F1Square.Analysis
