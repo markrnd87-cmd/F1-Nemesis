@@ -811,3 +811,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.fone_den_pos
 #print axioms Analysis.Fsum_zeros
 #print axioms Analysis.fmul_one
+#print axioms Analysis.dexpderiv_den
+#print axioms Analysis.dgeom_den
+#print axioms Analysis.dexpderiv_sum
+#print axioms Analysis.dgeom_ode

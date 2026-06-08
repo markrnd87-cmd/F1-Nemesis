@@ -326,4 +326,62 @@ theorem fmul_one (a : Nat → Q) (ha : ∀ i, 0 < (a i).den) (k : Nat) : Qeq (fm
       show Qeq (mul (a (n + 1)) ⟨1, 1⟩) (a (n + 1))
       simp only [Qeq, mul]; push_cast; ring_uor
 
+-- ===========================================================================
+-- The formal coefficient identity: the (1+w)/(1−w) coefficients satisfy the
+-- exp∘artanh chain-rule ODE  E' = (2/(1−w²))·E.
+-- ===========================================================================
+
+/-- `2/(1−w²)` coefficients — the formal derivative of the `2·artanh` series: `2` at even degree, `0` at odd. -/
+def dexpderiv (k : Nat) : Q := ⟨(2 - 2 * (k % 2) : Nat), 1⟩
+
+/-- The `exp(2·artanh w) = (1+w)/(1−w)` coefficients: `1` at degree 0, `2` after. -/
+def dgeom (k : Nat) : Q := if k = 0 then ⟨1, 1⟩ else ⟨2, 1⟩
+
+theorem dexpderiv_den (k : Nat) : 0 < (dexpderiv k).den := Nat.one_pos
+theorem dgeom_den (k : Nat) : 0 < (dgeom k).den := by unfold dgeom; split <;> exact Nat.one_pos
+
+/-- Partial sums of the `2/(1−w²)` coefficients: `Σ_{i≤k} = 2·⌊k/2⌋ + 2`. -/
+theorem dexpderiv_sum : ∀ k, Qeq (Fsum dexpderiv k) ⟨(2 * (k / 2) + 2 : Nat), 1⟩
+  | 0 => by show Qeq (dexpderiv 0) ⟨(2 * (0 / 2) + 2 : Nat), 1⟩; decide
+  | (k + 1) => by
+      show Qeq (add (Fsum dexpderiv k) (dexpderiv (k + 1))) ⟨(2 * ((k + 1) / 2) + 2 : Nat), 1⟩
+      refine Qeq_trans (add_den_pos Nat.one_pos Nat.one_pos)
+        (Qadd_congr (dexpderiv_sum k) (Qeq_refl _)) ?_
+      show Qeq (add (⟨(2 * (k / 2) + 2 : Nat), 1⟩ : Q) ⟨(2 - 2 * ((k + 1) % 2) : Nat), 1⟩)
+        ⟨(2 * ((k + 1) / 2) + 2 : Nat), 1⟩
+      simp only [Qeq, add]; push_cast; omega
+
+/-- **The formal coefficient identity**: the `(1+w)/(1−w)` coefficients `dgeom` satisfy the chain-rule
+    ODE `E' = (2/(1−w²))·E` (`fderiv dgeom = dexpderiv · dgeom`) — i.e. `exp(2·artanh w)` formally *is*
+    the geometric series. The parity recurrence `2(k+1) = Σ_{i≤k} dexpderivᵢ·dgeom_{k−i}`. -/
+theorem dgeom_ode (k : Nat) : Qeq (fderiv dgeom k) (fmul dexpderiv dgeom k) := by
+  have hLHS : Qeq (fderiv dgeom k) ⟨(2 * (k + 1) : Nat), 1⟩ := by
+    show Qeq (mul ⟨(k + 1 : Int), 1⟩ (dgeom (k + 1))) ⟨(2 * (k + 1) : Nat), 1⟩
+    have hg : dgeom (k + 1) = ⟨2, 1⟩ := by unfold dgeom; rw [if_neg (by omega)]
+    rw [hg]; simp only [Qeq, mul]; push_cast; omega
+  have hRHS : Qeq (fmul dexpderiv dgeom k) ⟨(2 * (k + 1) : Nat), 1⟩ := by
+    cases k with
+    | zero => show Qeq (mul (dexpderiv 0) (dgeom 0)) ⟨(2 * (0 + 1) : Nat), 1⟩; decide
+    | succ n =>
+        show Qeq (add (Fsum (fun i => mul (dexpderiv i) (dgeom (n + 1 - i))) n)
+          (mul (dexpderiv (n + 1)) (dgeom (n + 1 - (n + 1))))) ⟨(2 * (n + 1 + 1) : Nat), 1⟩
+        have hsum : Qeq (Fsum (fun i => mul (dexpderiv i) (dgeom (n + 1 - i))) n)
+            (mul (Fsum dexpderiv n) ⟨2, 1⟩) := by
+          refine Qeq_trans (Fsum_den_pos (fun i => Qmul_den_pos (dexpderiv_den i) (by decide)) n)
+            (Fsum_congr_le (fun i hi => ?_))
+            (Qeq_symm (Fsum_mul_const_right (by decide) (fun _ => Nat.one_pos) n))
+          have hg : dgeom (n + 1 - i) = ⟨2, 1⟩ := by unfold dgeom; rw [if_neg (by omega)]
+          rw [hg]; exact Qeq_refl _
+        refine Qeq_trans (add_den_pos (Qmul_den_pos (Fsum_den_pos (fun i => dexpderiv_den i) n) (by decide))
+            (Qmul_den_pos (dexpderiv_den _) (dgeom_den _))) (Qadd_congr hsum (Qeq_refl _)) ?_
+        rw [Nat.sub_self]
+        refine Qeq_trans (add_den_pos (Qmul_den_pos Nat.one_pos (by decide))
+            (Qmul_den_pos (dexpderiv_den _) Nat.one_pos))
+          (Qadd_congr (Qmul_congr (dexpderiv_sum n) (Qeq_refl _))
+            (Qmul_congr (Qeq_refl _) (show Qeq (dgeom 0) ⟨1, 1⟩ by decide))) ?_
+        show Qeq (add (mul (⟨(2 * (n / 2) + 2 : Nat), 1⟩ : Q) ⟨2, 1⟩)
+          (mul ⟨(2 - 2 * ((n + 1) % 2) : Nat), 1⟩ ⟨1, 1⟩)) ⟨(2 * (n + 1 + 1) : Nat), 1⟩
+        simp only [Qeq, add, mul]; push_cast; omega
+  exact Qeq_trans Nat.one_pos hLHS (Qeq_symm hRHS)
+
 end UOR.Bridge.F1Square.Analysis
