@@ -788,6 +788,42 @@ theorem fpow_vanish {b : Nat → Q} (hb : ∀ i, 0 < (b i).den) (hb0 : Qeq (b 0)
           (Qmul_congr (Qeq_refl _) hv) ?_
         simp [Qeq, mul]
 
+/-- The coefficientwise absolute value of a formal series. -/
+def fabs (b : Nat → Q) : Nat → Q := fun k => Qabs (b k)
+
+theorem fabs_den_pos {b : Nat → Q} (hb : ∀ i, 0 < (b i).den) (k : Nat) : 0 < (fabs b k).den :=
+  Qabs_den_pos (hb k)
+
+theorem fabs_nonneg (b : Nat → Q) (k : Nat) : 0 ≤ (fabs b k).num := Qabs_num_nonneg (b k)
+
+/-- **Abs of a Cauchy product is dominated by the Cauchy product of abs**: `|a·b| ≤ |a|·|b|` coefficientwise. -/
+theorem Qabs_fmul_le (a b : Nat → Q) (ha : ∀ i, 0 < (a i).den) (hb : ∀ i, 0 < (b i).den) (k : Nat) :
+    Qle (Qabs (fmul a b k)) (fmul (fabs a) (fabs b) k) := by
+  show Qle (Qabs (Fsum (fun i => mul (a i) (b (k - i))) k))
+    (Fsum (fun i => mul (Qabs (a i)) (Qabs (b (k - i)))) k)
+  refine Qle_trans (Fsum_den_pos (fun i => Qabs_den_pos (Qmul_den_pos (ha i) (hb (k - i)))) k)
+    (Fsum_abs_le (fun i => Qmul_den_pos (ha i) (hb (k - i))) k) ?_
+  refine Fsum_le_Fsum (fun i => ?_) k
+  rw [Qabs_mul]; exact Qle_refl _
+
+/-- **`fmul` is monotone in its right argument** when the left is nonnegative. -/
+theorem fmul_mono_right {a c d : Nat → Q} (ha0 : ∀ i, 0 ≤ (a i).num)
+    (hcd : ∀ j, Qle (c j) (d j)) (k : Nat) : Qle (fmul a c k) (fmul a d k) :=
+  Fsum_le_Fsum (fun i => Qmul_le_mul_left (ha0 i) (hcd (k - i))) k
+
+/-- **Coefficient domination of powers**: `|（bᵐ)_k| ≤ (|b|ᵐ)_k`. -/
+theorem fpow_abs_dom (b : Nat → Q) (hb : ∀ i, 0 < (b i).den) :
+    ∀ (m k : Nat), Qle (Qabs (fpow b m k)) (fpow (fabs b) m k)
+  | 0, k => by
+      show Qle (Qabs (fone k)) (fone k)
+      unfold fone; by_cases h : k = 0
+      · rw [if_pos h]; exact (by decide : Qle (Qabs (⟨1, 1⟩ : Q)) ⟨1, 1⟩)
+      · rw [if_neg h]; exact (by decide : Qle (Qabs (⟨0, 1⟩ : Q)) ⟨0, 1⟩)
+  | (m + 1), k =>
+      Qle_trans (fmul_den_pos (fun i => fabs_den_pos hb i) (fun j => fabs_den_pos (fpow_den_pos hb m) j) k)
+        (Qabs_fmul_le b (fpow b m) hb (fpow_den_pos hb m) k)
+        (fmul_mono_right (fun i => fabs_nonneg b i) (fun j => fpow_abs_dom b hb m j) k)
+
 /-- **Formal composition** `(a∘b)_k = Σ_{m=0}^{k} aₘ·(bᵐ)_k`. When `b(0)=0` (`fpow_vanish`) the terms
     with `m > k` vanish, so this finite sum is the full composition coefficient. -/
 def fcomp (a b : Nat → Q) (k : Nat) : Q := Fsum (fun m => mul (a m) (fpow b m k)) k
