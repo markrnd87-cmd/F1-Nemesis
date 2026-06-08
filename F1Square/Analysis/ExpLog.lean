@@ -780,4 +780,99 @@ theorem fmul_congr_right {a b b' : Nat → Q} (h : ∀ i, Qeq (b i) (b' i)) (k :
     Qeq (fmul a b k) (fmul a b' k) :=
   Fsum_congr (fun i => Qmul_congr (Qeq_refl _) (h (k - i))) k
 
+/-- Scalar multiplication of a formal series: `(c·a)_k = c·aₖ`. -/
+def fsmul (c : Q) (a : Nat → Q) (k : Nat) : Q := mul c (a k)
+
+theorem fsmul_den {c : Q} (hc : 0 < c.den) {a : Nat → Q} (ha : ∀ i, 0 < (a i).den) (k : Nat) :
+    0 < (fsmul c a k).den := Qmul_den_pos hc (ha k)
+
+/-- `fmul a (zero series) = 0`. -/
+theorem fmul_zero_right (a : Nat → Q) (ha : ∀ i, 0 < (a i).den) (k : Nat) :
+    Qeq (fmul a (fun _ => (⟨0, 1⟩ : Q)) k) ⟨0, 1⟩ := by
+  show Qeq (Fsum (fun i => mul (a i) ((fun _ => (⟨0, 1⟩ : Q)) (k - i))) k) ⟨0, 1⟩
+  refine Qeq_trans (Fsum_den_pos (fun _ => Nat.one_pos) k)
+    (Fsum_congr_le (g := fun _ => (⟨0, 1⟩ : Q)) (k := k) (fun i _ => ?_)) (Fsum_zeros k)
+  simp [Qeq, mul]
+
+/-- **Scalars pull out of the Cauchy product**: `a·(c·b) = c·(a·b)`. -/
+theorem fmul_smul_right (a b : Nat → Q) (c : Q) (hc : 0 < c.den) (ha : ∀ i, 0 < (a i).den)
+    (hb : ∀ i, 0 < (b i).den) (k : Nat) : Qeq (fmul a (fsmul c b) k) (mul c (fmul a b k)) := by
+  show Qeq (Fsum (fun i => mul (a i) (mul c (b (k - i)))) k)
+    (mul c (Fsum (fun i => mul (a i) (b (k - i))) k))
+  refine Qeq_trans (Fsum_den_pos (fun i => Qmul_den_pos hc (Qmul_den_pos (ha i) (hb (k - i)))) k)
+    (Fsum_congr (fun i => ?_) k)
+    (Fsum_mul_left hc (fun i => Qmul_den_pos (ha i) (hb (k - i))) k)
+  show Qeq (mul (a i) (mul c (b (k - i)))) (mul c (mul (a i) (b (k - i))))
+  simp only [Qeq, mul]; push_cast; ring_uor
+
+/-- `a·(c·d) = c·(a·d)` (swap the left factors of a nested Cauchy product). -/
+theorem fmul_swap_left (a c d : Nat → Q) (ha : ∀ i, 0 < (a i).den) (hc : ∀ i, 0 < (c i).den)
+    (hd : ∀ i, 0 < (d i).den) (k : Nat) : Qeq (fmul a (fmul c d) k) (fmul c (fmul a d) k) := by
+  have s1 : Qeq (fmul a (fmul c d) k) (fmul (fmul a c) d k) := Qeq_symm (fmul_assoc a c d ha hc hd k)
+  have s2 : Qeq (fmul (fmul a c) d k) (fmul (fmul c a) d k) :=
+    fmul_congr_left (fun i => fmul_comm a c ha hc i) k
+  have s3 : Qeq (fmul (fmul c a) d k) (fmul c (fmul a d) k) := fmul_assoc c a d hc ha hd k
+  exact Qeq_trans (fmul_den_pos (fun i => fmul_den_pos ha hc i) hd k) s1
+    (Qeq_trans (fmul_den_pos (fun i => fmul_den_pos hc ha i) hd k) s2 s3)
+
+/-- `p + (m+1)·p = (m+2)·p`. -/
+theorem Qcombine_succ (m : Nat) (p : Q) :
+    Qeq (add p (mul ⟨(m + 1 : Int), 1⟩ p)) (mul ⟨(m + 1 + 1 : Int), 1⟩ p) := by
+  simp only [Qeq, add, mul]; push_cast; ring_uor
+
+/-- **The power rule** `(bᵐ⁺¹)' = (m+1)·bᵐ·b'` (induction via the Leibniz rule). -/
+theorem fpow_deriv {b : Nat → Q} (hb : ∀ i, 0 < (b i).den) :
+    ∀ (m k : Nat), Qeq (fderiv (fpow b (m + 1)) k)
+      (fsmul ⟨(m + 1 : Int), 1⟩ (fmul (fderiv b) (fpow b m)) k)
+  | 0, k => by
+      have hb' : ∀ i, 0 < (fderiv b i).den := fun i => fderiv_den_pos hb i
+      have e1 : Qeq (fderiv (fpow b 1) k)
+          (add (fmul (fderiv b) (fpow b 0) k) (fmul b (fderiv (fpow b 0)) k)) :=
+        fderiv_fmul b (fpow b 0) hb (fun i => fpow_den_pos hb 0 i) k
+      have e2 : Qeq (fmul b (fderiv (fpow b 0)) k) ⟨0, 1⟩ :=
+        Qeq_trans (fmul_den_pos hb (fun i => fderiv_den_pos (fun j => fone_den_pos j) i) k)
+          (fmul_congr_right (fun i => fderiv_fone i) k) (fmul_zero_right b hb k)
+      have eA : Qeq (fderiv (fpow b 1) k) (add (fmul (fderiv b) (fpow b 0) k) ⟨0, 1⟩) :=
+        Qeq_trans (add_den_pos (fmul_den_pos hb' (fun i => fpow_den_pos hb 0 i) k)
+            (fmul_den_pos hb (fun i => fderiv_den_pos (fun j => fpow_den_pos hb 0 j) i) k))
+          e1 (Qadd_congr (Qeq_refl _) e2)
+      have eB : Qeq (fderiv (fpow b 1) k) (fmul (fderiv b) (fpow b 0) k) :=
+        Qeq_trans (add_den_pos (fmul_den_pos hb' (fun i => fpow_den_pos hb 0 i) k) Nat.one_pos)
+          eA (Qadd_zero_right _)
+      have eR : Qeq (fsmul ⟨(0 + 1 : Int), 1⟩ (fmul (fderiv b) (fpow b 0)) k)
+          (fmul (fderiv b) (fpow b 0) k) := by
+        show Qeq (mul ⟨(0 + 1 : Int), 1⟩ (fmul (fderiv b) (fpow b 0) k)) (fmul (fderiv b) (fpow b 0) k)
+        simp only [Qeq, mul]; push_cast; ring_uor
+      exact Qeq_trans (fmul_den_pos hb' (fun i => fpow_den_pos hb 0 i) k) eB (Qeq_symm eR)
+  | (m + 1), k => by
+      have hb' : ∀ i, 0 < (fderiv b i).den := fun i => fderiv_den_pos hb i
+      have hP : 0 < (fmul (fderiv b) (fpow b (m + 1)) k).den :=
+        fmul_den_pos hb' (fun i => fpow_den_pos hb (m + 1) i) k
+      have e1 : Qeq (fderiv (fpow b (m + 2)) k)
+          (add (fmul (fderiv b) (fpow b (m + 1)) k) (fmul b (fderiv (fpow b (m + 1))) k)) :=
+        fderiv_fmul b (fpow b (m + 1)) hb (fun i => fpow_den_pos hb (m + 1) i) k
+      have eIH : Qeq (fmul b (fderiv (fpow b (m + 1))) k)
+          (fmul b (fsmul ⟨(m + 1 : Int), 1⟩ (fmul (fderiv b) (fpow b m))) k) :=
+        fmul_congr_right (fun i => fpow_deriv hb m i) k
+      have eS : Qeq (fmul b (fsmul ⟨(m + 1 : Int), 1⟩ (fmul (fderiv b) (fpow b m))) k)
+          (mul ⟨(m + 1 : Int), 1⟩ (fmul b (fmul (fderiv b) (fpow b m)) k)) :=
+        fmul_smul_right b (fmul (fderiv b) (fpow b m)) ⟨(m + 1 : Int), 1⟩ Nat.one_pos hb
+          (fun i => fmul_den_pos hb' (fun j => fpow_den_pos hb m j) i) k
+      have eRw : Qeq (fmul b (fmul (fderiv b) (fpow b m)) k) (fmul (fderiv b) (fpow b (m + 1)) k) :=
+        fmul_swap_left b (fderiv b) (fpow b m) hb hb' (fun i => fpow_den_pos hb m i) k
+      have eP : Qeq (fmul b (fderiv (fpow b (m + 1))) k)
+          (mul ⟨(m + 1 : Int), 1⟩ (fmul (fderiv b) (fpow b (m + 1)) k)) :=
+        Qeq_trans (fmul_den_pos hb (fun i => fsmul_den Nat.one_pos
+            (fun j => fmul_den_pos hb' (fun l => fpow_den_pos hb m l) j) i) k) eIH
+          (Qeq_trans (Qmul_den_pos Nat.one_pos (fmul_den_pos hb
+              (fun i => fmul_den_pos hb' (fun j => fpow_den_pos hb m j) i) k)) eS
+            (Qmul_congr (Qeq_refl _) eRw))
+      refine Qeq_trans (add_den_pos hP (fmul_den_pos hb
+          (fun i => fderiv_den_pos (fun j => fpow_den_pos hb (m + 1) j) i) k)) e1 ?_
+      refine Qeq_trans (add_den_pos hP (Qmul_den_pos Nat.one_pos hP)) (Qadd_congr (Qeq_refl _) eP) ?_
+      show Qeq (add (fmul (fderiv b) (fpow b (m + 1)) k)
+          (mul ⟨(m + 1 : Int), 1⟩ (fmul (fderiv b) (fpow b (m + 1)) k)))
+        (mul ⟨(m + 1 + 1 : Int), 1⟩ (fmul (fderiv b) (fpow b (m + 1)) k))
+      exact Qcombine_succ m (fmul (fderiv b) (fpow b (m + 1)) k)
+
 end UOR.Bridge.F1Square.Analysis

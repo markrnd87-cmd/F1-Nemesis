@@ -845,3 +845,9 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.fcomp_const
 #print axioms Analysis.fderiv_fone
 #print axioms Analysis.fmul_congr_right
+#print axioms Analysis.fsmul_den
+#print axioms Analysis.fmul_zero_right
+#print axioms Analysis.fmul_smul_right
+#print axioms Analysis.fmul_swap_left
+#print axioms Analysis.Qcombine_succ
+#print axioms Analysis.fpow_deriv
