@@ -981,3 +981,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.per_m_step
 #print axioms Analysis.per_m_bound
 #print axioms Analysis.DN_eq
+#print axioms Analysis.acoef_num_nonneg
+#print axioms Analysis.acoef_le_one
+#print axioms Analysis.DN_abs_le
