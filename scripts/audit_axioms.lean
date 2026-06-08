@@ -928,3 +928,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qabs_fmul_le
 #print axioms Analysis.fmul_mono_right
 #print axioms Analysis.fpow_abs_dom
+#print axioms Analysis.peval_mono
+#print axioms Analysis.peval_abs_le_peval_fabs

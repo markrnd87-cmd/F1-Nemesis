@@ -427,6 +427,31 @@ theorem peval_abs_bound (c : Nat → Q) (hc : ∀ k, 0 < (c k).den) (w : Q) (hwd
     (Qle_trans (qpow_den_pos (Qabs_den_pos hwd) k) (Qeq_le (qpow_abs w k))
       (qpow_base_mono (Qabs_den_pos hwd) hρd (Qabs_num_nonneg w) hw k))
 
+/-- The coefficientwise absolute value of a formal series. -/
+def fabs (b : Nat → Q) : Nat → Q := fun k => Qabs (b k)
+
+theorem fabs_den_pos {b : Nat → Q} (hb : ∀ i, 0 < (b i).den) (k : Nat) : 0 < (fabs b k).den :=
+  Qabs_den_pos (hb k)
+
+theorem fabs_nonneg (b : Nat → Q) (k : Nat) : 0 ≤ (fabs b k).num := Qabs_num_nonneg (b k)
+
+/-- **Eval is monotone in coefficients** at a nonnegative point. -/
+theorem peval_mono {c d : Nat → Q} (hcd : ∀ k, Qle (c k) (d k)) (ρ : Q) (hρ0 : 0 ≤ ρ.num) (M : Nat) :
+    Qle (peval c ρ M) (peval d ρ M) :=
+  Fsum_le_Fsum (fun k => Qmul_le_mul_right (qpow_nonneg hρ0 k) (hcd k)) M
+
+/-- **Per-coefficient abs bound**: `|eval c w M| ≤ eval(|c|, ρ, M)` for `|w| ≤ ρ`. -/
+theorem peval_abs_le_peval_fabs (c : Nat → Q) (hc : ∀ k, 0 < (c k).den) (w : Q) (hwd : 0 < w.den)
+    {ρ : Q} (hρd : 0 < ρ.den) (hw : Qle (Qabs w) ρ) (M : Nat) :
+    Qle (Qabs (peval c w M)) (peval (fabs c) ρ M) := by
+  refine Qle_trans (Fsum_den_pos (fun k => Qabs_den_pos (Qmul_den_pos (hc k) (qpow_den_pos hwd k))) M)
+    (Fsum_abs_le (fun k => Qmul_den_pos (hc k) (qpow_den_pos hwd k)) M) ?_
+  refine Fsum_le_Fsum (fun k => ?_) M
+  rw [Qabs_mul]
+  exact Qmul_le_mul_left (Qabs_num_nonneg (c k))
+    (Qle_trans (qpow_den_pos (Qabs_den_pos hwd) k) (Qeq_le (qpow_abs w k))
+      (qpow_base_mono (Qabs_den_pos hwd) hρd (Qabs_num_nonneg w) hw k))
+
 /-- **The target side**: the geometric-coefficient evaluation is `2·(Σ_{k≤N} wᵏ) − 1`. With
     `gPow_telescope` this gives `peval dgeom w N · (1−w) → (1+w)` — the closed form `(1+w)/(1−w)`. -/
 theorem peval_dgeom (w : Q) (hwd : 0 < w.den) :
@@ -787,14 +812,6 @@ theorem fpow_vanish {b : Nat → Q} (hb : ∀ i, 0 < (b i).den) (hb0 : Qeq (b 0)
         refine Qeq_trans (Qmul_den_pos (hb i) Nat.one_pos)
           (Qmul_congr (Qeq_refl _) hv) ?_
         simp [Qeq, mul]
-
-/-- The coefficientwise absolute value of a formal series. -/
-def fabs (b : Nat → Q) : Nat → Q := fun k => Qabs (b k)
-
-theorem fabs_den_pos {b : Nat → Q} (hb : ∀ i, 0 < (b i).den) (k : Nat) : 0 < (fabs b k).den :=
-  Qabs_den_pos (hb k)
-
-theorem fabs_nonneg (b : Nat → Q) (k : Nat) : 0 ≤ (fabs b k).num := Qabs_num_nonneg (b k)
 
 /-- **Abs of a Cauchy product is dominated by the Cauchy product of abs**: `|a·b| ≤ |a|·|b|` coefficientwise. -/
 theorem Qabs_fmul_le (a b : Nat → Q) (ha : ∀ i, 0 < (a i).den) (hb : ∀ i, 0 < (b i).den) (k : Nat) :
