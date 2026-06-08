@@ -663,4 +663,62 @@ theorem kdbl_rel (k : Nat) : Qeq (fmul oneplusSq kdbl k) (twoT k) :=
     (fmul_add_left (fun i => fmono_den 0 i) (fun i => fmono_den 2 i) (fun _ => kdbl_den _) k)
     (kdbl_main k)
 
+theorem oneplusSq_den (k : Nat) : 0 < (oneplusSq k).den := add_den_pos (fmono_den 0 k) (fmono_den 2 k)
+
+/-- `fderiv` respects `≈` coefficient-wise. -/
+theorem fderiv_congr {a b : Nat → Q} (h : ∀ i, Qeq (a i) (b i)) (k : Nat) :
+    Qeq (fderiv a k) (fderiv b k) := Qmul_congr (Qeq_refl _) (h (k + 1))
+
+/-- `fmul` respects `≈` in its left argument. -/
+theorem fmul_congr_left {a a' b : Nat → Q} (h : ∀ i, Qeq (a i) (a' i)) (k : Nat) :
+    Qeq (fmul a b k) (fmul a' b k) :=
+  Fsum_congr (fun i => Qmul_congr (h i) (Qeq_refl _)) k
+
+/-- The constant `2` series `(2,0,0,…)` = `d/dt(2t)`. -/
+def twoFone (k : Nat) : Q := ⟨(if k = 0 then 2 else 0 : Int), 1⟩
+theorem twoFone_den (k : Nat) : 0 < (twoFone k).den := Nat.one_pos
+
+/-- `d/dt(1+t²) = 2t`. -/
+theorem fderiv_oneplusSq : ∀ k, Qeq (fderiv oneplusSq k) (twoT k)
+  | 0 => by decide
+  | 1 => by decide
+  | (k + 2) => by
+      show Qeq (mul ⟨(k + 2 + 1 : Int), 1⟩ (oneplusSq (k + 2 + 1))) (twoT (k + 2))
+      have ho : oneplusSq (k + 2 + 1) = ⟨0, 1⟩ := by
+        unfold oneplusSq fmono; rw [if_neg (by omega), if_neg (by omega)]; rfl
+      have ht : twoT (k + 2) = ⟨0, 1⟩ := by unfold twoT; rw [if_neg (by omega)]
+      rw [ho, ht]; simp [Qeq, mul]
+
+/-- `d/dt(2t) = 2`. -/
+theorem fderiv_twoT : ∀ k, Qeq (fderiv twoT k) (twoFone k)
+  | 0 => by decide
+  | (k + 1) => by
+      show Qeq (mul ⟨(k + 1 + 1 : Int), 1⟩ (twoT (k + 1 + 1))) (twoFone (k + 1))
+      have ht : twoT (k + 1 + 1) = ⟨0, 1⟩ := by unfold twoT; rw [if_neg (by omega)]
+      have hf : twoFone (k + 1) = ⟨0, 1⟩ := by unfold twoFone; rw [if_neg (by omega)]
+      rw [ht, hf]; simp [Qeq, mul]
+
+/-- **The differentiated relation** `2t·k + (1+t²)·k' = 2` (from `kdbl_rel` via the Leibniz rule
+    `fderiv_fmul`). With `kdbl_rel` this is the linear system pinning `k = 2t/(1+t²)` and `k'`. -/
+theorem kdbl_deriv_rel (k : Nat) :
+    Qeq (add (fmul twoT kdbl k) (fmul oneplusSq (fderiv kdbl) k)) (twoFone k) := by
+  have e1 : Qeq (fderiv (fmul oneplusSq kdbl) k)
+      (add (fmul (fderiv oneplusSq) kdbl k) (fmul oneplusSq (fderiv kdbl) k)) :=
+    fderiv_fmul oneplusSq kdbl (fun i => oneplusSq_den i) (fun _ => kdbl_den _) k
+  have e4 : Qeq (fmul (fderiv oneplusSq) kdbl k) (fmul twoT kdbl k) :=
+    fmul_congr_left (fun i => fderiv_oneplusSq i) k
+  -- fderiv(fmul oneplusSq kdbl) ≈ add (fmul twoT kdbl) (fmul oneplusSq kdbl')
+  have step1 : Qeq (fderiv (fmul oneplusSq kdbl) k)
+      (add (fmul twoT kdbl k) (fmul oneplusSq (fderiv kdbl) k)) :=
+    Qeq_trans (add_den_pos (fmul_den_pos (fun i => fderiv_den_pos (fun j => oneplusSq_den j) i)
+        (fun _ => kdbl_den _) k) (fmul_den_pos (fun i => oneplusSq_den i)
+        (fun i => fderiv_den_pos (fun _ => kdbl_den _) i) k)) e1
+      (Qadd_congr e4 (Qeq_refl _))
+  -- and fderiv(fmul oneplusSq kdbl) ≈ fderiv twoT ≈ 2
+  have step2 : Qeq (fderiv (fmul oneplusSq kdbl) k) (twoFone k) :=
+    Qeq_trans (fderiv_den_pos (fun i => Nat.one_pos) k)
+      (fderiv_congr (fun i => kdbl_rel i) k) (fderiv_twoT k)
+  exact Qeq_trans (fderiv_den_pos (fun i => fmul_den_pos (fun j => oneplusSq_den j)
+      (fun _ => kdbl_den _) i) k) (Qeq_symm step1) step2
+
 end UOR.Bridge.F1Square.Analysis

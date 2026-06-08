@@ -832,3 +832,10 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.kdbl_shift_cancel
 #print axioms Analysis.kdbl_main
 #print axioms Analysis.kdbl_rel
+#print axioms Analysis.oneplusSq_den
+#print axioms Analysis.fderiv_congr
+#print axioms Analysis.fmul_congr_left
+#print axioms Analysis.twoFone_den
+#print axioms Analysis.fderiv_oneplusSq
+#print axioms Analysis.fderiv_twoT
+#print axioms Analysis.kdbl_deriv_rel
