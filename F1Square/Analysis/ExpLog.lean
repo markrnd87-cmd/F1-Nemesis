@@ -3901,4 +3901,34 @@ theorem tmap_sq_uval (y : Q) (hyd : 0 < y.den) (hy1 : 0 < (add y ⟨1, 1⟩).num
   exact Qmul_cancel_left hcn hcd
     (Qeq_trans (Qmul_den_pos Nat.one_pos htd) rel1 (Qeq_symm (uval_rel (tmap y) htd)))
 
+/-- **`tmap` Lipschitz**: `|tmap a − tmap b| ≤ 2·|a − b|` for `a+1, b+1 ≥ 1` (i.e. `a, b ≥ 0`). From
+    `tmap_diff_cleared` ((tmap a − tmap b)·(a+1)(b+1) = 2(a−b)), since `(a+1)(b+1) ≥ 1`. -/
+theorem tmap_lip (a b : Q) (had : 0 < a.den) (hbd : 0 < b.den) (ha1 : 0 < (add a ⟨1, 1⟩).num)
+    (hb1 : 0 < (add b ⟨1, 1⟩).num) (hage : Qle ⟨1, 1⟩ (add a ⟨1, 1⟩))
+    (hbge : Qle ⟨1, 1⟩ (add b ⟨1, 1⟩)) :
+    Qle (Qabs (Qsub (tmap a) (tmap b))) (mul ⟨2, 1⟩ (Qabs (Qsub a b))) := by
+  have hXd : 0 < (Qsub (tmap a) (tmap b)).den :=
+    Qsub_den_pos (Qmul_den_pos (Qsub_den_pos had Nat.one_pos) (Qinv_den_pos ha1))
+      (Qmul_den_pos (Qsub_den_pos hbd Nat.one_pos) (Qinv_den_pos hb1))
+  have hsad : 0 < (add a ⟨1, 1⟩).den := add_den_pos had Nat.one_pos
+  have hsbd : 0 < (add b ⟨1, 1⟩).den := add_den_pos hbd Nat.one_pos
+  have hFd : 0 < (mul (add a ⟨1, 1⟩) (add b ⟨1, 1⟩)).den := Qmul_den_pos hsad hsbd
+  have hFnn : 0 ≤ (mul (add a ⟨1, 1⟩) (add b ⟨1, 1⟩)).num :=
+    Qmul_num_nonneg (Int.le_of_lt ha1) (Int.le_of_lt hb1)
+  have hF1 : Qle (⟨1, 1⟩ : Q) (mul (add a ⟨1, 1⟩) (add b ⟨1, 1⟩)) :=
+    Qle_trans hsad hage
+      (Qle_trans (Qmul_den_pos hsad Nat.one_pos) (Qeq_le (Qeq_symm (mul_one _)))
+        (Qmul_le_mul_left (Int.le_of_lt ha1) hbge))
+  have key2 : Qeq (mul (Qabs (Qsub (tmap a) (tmap b))) (mul (add a ⟨1, 1⟩) (add b ⟨1, 1⟩)))
+      (Qabs (mul (Qsub (tmap a) (tmap b)) (mul (add a ⟨1, 1⟩) (add b ⟨1, 1⟩)))) := by
+    rw [Qabs_mul]; exact Qmul_congr (Qeq_refl _) (Qeq_symm (Qabs_of_nonneg hFnn))
+  refine Qle_trans (Qmul_den_pos (Qabs_den_pos hXd) hFd)
+    (Qle_trans (Qmul_den_pos (Qabs_den_pos hXd) Nat.one_pos) (Qeq_le (Qeq_symm (mul_one _)))
+      (Qmul_le_mul_left (Qabs_num_nonneg _) hF1)) ?_
+  refine Qle_trans (Qabs_den_pos (Qmul_den_pos Nat.one_pos (Qsub_den_pos had hbd)))
+    (Qeq_le (Qeq_trans (Qabs_den_pos (Qmul_den_pos hXd hFd)) key2
+      (Qabs_Qeq (tmap_diff_cleared had hbd ha1 hb1)))) ?_
+  rw [Qabs_mul, show Qabs (⟨2, 1⟩ : Q) = ⟨2, 1⟩ from rfl]
+  exact Qle_refl _
+
 end UOR.Bridge.F1Square.Analysis

@@ -1035,3 +1035,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qmul_cancel_left
 #print axioms Analysis.tmap_uval_core
 #print axioms Analysis.tmap_sq_uval
+#print axioms Analysis.tmap_lip
