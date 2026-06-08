@@ -549,4 +549,52 @@ theorem artSum_lin_quad {t ρ : Q} (htd : 0 < t.den) (hρ0 : 0 ≤ ρ.num) (hρd
   exact Qmul_den_pos (Qabs_den_pos (Qsub_den_pos (artSum_den_pos htd b) (artSum_den_pos htd 0)))
     (Qsub_den_pos Nat.one_pos (Nat.mul_pos hρd hρd))
 
+-- ===========================================================================
+-- Toward the DOUBLING formula 2·artanh(t) = artanh(2t/(1+t²)) (the reduced crux C).
+-- Formal-ring foundations: sparse sums and monomial multiplication (= coefficient shift).
+-- ===========================================================================
+
+/-- **Sparse sum**: a finite sum of a sequence supported at a single index `j ≤ k` is its value
+    there. The engine for multiplying a formal series by a monomial. -/
+theorem Fsum_single {f : Nat → Q} (hf : ∀ i, 0 < (f i).den) {j : Nat}
+    (hz : ∀ i, i ≠ j → Qeq (f i) ⟨0, 1⟩) : ∀ {k : Nat}, j ≤ k → Qeq (Fsum f k) (f j)
+  | 0, hjk => by
+      have hj : j = 0 := Nat.le_zero.mp hjk
+      subst hj; exact Qeq_refl _
+  | (k + 1), hjk => by
+      show Qeq (add (Fsum f k) (f (k + 1))) (f j)
+      by_cases hjeq : j = k + 1
+      · subst hjeq
+        have hsum0 : Qeq (Fsum f k) ⟨0, 1⟩ :=
+          Qeq_trans (Fsum_den_pos (fun _ => Nat.one_pos) k)
+            (Fsum_congr_le (g := fun _ => (⟨0, 1⟩ : Q)) (k := k) (fun i hi => hz i (by omega)))
+            (Fsum_zeros k)
+        have hc : Qeq (add (Fsum f k) (f (k + 1))) (add ⟨0, 1⟩ (f (k + 1))) :=
+          Qadd_congr hsum0 (Qeq_refl _)
+        exact Qeq_trans (add_den_pos Nat.one_pos (hf (k + 1))) hc (Qzero_add _)
+      · have hjk' : j ≤ k := by omega
+        have hc : Qeq (add (Fsum f k) (f (k + 1))) (add (f j) ⟨0, 1⟩) :=
+          Qadd_congr (Fsum_single hf hz hjk') (hz (k + 1) (by omega))
+        exact Qeq_trans (add_den_pos (hf j) Nat.one_pos) hc (Qadd_zero_right _)
+
+/-- The monomial `tᵈ` as a coefficient sequence. -/
+def fmono (d : Nat) (k : Nat) : Q := if k = d then ⟨1, 1⟩ else ⟨0, 1⟩
+
+theorem fmono_den (d k : Nat) : 0 < (fmono d k).den := by unfold fmono; split <;> exact Nat.one_pos
+
+/-- **Multiplying by a monomial is a shift**: `fmul (tᵈ) c k = c(k−d)` for `d ≤ k`. -/
+theorem fmul_fmono {c : Nat → Q} (hc : ∀ i, 0 < (c i).den) (d : Nat) {k : Nat} (hdk : d ≤ k) :
+    Qeq (fmul (fmono d) c k) (c (k - d)) := by
+  have hg : ∀ i, 0 < (mul (fmono d i) (c (k - i))).den :=
+    fun i => Qmul_den_pos (fmono_den d i) (hc (k - i))
+  have hz : ∀ i, i ≠ d → Qeq (mul (fmono d i) (c (k - i))) ⟨0, 1⟩ := by
+    intro i hi
+    have he : fmono d i = ⟨0, 1⟩ := by unfold fmono; rw [if_neg hi]
+    rw [he]; simp [Qeq, mul]
+  have hgd : Qeq (mul (fmono d d) (c (k - d))) (c (k - d)) := by
+    have he : fmono d d = ⟨1, 1⟩ := by unfold fmono; rw [if_pos rfl]
+    rw [he]; simp [Qeq, mul]
+  show Qeq (Fsum (fun i => mul (fmono d i) (c (k - i))) k) (c (k - d))
+  exact Qeq_trans (hg d) (Fsum_single hg hz hdk) hgd
+
 end UOR.Bridge.F1Square.Analysis

@@ -821,5 +821,8 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qsq_mul_nonneg
 #print axioms Analysis.expSum_quad
 #print axioms Analysis.artSum_lin_quad
+#print axioms Analysis.Fsum_single
+#print axioms Analysis.fmono_den
+#print axioms Analysis.fmul_fmono
 #print axioms Analysis.peval_conv
 #print axioms Analysis.peval_mul
