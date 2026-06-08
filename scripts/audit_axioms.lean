@@ -984,3 +984,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.acoef_num_nonneg
 #print axioms Analysis.acoef_le_one
 #print axioms Analysis.DN_abs_le
+#print axioms Analysis.e_le_T
+#print axioms Analysis.DN_double_le
+#print axioms Analysis.Qadd_num_nonneg_loc
+#print axioms Analysis.Qzero_le_loc

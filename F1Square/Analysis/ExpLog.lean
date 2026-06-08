@@ -2902,4 +2902,60 @@ theorem DN_abs_le (w : Q) (hwd : 0 < w.den) (N : Nat) :
     (Qmul_le_mul_right (Qabs_num_nonneg _) (Qabs_le_of_nonneg (acoef_num_nonneg m) (acoef_le_one m))) ?_
   exact Qeq_le (Qone_mul _)
 
+/-- `0 ≤ (a+b).num` from non-negative numerators. -/
+theorem Qadd_num_nonneg_loc {a b : Q} (ha : 0 ≤ a.num) (hb : 0 ≤ b.num) : 0 ≤ (add a b).num := by
+  show 0 ≤ a.num * (b.den : Int) + b.num * (a.den : Int)
+  exact Int.add_nonneg (Int.mul_nonneg ha (by exact_mod_cast Nat.zero_le _))
+    (Int.mul_nonneg hb (by exact_mod_cast Nat.zero_le _))
+
+/-- `0 ≤ q` (as `Qle ⟨0,1⟩ q`) from `0 ≤ q.num`. -/
+theorem Qzero_le_loc {q : Q} (h : 0 ≤ q.num) : Qle (⟨0, 1⟩ : Q) q := by
+  show (0 : Int) * (q.den : Int) ≤ q.num * ((1 : Nat) : Int)
+  rw [Int.zero_mul]; omega
+
+/-- **Each head term `|p_m − uᵐ| ≤ T`** for `m ≤ 2N+1`, where `T = Σ_{j≤2N+1}(|q−u|+|corner_j|)`. -/
+theorem e_le_T (w : Q) (N : Nat) (hwd : 0 < w.den)
+    (hq1 : Qle (Qabs (peval kdbl w (2 * N + 1))) ⟨1, 1⟩) (hu1 : Qle (Qabs (uval w)) ⟨1, 1⟩)
+    (m : Nat) (hm : m ≤ 2 * N + 1) :
+    Qle (Qabs (Qsub (peval (fpow kdbl m) w (2 * N + 1)) (qpow (uval w) m)))
+      (Fsum (fun j => add (Qabs (Qsub (peval kdbl w (2 * N + 1)) (uval w)))
+        (Qabs (kcorner w j (2 * N + 1)))) (2 * N + 1)) := by
+  have hud : 0 < (uval w).den := uval_den_pos w hwd
+  have hqd : 0 < (peval kdbl w (2 * N + 1)).den := peval_den_pos (fun i => kdbl_den i) hwd _
+  have hqud : 0 < (Qsub (peval kdbl w (2 * N + 1)) (uval w)).den := Qsub_den_pos hqd hud
+  have hg0 : ∀ j, 0 ≤ (add (Qabs (Qsub (peval kdbl w (2 * N + 1)) (uval w)))
+      (Qabs (kcorner w j (2 * N + 1)))).num :=
+    fun j => Qadd_num_nonneg_loc (Qabs_num_nonneg _) (Qabs_num_nonneg _)
+  have hgd : ∀ j, 0 < (add (Qabs (Qsub (peval kdbl w (2 * N + 1)) (uval w)))
+      (Qabs (kcorner w j (2 * N + 1)))).den :=
+    fun j => add_den_pos (Qabs_den_pos hqud) (Qabs_den_pos (kcorner_den w hwd j _))
+  cases m with
+  | zero =>
+    have hp0 : Qeq (peval (fpow kdbl 0) w (2 * N + 1)) ⟨1, 1⟩ := peval_fone w hwd (2 * N + 1)
+    have he0 : Qeq (Qabs (Qsub (peval (fpow kdbl 0) w (2 * N + 1)) (qpow (uval w) 0))) ⟨0, 1⟩ := by
+      refine Qeq_trans (Qabs_den_pos (Qsub_den_pos Nat.one_pos (qpow_den_pos hud 0)))
+        (Qabs_Qeq (Qsub_congr hp0 (Qeq_refl _))) ?_
+      show Qeq (Qabs (Qsub (⟨1, 1⟩ : Q) ⟨1, 1⟩)) ⟨0, 1⟩
+      decide
+    refine Qle_trans Nat.one_pos (Qeq_le he0) ?_
+    exact Qzero_le_loc (Fsum_num_nonneg hg0 (2 * N + 1))
+  | succ k =>
+    refine Qle_trans (Fsum_den_pos hgd k)
+      (per_m_bound w (2 * N + 1) hwd hq1 hu1 k) ?_
+    exact Fsum_mono_len hg0 hgd (by omega : k ≤ 2 * N + 1)
+
+/-- **`|D_N|` collapsed to a double sum** that `→ 0`:
+    `|D_N| ≤ Σ_{m≤2N+1} Σ_{j≤2N+1}(|q−u| + |corner_j|)` (= `(2N+2)·T`). -/
+theorem DN_double_le (w : Q) (N : Nat) (hwd : 0 < w.den)
+    (hq1 : Qle (Qabs (peval kdbl w (2 * N + 1))) ⟨1, 1⟩) (hu1 : Qle (Qabs (uval w)) ⟨1, 1⟩) :
+    Qle (Qabs (Qsub (peval (fcomp acoef kdbl) w (2 * N + 1)) (peval acoef (uval w) (2 * N + 1))))
+      (Fsum (fun _ => Fsum (fun j => add (Qabs (Qsub (peval kdbl w (2 * N + 1)) (uval w)))
+        (Qabs (kcorner w j (2 * N + 1)))) (2 * N + 1)) (2 * N + 1)) := by
+  have hem : ∀ m, 0 < (Qsub (peval (fpow kdbl m) w (2 * N + 1)) (qpow (uval w) m)).den :=
+    fun m => Qsub_den_pos (peval_den_pos (fpow_den_pos (fun i => kdbl_den i) m) hwd _)
+      (qpow_den_pos (uval_den_pos w hwd) m)
+  refine Qle_trans (Fsum_den_pos (fun m => Qabs_den_pos (hem m)) (2 * N + 1))
+    (DN_abs_le w hwd N) ?_
+  exact Fsum_le_congr (fun m hm => e_le_T w N hwd hq1 hu1 m hm)
+
 end UOR.Bridge.F1Square.Analysis
