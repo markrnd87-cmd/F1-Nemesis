@@ -312,4 +312,125 @@ theorem rexp_factor_reconcile (x : Real) (n p J D : Nat) (hpn : n ≤ p) (hJn : 
     (Qadd_le_add hterm1 hterm2) (Qeq_le ?_)
   simp only [Qeq, add, mul]; push_cast; ring_uor
 
+/-- **The exp-add diagonal gap** (abstract): given the three reconciliation bounds (LHS depth `hLP`, FE
+    corner `hPQ`, and the two single-factor reconciliations `hAA`/`hBB`) plus the uniform factor bounds
+    `hB1`/`hA2`, the gap between the `exp(a₁+b₁)` diagonal at depth `R0` and the product of the `a₂`/`b₂`
+    diagonals is `≤ C/(n+1)` with `C = 2 + Uy(1+2Uₓ) + Uₓ(1+2Uy)`. The triangle `L → P → Q → RHS` plus
+    `Qprod_diff_le`. Wiring only — all analytic content is in the hypotheses. -/
+theorem rexp_add_gap {a1 b1 a2 b2 : Q} (Ux Uy : Nat) {R0 R1 R2 D n : Nat}
+    (ha1d : 0 < a1.den) (hb1d : 0 < b1.den) (ha2d : 0 < a2.den) (hb2d : 0 < b2.den)
+    (hLP : Qle (Qabs (Qsub (expSum (add a1 b1) R0) (expSum (add a1 b1) D))) ⟨1, n + 1⟩)
+    (hPQ : Qle (Qabs (Qsub (expSum (add a1 b1) D) (mul (expSum a1 D) (expSum b1 D)))) ⟨1, n + 1⟩)
+    (hAA : Qle (Qabs (Qsub (expSum a1 D) (expSum a2 R1))) ⟨(1 + 2 * Ux : Int), n + 1⟩)
+    (hBB : Qle (Qabs (Qsub (expSum b1 D) (expSum b2 R2))) ⟨(1 + 2 * Uy : Int), n + 1⟩)
+    (hB1 : Qle (Qabs (expSum b1 D)) ⟨(Uy : Int), 1⟩)
+    (hA2 : Qle (Qabs (expSum a2 R1)) ⟨(Ux : Int), 1⟩) :
+    Qle (Qabs (Qsub (expSum (add a1 b1) R0) (mul (expSum a2 R1) (expSum b2 R2))))
+      ⟨(2 + Uy * (1 + 2 * Ux) + Ux * (1 + 2 * Uy) : Int), n + 1⟩ := by
+  have hLd := expSum_den_pos (add_den_pos ha1d hb1d) R0
+  have hPd := expSum_den_pos (add_den_pos ha1d hb1d) D
+  have hA1d := expSum_den_pos ha1d D
+  have hB1d := expSum_den_pos hb1d D
+  have hA2d := expSum_den_pos ha2d R1
+  have hB2d := expSum_den_pos hb2d R2
+  have hQd := Qmul_den_pos hA1d hB1d
+  have hRHSd := Qmul_den_pos hA2d hB2d
+  -- |Q − RHS| ≤ Uy·(1+2Uₓ)/(n+1) + Uₓ·(1+2Uy)/(n+1)
+  have hQR : Qle (Qabs (Qsub (mul (expSum a1 D) (expSum b1 D)) (mul (expSum a2 R1) (expSum b2 R2))))
+      (add (mul ⟨(Uy : Int), 1⟩ ⟨(1 + 2 * Ux : Int), n + 1⟩) (mul ⟨(Ux : Int), 1⟩ ⟨(1 + 2 * Uy : Int), n + 1⟩)) := by
+    refine Qle_trans (add_den_pos (Qmul_den_pos (Qabs_den_pos hB1d) (Qabs_den_pos (Qsub_den_pos hA1d hA2d)))
+        (Qmul_den_pos (Qabs_den_pos hA2d) (Qabs_den_pos (Qsub_den_pos hB1d hB2d))))
+      (Qprod_diff_le (expSum a1 D) (expSum a2 R1) (expSum b1 D) (expSum b2 R2) hA1d hA2d hB1d hB2d) ?_
+    exact Qadd_le_add
+      (Qmul_le_mul (Qabs_den_pos hB1d) Nat.one_pos (Qabs_den_pos (Qsub_den_pos hA1d hA2d))
+        (Qabs_num_nonneg _) (Qabs_num_nonneg _) hB1 hAA)
+      (Qmul_le_mul (Qabs_den_pos hA2d) Nat.one_pos (Qabs_den_pos (Qsub_den_pos hB1d hB2d))
+        (Qabs_num_nonneg _) (Qabs_num_nonneg _) hA2 hBB)
+  -- |P − RHS| ≤ |P − Q| + |Q − RHS|
+  have hPRHS : Qle (Qabs (Qsub (expSum (add a1 b1) D) (mul (expSum a2 R1) (expSum b2 R2))))
+      (add ⟨1, n + 1⟩ (add (mul ⟨(Uy : Int), 1⟩ ⟨(1 + 2 * Ux : Int), n + 1⟩)
+        (mul ⟨(Ux : Int), 1⟩ ⟨(1 + 2 * Uy : Int), n + 1⟩))) :=
+    Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos hPd hQd)) (Qabs_den_pos (Qsub_den_pos hQd hRHSd)))
+      (Qabs_sub_triangle hPd hQd hRHSd) (Qadd_le_add hPQ hQR)
+  -- |L − RHS| ≤ |L − P| + |P − RHS|, then collapse to C/(n+1)
+  refine Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos hLd hPd))
+      (Qabs_den_pos (Qsub_den_pos hPd hRHSd)))
+    (Qabs_sub_triangle hLd hPd hRHSd) ?_
+  refine Qle_trans (add_den_pos (Nat.succ_pos n) (add_den_pos (Nat.succ_pos n)
+      (add_den_pos (Qmul_den_pos Nat.one_pos (Nat.succ_pos n)) (Qmul_den_pos Nat.one_pos (Nat.succ_pos n)))))
+    (Qadd_le_add hLP hPRHS) (Qeq_le ?_)
+  simp only [Qeq, add, mul]; push_cast; ring_uor
+
+/-- **The exp functional equation, fixed deep depth** (the technical core of `RexpReal_add`): at any common
+    reference depth `D` past the three diagonal depths and the FE threshold, the `exp(x+y)` diagonal at `n`
+    equals the product of the `exp x`, `exp y` diagonals (at the common reindex), up to `C/(n+1)`. The six
+    reconciliations: LHS depth (`expSum_trunc_bound`+`RexpReal_trunc_le`), FE corner (`expSum_add_decay_signed`),
+    two single-factor (`rexp_factor_reconcile`), two uniform bounds (`expSum_abs_le_Un`); assembled by `rexp_add_gap`. -/
+theorem RexpReal_add_aux (x y : Real) (n D : Nat)
+    (hR0D : RexpReal_R (Radd x y) n ≤ D)
+    (hR1D : RexpReal_R x (Ridx (RexpReal x) (RexpReal y) n) ≤ D)
+    (hR2D : RexpReal_R y (Ridx (RexpReal x) (RexpReal y) n) ≤ D)
+    (hThr : 2 * (n + 1) * npow (xBound x + xBound y) (2 * (xBound x + xBound y) + 1)
+        + 2 * (xBound x + xBound y) ≤ D) :
+    Qle (Qabs (Qsub
+        (expSum (add (x.seq (2 * RexpReal_R (Radd x y) n + 1)) (y.seq (2 * RexpReal_R (Radd x y) n + 1)))
+          (RexpReal_R (Radd x y) n))
+        (mul (expSum (x.seq (RexpReal_R x (Ridx (RexpReal x) (RexpReal y) n)))
+                (RexpReal_R x (Ridx (RexpReal x) (RexpReal y) n)))
+             (expSum (y.seq (RexpReal_R y (Ridx (RexpReal x) (RexpReal y) n)))
+                (RexpReal_R y (Ridx (RexpReal x) (RexpReal y) n))))))
+      ⟨(2 + (expM_U (xBound y) (2 * xBound y)).num.toNat
+            * (1 + 2 * (expM_U (xBound x) (2 * xBound x)).num.toNat)
+          + (expM_U (xBound x) (2 * xBound x)).num.toNat
+            * (1 + 2 * (expM_U (xBound y) (2 * xBound y)).num.toNat) : Int), n + 1⟩ := by
+  have hLP : Qle (Qabs (Qsub
+      (expSum (add (x.seq (2 * RexpReal_R (Radd x y) n + 1)) (y.seq (2 * RexpReal_R (Radd x y) n + 1)))
+        (RexpReal_R (Radd x y) n))
+      (expSum (add (x.seq (2 * RexpReal_R (Radd x y) n + 1)) (y.seq (2 * RexpReal_R (Radd x y) n + 1))) D)))
+      ⟨1, n + 1⟩ := by
+    rw [Qabs_Qsub_comm]
+    refine Qle_trans (fct_pos _)
+      (expSum_trunc_bound (M := xBound (Radd x y)) (add_den_pos (x.den_pos _) (y.den_pos _))
+        (canon_bound (Radd x y) (RexpReal_R (Radd x y) n))
+        (a := RexpReal_R (Radd x y) n) (b := D) (by unfold RexpReal_R; omega) hR0D) ?_
+    refine Qle_trans (b := (⟨1, 2 * (n + 1)⟩ : Q)) (by omega : (0:Nat) < 2 * (n + 1))
+      (RexpReal_trunc_le (Radd x y) n) (by simp only [Qle]; push_cast; omega)
+  have hPQ := expSum_add_decay_signed (x.den_pos (2 * RexpReal_R (Radd x y) n + 1))
+    (y.den_pos (2 * RexpReal_R (Radd x y) n + 1))
+    (canon_bound x (2 * RexpReal_R (Radd x y) n + 1)) (canon_bound y (2 * RexpReal_R (Radd x y) n + 1))
+    (by have := xBound_pos x; omega) n D hThr
+  have hAA := rexp_factor_reconcile x n (2 * RexpReal_R (Radd x y) n + 1)
+    (Ridx (RexpReal x) (RexpReal y) n) D (by have := n_le_RexpReal_R (Radd x y) n; omega)
+    (Ridx_ge (RexpReal x) (RexpReal y) n) hR1D
+  have hBB := rexp_factor_reconcile y n (2 * RexpReal_R (Radd x y) n + 1)
+    (Ridx (RexpReal x) (RexpReal y) n) D (by have := n_le_RexpReal_R (Radd x y) n; omega)
+    (Ridx_ge (RexpReal x) (RexpReal y) n) hR2D
+  have hB1 := expSum_abs_le_Un (y.den_pos (2 * RexpReal_R (Radd x y) n + 1))
+    (canon_bound y (2 * RexpReal_R (Radd x y) n + 1)) D
+  have hA2 := expSum_abs_le_Un (x.den_pos (RexpReal_R x (Ridx (RexpReal x) (RexpReal y) n)))
+    (canon_bound x (RexpReal_R x (Ridx (RexpReal x) (RexpReal y) n)))
+    (RexpReal_R x (Ridx (RexpReal x) (RexpReal y) n))
+  exact rexp_add_gap (expM_U (xBound x) (2 * xBound x)).num.toNat
+    (expM_U (xBound y) (2 * xBound y)).num.toNat (x.den_pos _) (y.den_pos _) (x.den_pos _) (y.den_pos _)
+    hLP hPQ hAA hBB hB1 hA2
+
+/-- **The exponential functional equation on all of ℝ**: `exp(x+y) ≈ exp x · exp y` (`RexpReal_add`). The
+    diagonal lift of the rational Cauchy-product functional equation, reconciled through a deep reference
+    depth — the keystone that makes `exp` a homomorphism, prerequisite for `exp(c·log n) = nᶜ`. -/
+theorem RexpReal_add (x y : Real) :
+    Req (RexpReal (Radd x y)) (Rmul (RexpReal x) (RexpReal y)) := by
+  refine Req_of_lin_bound (C := 2 + (expM_U (xBound y) (2 * xBound y)).num.toNat
+        * (1 + 2 * (expM_U (xBound x) (2 * xBound x)).num.toNat)
+      + (expM_U (xBound x) (2 * xBound x)).num.toNat
+        * (1 + 2 * (expM_U (xBound y) (2 * xBound y)).num.toNat)) ?_
+  intro n
+  refine Qle_trans (Nat.succ_pos n)
+    (RexpReal_add_aux x y n
+      (RexpReal_R (Radd x y) n + RexpReal_R x (Ridx (RexpReal x) (RexpReal y) n)
+        + RexpReal_R y (Ridx (RexpReal x) (RexpReal y) n)
+        + (2 * (n + 1) * npow (xBound x + xBound y) (2 * (xBound x + xBound y) + 1)
+          + 2 * (xBound x + xBound y)))
+      (by omega) (by omega) (by omega) (by omega))
+    (Qeq_le (by simp only [Qeq]; push_cast; ring_uor))
+
 end UOR.Bridge.F1Square.Analysis
