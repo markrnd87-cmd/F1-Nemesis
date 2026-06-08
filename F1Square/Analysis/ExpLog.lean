@@ -3125,4 +3125,30 @@ theorem corner_sum_final (ρ w : Q) (hρd : 0 < ρ.den) (hρ0 : 0 ≤ ρ.num) (h
       (qpow_den_pos (Qmul_den_pos Nat.one_pos hρd) (2 * N + 2))) Nat.one_pos)
     hρ4 (corner_sum_closed ρ w hρd hρ0 hwd hw h2ρ N)
 
+/-- **`T` bound**: `Σ_{j≤2N+1}(|q−u| + |corner_j|) ≤ (2N+2)·(2ρ^{2N+2}+2ρ^{2N+3}) + 2·(2N+2)(2ρ)^{2N+2}·2·4^{2N+2}`. -/
+theorem T_le (ρ w : Q) (hρd : 0 < ρ.den) (hρ0 : 0 ≤ ρ.num) (hwd : 0 < w.den)
+    (hw : Qle (Qabs w) ρ) (h2ρ : 0 ≤ (Qsub (⟨1, 1⟩ : Q) (mul ⟨2, 1⟩ ρ)).num)
+    (hρ4 : Qle (⟨1, 2⟩ : Q) (Qsub ⟨1, 1⟩ (mul ⟨2, 1⟩ ρ))) (N : Nat) :
+    Qle (Fsum (fun j => add (Qabs (Qsub (peval kdbl w (2 * N + 1)) (uval w)))
+          (Qabs (kcorner w j (2 * N + 1)))) (2 * N + 1))
+      (add (mul (⟨((2 * N + 1 : Nat) : Int) + 1, 1⟩ : Q)
+            (add (mul ⟨2, 1⟩ (qpow ρ (2 * N + 2))) (mul ⟨2, 1⟩ (qpow ρ (2 * N + 3)))))
+        (mul ⟨2, 1⟩ (mul (mul (⟨((2 * N + 1 : Nat) : Int) + 1, 1⟩ : Q)
+          (qpow (mul ⟨2, 1⟩ ρ) (2 * N + 2))) (⟨2 * (4 : Int) ^ (2 * N + 2), 1⟩ : Q)))) := by
+  have hqud : 0 < (Qsub (peval kdbl w (2 * N + 1)) (uval w)).den :=
+    Qsub_den_pos (peval_den_pos (fun i => kdbl_den i) hwd _) (uval_den_pos w hwd)
+  have hcornerd : ∀ j, 0 < (Qabs (kcorner w j (2 * N + 1))).den :=
+    fun j => Qabs_den_pos (kcorner_den w hwd j _)
+  have hcstnn : 0 ≤ (⟨((2 * N + 1 : Nat) : Int) + 1, 1⟩ : Q).num := by
+    have : (0 : Int) ≤ ((2 * N + 1 : Nat) : Int) := Int.ofNat_nonneg _
+    show 0 ≤ ((2 * N + 1 : Nat) : Int) + 1; omega
+  refine Qle_trans (add_den_pos (Fsum_den_pos (fun _ => Qabs_den_pos hqud) _)
+      (Fsum_den_pos hcornerd _))
+    (Qeq_le (Fsum_add (fun _ => Qabs_den_pos hqud) hcornerd (2 * N + 1))) ?_
+  refine Qadd_le_add ?_ (corner_sum_final ρ w hρd hρ0 hwd hw h2ρ hρ4 N)
+  refine Qle_trans (Qmul_den_pos Nat.one_pos (Qabs_den_pos hqud))
+    (Qeq_le (Fsum_const_eq (Qabs (Qsub (peval kdbl w (2 * N + 1)) (uval w)))
+      (Qabs_den_pos hqud) (2 * N + 1))) ?_
+  exact Qmul_le_mul_left hcstnn (q_conv ρ w hρd hwd hw (2 * N))
+
 end UOR.Bridge.F1Square.Analysis
