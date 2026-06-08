@@ -820,5 +820,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.expTerm_quad
 #print axioms Analysis.Qsq_mul_nonneg
 #print axioms Analysis.expSum_quad
+#print axioms Analysis.artSum_lin_quad
 #print axioms Analysis.peval_conv
 #print axioms Analysis.peval_mul

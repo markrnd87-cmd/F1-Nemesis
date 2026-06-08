@@ -12,6 +12,7 @@ Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 
 import F1Square.Analysis.ExpRealAdd
 import F1Square.Analysis.ComplexExp
+import F1Square.Analysis.Log
 
 namespace UOR.Bridge.F1Square.Analysis
 
@@ -529,5 +530,23 @@ theorem expSum_quad {q : Q} (hqd : 0 < q.den) (hq : Qle (Qabs q) ⟨1, 1⟩) :
         (Qadd_le_add (expSum_quad hqd hq N) (expTerm_quad hqd hq (by omega : 2 ≤ N + 1 + 1))) (Qeq_le ?_)
       rw [npow_one]
       simp only [Qeq, mul, add]; push_cast; ring_uor
+
+/-- **The artanh quadratic remainder** (brick B): `|artSum t b − t|·(1−ρ²) ≤ ρ³` for `|t| ≤ ρ`. Since
+    `artSum t 0 = artTerm t 0 ≈ t`, the remainder past the linear term `t` is the geometric tail
+    `Σ_{n≥1} t^{2n+1}/(2n+1)`, bounded by `ρ³/(1−ρ²)` via `artSum_trunc` (a = 0). -/
+theorem artSum_lin_quad {t ρ : Q} (htd : 0 < t.den) (hρ0 : 0 ≤ ρ.num) (hρd : 0 < ρ.den)
+    (htρ : Qle (Qabs t) ρ) (hW : 0 ≤ (Qsub (⟨1, 1⟩ : Q) (mul ρ ρ)).num) (b : Nat) :
+    Qle (mul (Qabs (Qsub (artSum t b) t)) (Qsub ⟨1, 1⟩ (mul ρ ρ))) (qpow ρ 3) := by
+  have h0 : Qeq (artSum t 0) t := by
+    have e1 : artSum t 0 = mul (mul t ⟨1, 1⟩) ⟨1, 1⟩ := rfl
+    rw [e1]; simp [Qeq, mul]
+  have htrunc : Qle (mul (Qabs (Qsub (artSum t b) (artSum t 0))) (Qsub ⟨1, 1⟩ (mul ρ ρ)))
+      (qpow ρ 3) := artSum_trunc htd hρ0 hρd htρ hW (Nat.zero_le b)
+  -- `artSum t 0 ≈ t`, so the bound on `|artSum t b − artSum t 0|` transfers to `|artSum t b − t|`.
+  have hsub : Qeq (Qsub (artSum t b) (artSum t 0)) (Qsub (artSum t b) t) :=
+    Qsub_congr (Qeq_refl _) h0
+  refine Qle_congr_left ?_ (Qmul_congr (Qabs_Qeq hsub) (Qeq_refl _)) htrunc
+  exact Qmul_den_pos (Qabs_den_pos (Qsub_den_pos (artSum_den_pos htd b) (artSum_den_pos htd 0)))
+    (Qsub_den_pos Nat.one_pos (Nat.mul_pos hρd hρd))
 
 end UOR.Bridge.F1Square.Analysis
