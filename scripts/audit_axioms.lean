@@ -802,3 +802,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.fderiv_den_pos
 #print axioms Analysis.fmul_den_pos
 #print axioms Analysis.fderiv_fmul
+#print axioms Analysis.Qadd_comm
+#print axioms Analysis.Qmul_comm
+#print axioms Analysis.Fsum_reverse
+#print axioms Analysis.fmul_comm

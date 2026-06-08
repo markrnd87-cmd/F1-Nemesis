@@ -18,6 +18,12 @@ namespace UOR.Bridge.F1Square.Analysis
 /-- `0 + a ≈ a`. -/
 theorem Qzero_add (a : Q) : Qeq (add ⟨0, 1⟩ a) a := by simp only [Qeq, add]; push_cast; ring_uor
 
+/-- Commutativity of `ℚ` addition (up to `≈`). -/
+theorem Qadd_comm (a b : Q) : Qeq (add a b) (add b a) := by simp only [Qeq, add]; push_cast; ring_uor
+
+/-- Commutativity of `ℚ` multiplication (up to `≈`). -/
+theorem Qmul_comm (a b : Q) : Qeq (mul a b) (mul b a) := by simp only [Qeq, mul]; push_cast; ring_uor
+
 /-- **`exp` respects Bishop equality**: `x ≈ y ⇒ exp x ≈ exp y`. The two exp diagonals are reconciled
     through a common deep depth `D = Rₓ + R_y`: depth tails on each side (`expSum_trunc_bound`,
     `RexpReal_trunc_le`) and the Lipschitz middle (`expSum_Lip_le`, `LipS ≤ U`) with the argument gap
@@ -220,5 +226,35 @@ theorem fderiv_fmul (a b : Nat → Q) (ha : ∀ i, 0 < (a i).den) (hb : ∀ i, 0
   refine Qeq_trans (add_den_pos (Fsum_den_pos hTL (k + 1)) (Fsum_den_pos hTR (k + 1)))
     (Fsum_add hTL hTR (k + 1)) ?_
   exact Qadd_congr hLeft hRight
+
+/-- **Sum reversal**: `Σ_{i=0}^{k} fᵢ ≈ Σ_{i=0}^{k} f_{k−i}`. -/
+theorem Fsum_reverse {f : Nat → Q} (hf : ∀ i, 0 < (f i).den) :
+    ∀ k, Qeq (Fsum f k) (Fsum (fun i => f (k - i)) k)
+  | 0 => Qeq_refl _
+  | (k + 1) => by
+      have hrev := Fsum_reverse hf k
+      have hRHS : Qeq (Fsum (fun i => f (k + 1 - i)) (k + 1))
+          (add (f (k + 1)) (Fsum (fun i => f (k - i)) k)) := by
+        refine Qeq_trans (add_den_pos (hf (k + 1 - 0)) (Fsum_den_pos (fun i => hf (k + 1 - (i + 1))) k))
+          (Fsum_front (fun i => hf (k + 1 - i)) k) (Qadd_congr (Qeq_refl _)
+          (Fsum_congr_le (fun i hi => ?_)))
+        have hidx : k + 1 - (i + 1) = k - i := by omega
+        rw [hidx]; exact Qeq_refl _
+      exact Qeq_trans (add_den_pos (hf (k + 1)) (Fsum_den_pos (fun i => hf (k - i)) k))
+        (Qeq_trans (add_den_pos (hf (k + 1)) (Fsum_den_pos hf k))
+          (Qadd_comm (Fsum f k) (f (k + 1))) (Qadd_congr (Qeq_refl _) hrev))
+        (Qeq_symm hRHS)
+
+/-- **Commutativity of the formal Cauchy product**: `a·b ≈ b·a`. -/
+theorem fmul_comm (a b : Nat → Q) (ha : ∀ i, 0 < (a i).den) (hb : ∀ i, 0 < (b i).den) (k : Nat) :
+    Qeq (fmul a b k) (fmul b a k) := by
+  show Qeq (Fsum (fun i => mul (a i) (b (k - i))) k) (Fsum (fun i => mul (b i) (a (k - i))) k)
+  refine Qeq_trans (Fsum_den_pos (fun i => Qmul_den_pos (ha (k - i)) (hb (k - (k - i)))) k)
+    (Fsum_reverse (fun i => Qmul_den_pos (ha i) (hb (k - i))) k)
+    (Fsum_congr_le (fun i hi => ?_))
+  have hidx : k - (k - i) = i := by omega
+  show Qeq (mul (a (k - i)) (b (k - (k - i)))) (mul (b i) (a (k - i)))
+  rw [hidx]
+  exact Qmul_comm (a (k - i)) (b i)
 
 end UOR.Bridge.F1Square.Analysis
