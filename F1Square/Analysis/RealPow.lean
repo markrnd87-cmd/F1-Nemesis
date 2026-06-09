@@ -1288,4 +1288,32 @@ theorem nine3w_8m3d (k : Nat) :
   exact Qeq_trans (Qsub_den_pos (Qmul_den_pos (by decide) (nine3w_den k))
     (Qmul_den_pos (by decide) (eightT_den k))) (Qsub_congr e1 e2) (eight_n_three_e k)
 
+/-- **H3** (LHS of the double-cleared key identity): `(9+3w)²·((1−w²)·δ') = 72·(1−w²)`. -/
+theorem nine3w_M2 (k : Nat) :
+    Qeq (fmul nine3w (fmul nine3w (fmul oneMinusSq (fderiv dcoef))) k) (mul ⟨72, 1⟩ (oneMinusSq k)) := by
+  have hdd : ∀ i, 0 < (fderiv dcoef i).den := fun i => fderiv_den_pos dcoef_den i
+  have hDRd : ∀ i, 0 < (Qsub (eightFone i) (mul ⟨3, 1⟩ (dcoef i))).den :=
+    fun i => Qsub_den_pos (eightFone_den i) (Qmul_den_pos (by decide) (dcoef_den i))
+  have inner1 : ∀ i, Qeq (fmul nine3w (fmul oneMinusSq (fderiv dcoef)) i)
+      (fmul oneMinusSq (fun j => Qsub (eightFone j) (mul ⟨3, 1⟩ (dcoef j))) i) := by
+    intro i
+    refine Qeq_trans (fmul_den_pos (fun j => oneMinusSq_den j)
+      (fun j => fmul_den_pos nine3w_den hdd j) i)
+      (fmul_swap_left nine3w oneMinusSq (fderiv dcoef) nine3w_den (fun j => oneMinusSq_den j) hdd i) ?_
+    exact fmul_congr_right (fun j => nine3w_dderiv j) i
+  refine Qeq_trans (fmul_den_pos nine3w_den
+    (fun i => fmul_den_pos (fun j => oneMinusSq_den j) hDRd i) k) (fmul_congr_right inner1 k) ?_
+  refine Qeq_trans (fmul_den_pos (fun j => oneMinusSq_den j)
+    (fun i => fmul_den_pos nine3w_den hDRd i) k)
+    (fmul_swap_left nine3w oneMinusSq (fun j => Qsub (eightFone j) (mul ⟨3, 1⟩ (dcoef j)))
+      nine3w_den (fun j => oneMinusSq_den j) hDRd k) ?_
+  refine Qeq_trans (fmul_den_pos (fun j => oneMinusSq_den j)
+    (fun i => Qmul_den_pos (by decide) (fone_den_pos i)) k)
+    (fmul_congr_right (fun i => nine3w_8m3d i) k) ?_
+  refine Qeq_trans (Qmul_den_pos (by decide)
+    (fmul_den_pos (fun j => oneMinusSq_den j) (fun _ => fone_den_pos _) k))
+    (fmul_smul_right oneMinusSq fone ⟨72, 1⟩ (by decide) (fun j => oneMinusSq_den j)
+      (fun _ => fone_den_pos _) k) ?_
+  exact Qmul_congr (Qeq_refl _) (fmul_one oneMinusSq (fun j => oneMinusSq_den j) k)
+
 end UOR.Bridge.F1Square.Analysis

@@ -1146,3 +1146,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.eightFone_eq_fsmul
 #print axioms Analysis.eight_n_three_e
 #print axioms Analysis.nine3w_8m3d
+#print axioms Analysis.nine3w_M2
