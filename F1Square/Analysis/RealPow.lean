@@ -839,4 +839,63 @@ theorem RexpReal_ge_one_add_nonneg {t : Real} (ht : Rnonneg t) : Rle (Radd one t
     (add_den_pos (expSum_den_pos hqd _) (add_den_pos (Nat.succ_pos _) (Nat.succ_pos _)))
     (Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor)) (Qadd_le_add (Qle_refl _) hBC)
 
+-- ===========================================================================
+-- Toward `Re s ∈ (1,2)` via the artanh ADDITION formula (the only reflection-free route to
+-- log-multiplicativity). STEP 1 — the rational connector `tmap(2b) = g(tmap b)`, `g(w)=(1+3w)/(3+w)`,
+-- the inner of `artanh(⅓)+artanh(w)=artanh(g(w))`. Mirrors `uval`/`uval_rel`/`tmap_sq_uval`.
+-- ===========================================================================
+
+/-- Fresh-`Int`-var core for `gval_rel` (dodges `ring_uor`'s cast-reifier issue, cf. `tmap_uval_core`). -/
+private theorem gval_rel_core (wn d : Int) :
+    (3 * d + wn * 1) * (d + 3 * wn) * (1 * (1 * d))
+      = (1 * (1 * d) + 3 * wn * 1) * (1 * d * (3 * d + wn)) := by ring_uor
+
+/-- Fresh-`Int`-var core for `tmap_two_law`'s cleared cross-relation. -/
+private theorem tmap_two_law_core (B d : Int) :
+    (3 * (d * 1 * (B * 1 + 1 * d)) + (B * 1 + -1 * d) * (d * 1) * 1) *
+        ((2 * B * 1 + -1 * (1 * d)) * (1 * d * 1)) *
+      (1 * (1 * (d * 1 * (B * 1 + 1 * d)))) =
+    (1 * (1 * (d * 1 * (B * 1 + 1 * d))) + 3 * ((B * 1 + -1 * d) * (d * 1)) * 1) *
+      (1 * (d * 1 * (B * 1 + 1 * d)) * (1 * d * 1 * (2 * B * 1 + 1 * (1 * d)))) := by ring_uor
+
+/-- `g(w) = (1+3w)/(3+w)` as a rational (the addition-with-`tmap 2 = ⅓` inner map), for `w ≥ 0`. -/
+def gval (w : Q) : Q := ⟨(w.den : Int) + 3 * w.num, (3 * (w.den : Int) + w.num).natAbs⟩
+
+theorem gval_den_pos (w : Q) (hwd : 0 < w.den) (hwn : 0 ≤ w.num) : 0 < (gval w).den := by
+  show 0 < (3 * (w.den : Int) + w.num).natAbs
+  have hd : (0 : Int) < (w.den : Int) := by exact_mod_cast hwd
+  omega
+
+/-- The defining relation `(3+w)·g(w) = 1+3w` (for `w ≥ 0`). -/
+theorem gval_rel (w : Q) (hwd : 0 < w.den) (hwn : 0 ≤ w.num) :
+    Qeq (mul (add ⟨3, 1⟩ w) (gval w)) (add ⟨1, 1⟩ (mul ⟨3, 1⟩ w)) := by
+  have h : (0 : Int) ≤ 3 * (w.den : Int) + w.num := by
+    have : (0 : Int) ≤ (w.den : Int) := Int.ofNat_nonneg _; omega
+  simp only [Qeq, mul, add, gval]; push_cast [Int.natAbs_of_nonneg h]
+  exact gval_rel_core w.num (w.den : Int)
+
+/-- **The `tmap` addition connector**: `tmap(2b) = g(tmap b)` for `b ≥ 1` — i.e. the inner map of the
+    artanh addition with `tmap 2 = ⅓`. Both sides `= (2b−1)/(2b+1)`. Via the cleared cross-relation
+    `(3+tmap b)·tmap(2b) = 1+3·tmap b` and `gval_rel`, then `Qmul_cancel_left` (cf. `tmap_sq_uval`). -/
+theorem tmap_two_law (b : Q) (hbd : 0 < b.den) (hb1 : 0 < (add b ⟨1, 1⟩).num)
+    (hb2 : 0 < (add (mul ⟨2, 1⟩ b) ⟨1, 1⟩).num) (htn : 0 ≤ (tmap b).num) :
+    Qeq (tmap (mul ⟨2, 1⟩ b)) (gval (tmap b)) := by
+  have htd : 0 < (tmap b).den := Qmul_den_pos (Qsub_den_pos hbd Nat.one_pos) (Qinv_den_pos hb1)
+  have hcn : 0 < (add ⟨3, 1⟩ (tmap b)).num := by
+    show 0 < 3 * ((tmap b).den : Int) + (tmap b).num * 1
+    have hd : (0 : Int) < ((tmap b).den : Int) := by exact_mod_cast htd
+    omega
+  have hcd : 0 < (add ⟨3, 1⟩ (tmap b)).den := add_den_pos Nat.one_pos htd
+  have rel1 : Qeq (mul (add ⟨3, 1⟩ (tmap b)) (tmap (mul ⟨2, 1⟩ b)))
+      (add ⟨1, 1⟩ (mul ⟨3, 1⟩ (tmap b))) := by
+    have hb1c := hb1; have hb2c := hb2
+    simp only [mul, add] at hb1c hb2c
+    push_cast at hb1c hb2c
+    simp only [tmap, mul, add, Qsub, neg, Qinv, Qeq]
+    push_cast [Int.toNat_of_nonneg (Int.le_of_lt hb1c), Int.toNat_of_nonneg (Int.le_of_lt hb2c)]
+    exact tmap_two_law_core b.num (b.den : Int)
+  exact Qmul_cancel_left hcn hcd
+    (Qeq_trans (add_den_pos Nat.one_pos (Qmul_den_pos (by decide) htd)) rel1
+      (Qeq_symm (gval_rel (tmap b) htd htn)))
+
 end UOR.Bridge.F1Square.Analysis

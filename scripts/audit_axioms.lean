@@ -1112,3 +1112,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Pos_of_Rle_one
 #print axioms Analysis.expSum_ge_one_add
 #print axioms Analysis.RexpReal_ge_one_add_nonneg
+#print axioms Analysis.gval_den_pos
+#print axioms Analysis.gval_rel
+#print axioms Analysis.tmap_two_law
