@@ -2012,4 +2012,32 @@ theorem per_m_bound_gen (b : Nat → Q) (hb : ∀ i, 0 < (b i).den) (w : Q) (M :
             (Qmul_le_mul_left (Qabs_num_nonneg _) (hum1 (m + 1))) (Qeq_le (mul_one _))) (Qle_refl _))) ?_
       exact Qadd_le_add ih (Qle_refl _)
 
+/-- `|(−1/3)ᵏ| ≤ 1` (the δ-series geometric ratio is `≤ 1`). -/
+theorem qpow_third_abs_le_one : ∀ k, Qle (Qabs (qpow ⟨-1, 3⟩ k)) ⟨1, 1⟩
+  | 0 => by decide
+  | (k + 1) => by
+      show Qle (Qabs (mul ⟨-1, 3⟩ (qpow ⟨-1, 3⟩ k))) ⟨1, 1⟩
+      refine Qle_trans (Qmul_den_pos (Qabs_den_pos (by decide))
+          (Qabs_den_pos (qpow_den_pos (by decide) k)))
+        (Qeq_le (by rw [Qabs_mul]; exact Qeq_refl _ :
+          Qeq (Qabs (mul ⟨-1, 3⟩ (qpow ⟨-1, 3⟩ k)))
+            (mul (Qabs (⟨-1, 3⟩ : Q)) (Qabs (qpow ⟨-1, 3⟩ k))))) ?_
+      refine Qle_trans (Qmul_den_pos (Qabs_den_pos (by decide)) Nat.one_pos)
+        (Qmul_le_mul_left (Qabs_num_nonneg _) (qpow_third_abs_le_one k)) ?_
+      exact (by decide : Qle (mul (Qabs (⟨-1, 3⟩ : Q)) ⟨1, 1⟩) ⟨1, 1⟩)
+
+/-- **`|δₖ| ≤ 1`** (the δ-series coefficients are bounded — the analog of the doubling's `|kdblₖ| ≤ 2`). -/
+theorem dcoef_abs_le_one : ∀ k, Qle (Qabs (dcoef k)) ⟨1, 1⟩
+  | 0 => by decide
+  | (k + 1) => by
+      show Qle (Qabs (mul ⟨8, 9⟩ (qpow ⟨-1, 3⟩ k))) ⟨1, 1⟩
+      refine Qle_trans (Qmul_den_pos (Qabs_den_pos (by decide))
+          (Qabs_den_pos (qpow_den_pos (by decide) k)))
+        (Qeq_le (by rw [Qabs_mul]; exact Qeq_refl _ :
+          Qeq (Qabs (mul ⟨8, 9⟩ (qpow ⟨-1, 3⟩ k)))
+            (mul (Qabs (⟨8, 9⟩ : Q)) (Qabs (qpow ⟨-1, 3⟩ k))))) ?_
+      refine Qle_trans (Qmul_den_pos (Qabs_den_pos (by decide)) Nat.one_pos)
+        (Qmul_le_mul_left (Qabs_num_nonneg _) (qpow_third_abs_le_one k)) ?_
+      exact (by decide : Qle (mul (Qabs (⟨8, 9⟩ : Q)) ⟨1, 1⟩) ⟨1, 1⟩)
+
 end UOR.Bridge.F1Square.Analysis

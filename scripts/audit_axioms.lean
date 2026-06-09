@@ -1179,3 +1179,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.gcorner_den
 #print axioms Analysis.per_m_step_gen
 #print axioms Analysis.per_m_bound_gen
+#print axioms Analysis.qpow_third_abs_le_one
+#print axioms Analysis.dcoef_abs_le_one
