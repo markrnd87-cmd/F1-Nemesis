@@ -2741,4 +2741,9 @@ theorem logN_mono {m n : Nat} (hm : 1 ≤ m) (hmn : m ≤ n) :
       (Rle_trans (Rle_ofQ_ofQ Nat.one_pos Nat.one_pos (by simp only [Qle]; push_cast; omega))
         (Rle_of_Req (Req_symm (Rexp_logN n (Nat.le_trans hm hmn))))))
 
+/-- **The dyadic block's log bound**: `2ᵏ ≤ n ⟹ k·log 2 ≤ log n`. The input to `|n⁻ˢ| ≤ exp(−σ·k·log 2)`. -/
+theorem logN_ge_k_log2 {k n : Nat} (hn : 2 ^ k ≤ n) :
+    Rle (Rnsmul k (logN 2 (by omega))) (logN n (Nat.le_trans (one_le_two_pow k) hn)) :=
+  Rle_trans (Rle_of_Req (Req_symm (logN_pow_two k))) (logN_mono (one_le_two_pow k) hn)
+
 end UOR.Bridge.F1Square.Analysis

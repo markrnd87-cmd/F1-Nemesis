@@ -1225,3 +1225,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.logN_pow_two
 #print axioms Analysis.Rle_ofQ_ofQ
 #print axioms Analysis.logN_mono
+#print axioms Analysis.logN_ge_k_log2
