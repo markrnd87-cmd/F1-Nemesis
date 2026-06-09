@@ -1080,3 +1080,9 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.tmap_nat_num
 #print axioms Analysis.Rexp_log_nat
 #print axioms Analysis.Rexp_log_nat_Rlog
+
+-- v0.15.2 — real powers `nᶜ = exp(c·log n)` (RealPow.lean).
+#print axioms Analysis.Rnsmul_zero
+#print axioms Analysis.Rnsmul_succ
+#print axioms Analysis.RexpReal_nsmul
+#print axioms Analysis.RexpReal_nsmul_eq
