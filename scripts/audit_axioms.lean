@@ -1098,3 +1098,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.RexpReal_le_of_Rle
 #print axioms Analysis.Rmul_ofQ_ofQ
 #print axioms Analysis.RexpReal_neg_eq_recip
+#print axioms Analysis.artSum_nonneg
+#print axioms Analysis.Rlog_nonneg

@@ -428,4 +428,77 @@ theorem RexpReal_neg_eq_recip (n : Nat) (hn : 0 < n) {L : Real}
         (Req_trans (Rmul_congr hsub (Req_refl (ofQ (⟨1, n⟩ : Q) hn)))
           (Req_trans (Rmul_comm one (ofQ (⟨1, n⟩ : Q) hn)) (Rmul_one (ofQ (⟨1, n⟩ : Q) hn))))))
 
+-- ===========================================================================
+-- `log n ≥ 0` for `n ≥ 1` — the sign fact behind the exponent comparison `−σ·log n ≤ −2·log n`.
+-- ===========================================================================
+
+/-- The artanh partial sums are non-negative for a non-negative base (`artSum t N ≥ t ≥ 0`). -/
+theorem artSum_nonneg {t : Q} (ht0 : 0 ≤ t.num) (htd : 0 < t.den) (N : Nat) :
+    0 ≤ (artSum t N).num := by
+  have h := artSum_ge_arg ht0 htd N
+  have hdI : (0 : Int) ≤ ((artSum t N).den : Int) := Int.ofNat_nonneg _
+  have htdI : (0 : Int) < (t.den : Int) := by exact_mod_cast htd
+  unfold Qle at h
+  have h1 : (0 : Int) ≤ t.num * ((artSum t N).den : Int) := Int.mul_nonneg ht0 hdI
+  have h3 : (0 : Int) * (t.den : Int) ≤ (artSum t N).num * (t.den : Int) := by
+    have := Int.le_trans h1 h; simpa using this
+  exact Int.le_of_mul_le_mul_right h3 htdI
+
+/-- **`log n ≥ 0`** for `n ≥ 1` (Bishop), where `Rlog (ofQ n) …` is the constructive logarithm. Since
+    `Rlog x M = 2·artanh((x−1)/(x+1))` and the argument is the constant `tmap n ≥ 0`, the artanh diagonal
+    is `artSum (tmap n) (·) ≥ 0`, and `2·(≥0) ≥ 0` (`Rnonneg_Rmul`). -/
+theorem Rlog_nonneg (x : Real) (M : Q) (hMd : 0 < M.den) (hMge : Qle (⟨1, 1⟩ : Q) M)
+    (hxpos : ∀ n, 0 < (x.seq n).num) (hhi : ∀ n, Qle (x.seq n) M)
+    (hlo : ∀ n, Qle (⟨1, 1⟩ : Q) (mul (x.seq n) M))
+    (htmap : ∀ n, 0 ≤ (x.seq n).num → 0 ≤ (Rlog_seq x n).num) :
+    Rnonneg (Rlog x M hMd hMge hxpos hhi hlo) := by
+  have hden : ∀ n, 0 < (Rlog_seq x n).den := by
+    intro n
+    refine Qmul_den_pos (Qsub_den_pos (x.den_pos _) Nat.one_pos) (Qinv_den_pos ?_)
+    have h2 := hxpos (Rlog_R n)
+    show 0 < (x.seq (Rlog_R n)).num * 1 + 1 * ((x.seq (Rlog_R n)).den : Int)
+    have h := Int.ofNat_nonneg (x.seq (Rlog_R n)).den; omega
+  have hMge' : (1 : Int) * (M.den : Int) ≤ M.num * 1 := hMge
+  have hMn : 0 ≤ M.num := by omega
+  have hρ0 : 0 ≤ (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q).num := by
+    show 0 ≤ M.num - (M.den : Int); omega
+  have hρd : 0 < (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q).den := by
+    show 0 < M.num.toNat + M.den; omega
+  have hlt : (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q).num.toNat
+      < (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q).den := by
+    show (M.num - (M.den : Int)).toNat < M.num.toNat + M.den
+    have h1 : ((M.num.toNat : Nat) : Int) = M.num := Int.toNat_of_nonneg hMn
+    have h2 : ((M.num - (M.den : Int)).toNat : Int) = M.num - (M.den : Int) :=
+      Int.toNat_of_nonneg (by omega)
+    have : ((M.num - (M.den : Int)).toNat : Int) < ((M.num.toNat + M.den : Nat) : Int) := by
+      push_cast [h1, h2]; omega
+    exact_mod_cast this
+  have hb : ∀ n, Qle (Qabs ((⟨Rlog_seq x, Rlog_regular x hxpos, hden⟩ : Real).seq n))
+      (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q) := by
+    intro n
+    have hca : 0 < (add (x.seq (Rlog_R n)) ⟨1, 1⟩).num := by
+      have h := Int.ofNat_nonneg (x.seq (Rlog_R n)).den; have := hxpos (Rlog_R n)
+      show 0 < (x.seq (Rlog_R n)).num * 1 + 1 * ((x.seq (Rlog_R n)).den : Int); omega
+    exact Qle_trans (show 0 < (tmap M).den from
+        Qmul_den_pos (Qsub_den_pos hMd Nat.one_pos) (Qinv_den_pos (by
+          show 0 < M.num * 1 + 1 * (M.den : Int); omega)))
+      (tmap_abs_le (x.den_pos _) hMd hca (by show 0 < M.num * 1 + 1 * (M.den : Int); omega)
+        (hhi (Rlog_R n)) (hlo (Rlog_R n)))
+      (Qeq_le (tmap_M_eq hMd hMn))
+  rw [Rlog_eq_Rmul x M hMd hMge hxpos hhi hlo hden hρ0 hρd hlt hb]
+  refine Rnonneg_Rmul (fun n => by show Qle (neg (Qbound n)) ⟨2, 1⟩; simp only [Qle, neg, Qbound]; push_cast; omega) ?_
+  intro j
+  show Qle (neg (Qbound j)) (Rartanh_seq ⟨Rlog_seq x, Rlog_regular x hxpos, hden⟩
+    (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q) j)
+  have hnn : 0 ≤ (Rartanh_seq ⟨Rlog_seq x, Rlog_regular x hxpos, hden⟩
+      (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q) j).num :=
+    artSum_nonneg
+      (htmap (Rartanh_R (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q) j)
+        (Int.le_of_lt (hxpos (Rartanh_R (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q) j))))
+      (hden (Rartanh_R (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q) j))
+      (Rartanh_R (⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ : Q) j)
+  refine Qle_trans (b := (⟨0, 1⟩ : Q)) (by decide) (by simp only [Qle, neg, Qbound]; push_cast; omega) ?_
+  show Qle (⟨0, 1⟩ : Q) _
+  simp only [Qle]; push_cast; omega
+
 end UOR.Bridge.F1Square.Analysis
