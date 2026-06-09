@@ -2752,6 +2752,30 @@ theorem Rmul_le_Rmul_left {c a b : Real} (hc : Rnonneg c) (h : Rle a b) :
   Rle_of_Rnonneg_Rsub (Rnonneg_congr (Rmul_sub_distrib c b a)
     (Rnonneg_Rmul hc (Rnonneg_Rsub_of_Rle h)))
 
+/-- `ofQ c ≥ 0` for `0 ≤ c.num`. -/
+theorem Rnonneg_ofQ {c : Q} (hcd : 0 < c.den) (hcn : 0 ≤ c.num) : Rnonneg (ofQ c hcd) := by
+  intro n
+  show Qle (neg (Qbound n)) c
+  have hd : (0 : Int) ≤ (c.den : Int) := by exact_mod_cast Nat.zero_le c.den
+  have hp : (0 : Int) ≤ c.num * ((n : Int) + 1) := Int.mul_nonneg hcn (by omega)
+  simp only [Qle, neg, Qbound]; push_cast; omega
+
+/-- **`Rmul` is monotone in the left factor** for a non-negative right factor. -/
+theorem Rmul_le_Rmul_right {c a b : Real} (hc : Rnonneg c) (h : Rle a b) :
+    Rle (Rmul a c) (Rmul b c) :=
+  Rle_trans (Rle_of_Req (Rmul_comm a c))
+    (Rle_trans (Rmul_le_Rmul_left hc h) (Rle_of_Req (Rmul_comm c b)))
+
+/-- **`Pos` of a product**: `Pos a` and `Pos b` give `Pos (a·b)`. -/
+theorem Pos_Rmul {a b : Real} (ha : Pos a) (hb : Pos b) : Pos (Rmul a b) := by
+  obtain ⟨c, hcd, hcn, hca⟩ := Pos_imp_ofQ_le ha
+  obtain ⟨d, hdd, hdn, hdb⟩ := Pos_imp_ofQ_le hb
+  refine Pos_of_Rle_ofQ (c := mul c d) (by simp only [mul]; exact Int.mul_pos hcn hdn)
+    (Qmul_den_pos hcd hdd) ?_
+  exact Rle_trans (Rle_of_Req (Req_symm (Rmul_ofQ_ofQ hcd hdd)))
+    (Rle_trans (Rmul_le_Rmul_right (Rnonneg_ofQ hdd (Int.le_of_lt hdn)) hca)
+      (Rmul_le_Rmul_left (Rnonneg_of_Pos ha) hdb))
+
 /-- **The dyadic block modulus bound**: for `σ ≥ 0` and `2ᵏ ≤ n`, `exp(−σ·log n) ≤ exp(−σ·k·log 2)`.
     The per-term bound that makes block `B_k` sum to `≤ 2ᵏ·exp(−σ·k·log 2) = (exp(−θ))ᵏ`. -/
 theorem exp_block_bound {σ : Real} (hσ : Rnonneg σ) {k n : Nat} (hn : 2 ^ k ≤ n) :
@@ -2798,14 +2822,6 @@ theorem Rexp_half_le : Rle (RexpReal (ofQ (⟨1, 2⟩ : Q) (by decide))) (ofQ (�
 theorem logN_2_ge_half : Rle (ofQ (⟨1, 2⟩ : Q) (by decide)) (logN 2 (by omega)) :=
   RexpReal_reflects_le (Rnonneg_logN 2 (by omega))
     (Rle_trans Rexp_half_le (Rle_of_Req (Req_symm (Rexp_logN 2 (by omega)))))
-
-/-- `ofQ c ≥ 0` for `0 ≤ c.num`. -/
-theorem Rnonneg_ofQ {c : Q} (hcd : 0 < c.den) (hcn : 0 ≤ c.num) : Rnonneg (ofQ c hcd) := by
-  intro n
-  show Qle (neg (Qbound n)) c
-  have hd : (0 : Int) ≤ (c.den : Int) := by exact_mod_cast Nat.zero_le c.den
-  have hp : (0 : Int) ≤ c.num * ((n : Int) + 1) := Int.mul_nonneg hcn (by omega)
-  simp only [Qle, neg, Qbound]; push_cast; omega
 
 /-- **Real reciprocal is antitone**: if `a·b ≈ 1`, `b ≥ 0`, and `a ≥ ofQ d` (`d > 0`), then `b ≤ ofQ(1/d)`. -/
 theorem Rle_recip {a b : Real} {d : Q} (hdn : 0 < d.num) (hdd : 0 < d.den)
