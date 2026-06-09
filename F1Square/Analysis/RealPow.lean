@@ -739,4 +739,104 @@ theorem Pos_of_Rle_one {x : Real} (h : Rle one x) : Pos x := by
   push_cast at h3 ⊢
   omega
 
+/-- **`expSum q (N+1) ≥ 1 + q`** for `q ≥ 0` — the linear lower bound `exp q ≥ 1+q` at the partial-sum
+    level: `expSum q 1 = 1 + q`, and the partial sums increase (`expSum_le`). -/
+theorem expSum_ge_one_add {q : Q} (hq0 : 0 ≤ q.num) (hqd : 0 < q.den) (N : Nat) :
+    Qle (add (⟨1, 1⟩ : Q) q) (expSum q (N + 1)) := by
+  have h1 : Qeq (add (⟨1, 1⟩ : Q) q) (expSum q 1) := by
+    show Qeq (add (⟨1, 1⟩ : Q) q) (add (expSum q 0) (expTerm q 1))
+    simp only [expSum, expTerm, qpow, fct, Qeq, add, mul]; push_cast; ring_uor
+  exact Qle_trans (expSum_den_pos hqd 1) (Qeq_le h1) (expSum_le hq0 hqd (by omega))
+
+/-- `|q| ≤ 1/(N+1)` from `q ≥ −1/(N+1)` and `q < 0`. -/
+private theorem qabs_le_qbound {q : Q} {N : Nat} (hqlo : Qle (neg (Qbound N)) q)
+    (hqneg : q.num < 0) : Qle (Qabs q) (Qbound N) := by
+  have hlo' : -(q.den : Int) ≤ q.num * ((N + 1 : Nat) : Int) := by
+    have := hqlo; simp only [Qle, neg, Qbound] at this; push_cast at this ⊢; omega
+  have hkey : (q.num.natAbs : Int) * ((N + 1 : Nat) : Int) ≤ 1 * (q.den : Int) := by
+    have habs : ((q.num.natAbs : Int)) = -q.num := by omega
+    rw [habs, Int.neg_mul]; omega
+  simpa only [Qle, Qabs, Qbound] using hkey
+
+/-- **`exp q ≥ 1 + q − 3/(N+1)`** (partial-sum form) for `q < 0` with `|q| ≤ 1/(N+1)` — the quadratic
+    remainder `expSum_quad` with the constant bound `expSumM 1 N ≤ 3`. -/
+private theorem exp_lower_quad {q : Q} (hqd : 0 < q.den) {N : Nat} (hN1 : 1 ≤ N)
+    (hqabs : Qle (Qabs q) (Qbound N)) :
+    Qle (add (⟨1, 1⟩ : Q) q) (add (expSum q N) (⟨3, N + 1⟩ : Q)) := by
+  have hq1 : Qle (Qabs q) (⟨1, 1⟩ : Q) :=
+    Qle_trans (Qbound_den_pos N) hqabs (by simp only [Qle, Qbound]; push_cast; omega)
+  have hNsucc : N - 1 + 1 = N := by omega
+  have hquad := expSum_quad hqd hq1 (N - 1)
+  rw [hNsucc] at hquad
+  have hEbound : Qle (expSumM 1 N) (⟨3, 1⟩ : Q) :=
+    Qle_trans (expM_U_den_pos 1 2) (expSumM_le_U 1 N) (by decide)
+  have hnn_q : 0 ≤ (Qabs q).num := Qabs_num_nonneg q
+  have hBbound : Qle (mul (mul (Qabs q) (Qabs q)) (expSumM 1 N)) (⟨3, N + 1⟩ : Q) := by
+    have step1 : Qle (mul (Qabs q) (Qabs q)) (mul (Qbound N) (⟨1, 1⟩ : Q)) :=
+      Qmul_le_mul (Qabs_den_pos hqd) (Qbound_den_pos N) (Qabs_den_pos hqd) hnn_q hnn_q hqabs hq1
+    have step2 : Qle (mul (mul (Qabs q) (Qabs q)) (expSumM 1 N))
+        (mul (mul (Qbound N) (⟨1, 1⟩ : Q)) (⟨3, 1⟩ : Q)) :=
+      Qmul_le_mul (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hqd))
+        (Qmul_den_pos (Qbound_den_pos N) (by decide)) (expSumM_den_pos 1 N)
+        (Int.mul_nonneg hnn_q hnn_q) (expSumM_num_nonneg 1 N) step1 hEbound
+    refine Qle_trans (Qmul_den_pos (Qmul_den_pos (Qbound_den_pos N) (by decide)) (by decide))
+      step2 (Qeq_le ?_)
+    simp only [Qeq, mul, Qbound]; push_cast; ring_uor
+  have hCAB : Qle (add (⟨1, 1⟩ : Q) q)
+      (add (expSum q N) (mul (mul (Qabs q) (Qabs q)) (expSumM 1 N))) := by
+    apply Qle_add_of_Qabs_sub (add_den_pos (by decide) hqd) (expSum_den_pos hqd N)
+      (Qmul_den_pos (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hqd)) (expSumM_den_pos 1 N))
+    rw [Qabs_Qsub_comm]; exact hquad
+  exact Qle_trans (add_den_pos (expSum_den_pos hqd N)
+    (Qmul_den_pos (Qmul_den_pos (Qabs_den_pos hqd) (Qabs_den_pos hqd)) (expSumM_den_pos 1 N)))
+    hCAB (Qadd_le_add (Qle_refl _) hBbound)
+
+/-- **`1 + t ≤ exp t`** for `t ≥ 0` (the `Rle` form). At the diagonal the sample `q = t_{R j}` gives
+    `expSum q N ≥ 1 + q` (`expSum_ge_one_add`, or the quad lower bound if `q` dips negative), and the
+    `+t` term at index `2j+1` is reconciled by regularity; the reindex `N ≥ 4(j+1)` closes the budget. -/
+theorem RexpReal_ge_one_add_nonneg {t : Real} (ht : Rnonneg t) : Rle (Radd one t) (RexpReal t) := by
+  intro j
+  show Qle (add (⟨1, 1⟩ : Q) (t.seq (2 * j + 1)))
+    (add (expSum (t.seq (RexpReal_R t j)) (RexpReal_R t j)) ⟨2, j + 1⟩)
+  have hNlb : 4 * (j + 1) ≤ RexpReal_R t j := by
+    have hK : 1 ≤ RexpReal_K t := by unfold RexpReal_K; omega
+    have hmul : 4 * (j + 1) * 1 ≤ 4 * (j + 1) * RexpReal_K t := Nat.mul_le_mul_left _ hK
+    unfold RexpReal_R; omega
+  have hqd : 0 < (t.seq (RexpReal_R t j)).den := t.den_pos _
+  have ht1 : Qle (t.seq (2 * j + 1)) (add (t.seq (RexpReal_R t j)) ⟨2, 2 * j + 1 + 1⟩) :=
+    Qle_add_of_Qabs_sub (t.den_pos _) (t.den_pos _) (Nat.succ_pos _)
+      (xreg_n_le t (Nat.le_refl (2 * j + 1)) (by omega : 2 * j + 1 ≤ RexpReal_R t j))
+  -- the `1 + q` lower bound (uniform `3/(N+1)` slack covering both signs of `q`)
+  have hlb : Qle (add (⟨1, 1⟩ : Q) (t.seq (RexpReal_R t j)))
+      (add (expSum (t.seq (RexpReal_R t j)) (RexpReal_R t j)) ⟨3, RexpReal_R t j + 1⟩) := by
+    by_cases hq0 : 0 ≤ (t.seq (RexpReal_R t j)).num
+    · have h := expSum_ge_one_add hq0 hqd (RexpReal_R t j - 1)
+      rw [(by omega : RexpReal_R t j - 1 + 1 = RexpReal_R t j)] at h
+      exact Qle_trans (expSum_den_pos hqd _) h (Qle_self_add (by show (0 : Int) ≤ 3; decide))
+    · exact exp_lower_quad hqd (by omega) (qabs_le_qbound (ht (RexpReal_R t j)) (by omega))
+  have hassoc1 : Qeq (add (⟨1, 1⟩ : Q) (add (t.seq (RexpReal_R t j)) ⟨2, 2 * j + 1 + 1⟩))
+      (add (add (⟨1, 1⟩ : Q) (t.seq (RexpReal_R t j))) ⟨2, 2 * j + 1 + 1⟩) := by
+    simp only [Qeq, add]; push_cast; ring_uor
+  have hmain : Qle (add (⟨1, 1⟩ : Q) (t.seq (2 * j + 1)))
+      (add (add (expSum (t.seq (RexpReal_R t j)) (RexpReal_R t j)) ⟨3, RexpReal_R t j + 1⟩)
+        ⟨2, 2 * j + 1 + 1⟩) := by
+    refine Qle_trans (b := add (add (⟨1, 1⟩ : Q) (t.seq (RexpReal_R t j))) ⟨2, 2 * j + 1 + 1⟩)
+      (add_den_pos (add_den_pos (by decide) (t.den_pos _)) (Nat.succ_pos _)) ?_
+      (Qadd_le_add hlb (Qle_refl _))
+    exact Qle_trans (add_den_pos (by decide) (add_den_pos (t.den_pos _) (Nat.succ_pos _)))
+      (Qadd_le_add (Qle_refl _) ht1) (Qeq_le hassoc1)
+  -- the slack reduction `3/(N+1) + 1/(j+1) ≤ 2/(j+1)`
+  have h31 : Qle (⟨3, RexpReal_R t j + 1⟩ : Q) (⟨1, j + 1⟩ : Q) := by
+    simp only [Qle]; push_cast; omega
+  have hBC : Qle (add (⟨3, RexpReal_R t j + 1⟩ : Q) ⟨2, 2 * j + 1 + 1⟩) (⟨2, j + 1⟩ : Q) :=
+    Qle_trans (add_den_pos (Nat.succ_pos _) (Nat.succ_pos _)) (Qadd_le_add h31 (Qle_refl _))
+      (Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor))
+  refine Qle_trans (b := add (add (expSum (t.seq (RexpReal_R t j)) (RexpReal_R t j))
+    ⟨3, RexpReal_R t j + 1⟩) ⟨2, 2 * j + 1 + 1⟩)
+    (add_den_pos (add_den_pos (expSum_den_pos hqd _) (Nat.succ_pos _)) (Nat.succ_pos _)) hmain ?_
+  refine Qle_trans (b := add (expSum (t.seq (RexpReal_R t j)) (RexpReal_R t j))
+    (add ⟨3, RexpReal_R t j + 1⟩ ⟨2, 2 * j + 1 + 1⟩))
+    (add_den_pos (expSum_den_pos hqd _) (add_den_pos (Nat.succ_pos _) (Nat.succ_pos _)))
+    (Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor)) (Qadd_le_add (Qle_refl _) hBC)
+
 end UOR.Bridge.F1Square.Analysis
