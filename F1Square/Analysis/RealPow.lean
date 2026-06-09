@@ -1823,4 +1823,67 @@ theorem composed_ode (k : Nat) :
     (Qeq_trans (fcomp_den_pos (fun i => fmul_den_pos p2_den sacD_den i) dcoef_den k)
       (Qeq_symm hFM) hode)
 
+private theorem mul9_cancel_core (xn yn : Int) (xd yd : Nat)
+    (h : 9 * xn * ((1 * yd : Nat) : Int) = 9 * yn * ((1 * xd : Nat) : Int)) :
+    xn * (yd : Int) = yn * (xd : Int) := by
+  refine Int.eq_of_mul_eq_mul_left (a := 9) (by decide) ?_
+  have e1 : 9 * xn * ((1 * yd : Nat) : Int) = 9 * (xn * (yd : Int)) := by push_cast; ring_uor
+  have e2 : 9 * yn * ((1 * xd : Nat) : Int) = 9 * (yn * (xd : Int)) := by push_cast; ring_uor
+  rw [e1, e2] at h; exact h
+
+/-- Scalar `9` cancellation: `9·X = 9·Y ⇒ X = Y`. -/
+theorem mul9_cancel {X Y : Q} (h : Qeq (mul ⟨9, 1⟩ X) (mul ⟨9, 1⟩ Y)) : Qeq X Y :=
+  mul9_cancel_core X.num Y.num X.den Y.den h
+
+-- ===========================================================================
+-- STEP 2e/2f finale — `fderiv(fcomp sacoef δ)=gcoef` (chain rule + dcoef_ode + composed_ode, via the
+-- `(1−w²)`-cancellation) and then `fcomp sacoef δ = acoef` (`fderiv_inj`, both 0 at the origin).
+-- ===========================================================================
+
+/-- **`fderiv(fcomp sacoef δ) = gcoef`** = `artanh'`: `H=artanh(g(w))` and `artanh(w)` have equal
+    derivatives. Chain rule gives `H' = (sacD∘δ)·δ'`; then `(1−w²)·H' = 1` via `dcoef_ode` + `composed_ode`
+    + the `9`-scalar cancel, matching `artanh_ode`, so `H' = gcoef` by `fmul_oneMinusSq_cancel`. -/
+theorem fderiv_fcomp_sacoef (l : Nat) : Qeq (fderiv (fcomp sacoef dcoef) l) (gcoef l) := by
+  have hHd : ∀ i, 0 < (fcomp sacoef dcoef i).den := fun i => fcomp_den_pos sacoef_den dcoef_den i
+  have hP : ∀ i, 0 < (fcomp sacD dcoef i).den := fun i => fcomp_den_pos sacD_den dcoef_den i
+  have hd' : ∀ i, 0 < (fderiv dcoef i).den := fun i => fderiv_den_pos dcoef_den i
+  have hOMd' : ∀ i, 0 < (fmul oneMinusSq (fderiv dcoef) i).den :=
+    fun i => fmul_den_pos (fun j => oneMinusSq_den j) hd' i
+  have hchain : ∀ m, Qeq (fderiv (fcomp sacoef dcoef) m) (fmul (fcomp sacD dcoef) (fderiv dcoef) m) := by
+    intro m
+    refine Qeq_trans (fmul_den_pos
+      (fun i => fcomp_den_pos (fun j => fderiv_den_pos sacoef_den j) dcoef_den i) hd' m)
+      (fcomp_chain sacoef dcoef sacoef_den dcoef_den dcoef_zero m) ?_
+    exact fmul_congr_left (fun i => fcomp_congr_left (fun j => fderiv_sacoef j) i) m
+  have hode_H : ∀ m, Qeq (fmul oneMinusSq (fderiv (fcomp sacoef dcoef)) m) (fone m) := by
+    intro m
+    apply mul9_cancel
+    have s12 : Qeq (fmul oneMinusSq (fderiv (fcomp sacoef dcoef)) m)
+        (fmul (fcomp sacD dcoef) (fmul oneMinusSq (fderiv dcoef)) m) :=
+      Qeq_trans (fmul_den_pos (fun j => oneMinusSq_den j) (fun i => fmul_den_pos hP hd' i) m)
+        (fmul_congr_right (fun i => hchain i) m)
+        (fmul_swap_left oneMinusSq (fcomp sacD dcoef) (fderiv dcoef)
+          (fun j => oneMinusSq_den j) hP hd' m)
+    refine Qeq_trans (Qmul_den_pos (by decide)
+      (fmul_den_pos hP (fun i => fmul_den_pos (fun j => oneMinusSq_den j) hd' i) m))
+      (Qmul_congr (Qeq_refl _) s12) ?_
+    refine Qeq_trans (fmul_den_pos hP (fun i => fsmul_den (by decide) hOMd' i) m)
+      (Qeq_symm (fmul_smul_right (fcomp sacD dcoef) (fmul oneMinusSq (fderiv dcoef)) ⟨9, 1⟩
+        (by decide) hP hOMd' m)) ?_
+    refine Qeq_trans (fmul_den_pos hP qcomp_den m) (fmul_congr_right (fun i => dcoef_ode i) m) ?_
+    exact Qeq_trans (fmul_den_pos qcomp_den hP m)
+      (fmul_comm (fcomp sacD dcoef) qcomp hP qcomp_den m) (composed_ode m)
+  exact fmul_oneMinusSq_cancel (fun i => fderiv_den_pos hHd i) (fun i => gcoef_den i)
+    (fun m => Qeq_trans (fone_den_pos m) (hode_H m) (Qeq_symm (artanh_ode m))) l
+
+/-- **★ THE FORMAL ARTANH ADDITION** `fcomp sacoef δ = acoef` (as coefficient sequences): `artanh(g(w))`
+    (re-centered, constant dropped) and `artanh(w)` agree, since both solve `(1−w²)y'=1` with `y(0)=0`
+    (`fderiv_inj` + `fderiv_fcomp_sacoef`). The formal backbone of `artanh(g(w))=artanh(⅓)+artanh(w)`. -/
+theorem fcomp_sacoef_eq_acoef (k : Nat) : Qeq (fcomp sacoef dcoef k) (acoef k) := by
+  refine fderiv_inj (y := fcomp sacoef dcoef) (z := acoef) (fun m => ?_) ?_ k
+  · exact Qeq_trans (gcoef_den m) (fderiv_fcomp_sacoef m) (Qeq_symm (fderiv_acoef m))
+  · refine Qeq_trans (Qmul_den_pos (sacoef_den 0) (fpow_den_pos dcoef_den 0 0))
+      (fcomp_const sacoef dcoef) ?_
+    rw [sacoef_zero]; decide
+
 end UOR.Bridge.F1Square.Analysis
