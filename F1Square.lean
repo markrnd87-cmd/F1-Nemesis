@@ -543,4 +543,25 @@ example :
   Analysis.Rexp_log_nat_Rlog 2 (by decide) Analysis.Rlog_two_ok.2.1 Analysis.Rlog_two_ok.2.2.1
     Analysis.Rlog_two_ok.2.2.2.1 Analysis.Rlog_two_ok.2.2.2.2
 
+/-- Elaboration-checked witness binding the v0.15.2 keystone: **the Riemann zeta function `ζ(s) = Σ_{n≥1} n⁻ˢ`
+    for *complex* `s` with `Re s > 1`** is a genuine constructive complex number (`Czeta`), and its partial
+    sums converge to it with an explicit rate. For any `s` with `Re s ≥ 0` and a rational witness `τ > 0` of
+    `Re s > 1` (`τ ≤ (Re s − 1)·log 2`, so the dyadic ratio `2^{1−Re s} < 1`), both the real and imaginary
+    reindexed partial sums `Σ_{n<2^{M(k)}} Re/Im(n⁻ˢ)` converge to `Re/Im ζ(s)` with the canonical Bishop
+    rate `2/(k+1)` (`Czeta_re_tendsTo`, `Czeta_im_tendsTo`) — the rigorous complex geometric tail. This is ζ
+    in its *full* convergent half-plane `Re s > 1` (not merely integer `s ≥ 2`); the analytic continuation to
+    the critical strip — where RH lives — is not built, and the crux stays open (`liPositivityHolds = none`). -/
+example :
+    (∀ (s : Analysis.Complex) (hσ : Analysis.Rnonneg s.re) (τ : Analysis.Q)
+        (hτn : 0 < τ.num) (hτd : 0 < τ.den)
+        (hθ : Analysis.Rle (Analysis.ofQ τ hτd)
+          (Analysis.Rmul (Analysis.Rsub s.re Analysis.one) (Analysis.logN 2 (by omega)))),
+        Analysis.RTendsTo (fun j => Analysis.czetaReSum s (2 ^ Analysis.czetaMidx τ j))
+            (Analysis.Czeta s hσ hτn hτd hθ).re
+          ∧ Analysis.RTendsTo (fun j => Analysis.czetaImSum s (2 ^ Analysis.czetaMidx τ j))
+            (Analysis.Czeta s hσ hτn hτd hθ).im)
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨fun s hσ τ hτn hτd hθ =>
+    ⟨Analysis.Czeta_re_tendsTo s hσ hτn hτd hθ, Analysis.Czeta_im_tendsTo s hσ hτn hτd hθ⟩, rfl⟩
+
 end UOR.Bridge.F1Square
