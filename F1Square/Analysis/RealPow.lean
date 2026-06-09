@@ -1886,4 +1886,18 @@ theorem fcomp_sacoef_eq_acoef (k : Nat) : Qeq (fcomp sacoef dcoef k) (acoef k) :
       (fcomp_const sacoef dcoef) ?_
     rw [sacoef_zero]; decide
 
+-- ===========================================================================
+-- STEP 3 — the EVAL BRIDGE. `peval` of the formal addition `fcomp sacoef δ = acoef` connects it to the
+-- real `artanh` partial sum `artSum`. (The "acoef side"; the composition-eval estimate mirrors the
+-- doubling's `Dterm_recip`/`DN_recip`.)
+-- ===========================================================================
+
+/-- **The formal addition, evaluated**: `peval(fcomp sacoef δ)(w, 2N+1) = artSum(w, N)` (the artanh
+    partial sum), via `fcomp_sacoef_eq_acoef` + `peval_acoef_artSum`. -/
+theorem peval_fcomp_sacoef_artSum (w : Q) (hwd : 0 < w.den) (N : Nat) :
+    Qeq (peval (fcomp sacoef dcoef) w (2 * N + 1)) (artSum w N) :=
+  Qeq_trans (peval_den_pos (fun k => acoef_den k) hwd _)
+    (peval_congr (fun k => fcomp_sacoef_eq_acoef k) w (2 * N + 1))
+    (peval_acoef_artSum w hwd N)
+
 end UOR.Bridge.F1Square.Analysis

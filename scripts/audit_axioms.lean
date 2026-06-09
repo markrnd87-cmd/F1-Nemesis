@@ -1175,3 +1175,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.mul9_cancel
 #print axioms Analysis.fderiv_fcomp_sacoef
 #print axioms Analysis.fcomp_sacoef_eq_acoef
+#print axioms Analysis.peval_fcomp_sacoef_artSum
