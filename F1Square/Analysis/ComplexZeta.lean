@@ -355,6 +355,43 @@ theorem czetaExp_tail (s : Complex) (hσ : Rnonneg s.re) {τ : Q} (hτn : 0 < τ
           (czetaExp_tail s hσ hτn hτd hθ j d)) ?_
       exact Rle_of_Req (Radd_ofQ_ofQ _ _)
 
+/-- `(1−q).num = q.den − q.num` (generic; `q` kept opaque so the inner structure is untouched). -/
+private theorem Qsub_one_num (q : Q) : (Qsub (⟨1, 1⟩ : Q) q).num = (q.den : Int) - q.num := by
+  simp only [Qsub, add, neg]; push_cast; omega
+
+/-- The field facts for `r = 1/(1+τ)` (`τ > 0`): `0 < r.den`, `0 ≤ r.num`, `r.num.toNat ≤ r.den`,
+    `0 < (1−r).num` — the hypotheses `geoFrom_le`/`geom_reindex` need. -/
+theorem czetaR_facts {τ : Q} (hτn : 0 < τ.num) (hτd : 0 < τ.den) :
+    (0 < (Qinv (add (⟨1, 1⟩ : Q) τ)).den) ∧ (0 ≤ (Qinv (add (⟨1, 1⟩ : Q) τ)).num) ∧
+    ((Qinv (add (⟨1, 1⟩ : Q) τ)).num.toNat ≤ (Qinv (add (⟨1, 1⟩ : Q) τ)).den) ∧
+    (0 < (Qsub ⟨1, 1⟩ (Qinv (add (⟨1, 1⟩ : Q) τ))).num) := by
+  have hxnum : (add (⟨1, 1⟩ : Q) τ).num = (τ.den : Int) + τ.num := by simp only [add]; push_cast; omega
+  have hxden : (add (⟨1, 1⟩ : Q) τ).den = τ.den := by simp only [add, Nat.one_mul]
+  have hrnum : (Qinv (add (⟨1, 1⟩ : Q) τ)).num = (τ.den : Int) := by simp only [Qinv, hxden]
+  have hrden : (Qinv (add (⟨1, 1⟩ : Q) τ)).den = ((τ.den : Int) + τ.num).toNat := by
+    simp only [Qinv, hxnum]
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rw [hrden]; omega
+  · rw [hrnum]; exact_mod_cast Nat.zero_le _
+  · rw [hrnum, hrden]; omega
+  · rw [Qsub_one_num, hrnum, hrden]; omega
+
+/-- **The reindexed dyadic tail collapses to the canonical modulus**: at the base `M(j)=(j+1)·r.den²`,
+    `E(2^{M(j)+d}) − E(2^{M(j)}) ≤ 1/(j+1)` for every `d`. Combines `czetaExp_tail` (≤ `geoFrom`),
+    `geoFrom_le` (≤ `rᴹ/(1−r)`) and `geom_reindex` (≤ `1/(j+1)`). -/
+theorem czetaExp_tail_reindex (s : Complex) (hσ : Rnonneg s.re) {τ : Q} (hτn : 0 < τ.num) (hτd : 0 < τ.den)
+    (hθ : Rle (ofQ τ hτd) (Rmul (Rsub s.re one) (logN 2 (by omega)))) (j d : Nat) :
+    Rle (Rsub (czetaExpSum s (2 ^ ((j + 1) *
+              ((Qinv (add ⟨1, 1⟩ τ)).den * (Qinv (add ⟨1, 1⟩ τ)).den) + d)))
+            (czetaExpSum s (2 ^ ((j + 1) *
+              ((Qinv (add ⟨1, 1⟩ τ)).den * (Qinv (add ⟨1, 1⟩ τ)).den)))))
+        (ofQ ⟨1, j + 1⟩ (Nat.succ_pos j)) := by
+  obtain ⟨hrd, hr0, hple, hsub⟩ := czetaR_facts hτn hτd
+  refine Rle_trans (czetaExp_tail s hσ hτn hτd hθ _ d) ?_
+  refine Rle_ofQ_ofQ _ (Nat.succ_pos j) ?_
+  exact Qle_trans (Qmul_den_pos (qpow_den_pos hrd _) (Qinv_den_pos hsub))
+    (geoFrom_le _ hrd hr0 hsub _ d) (geom_reindex hrd hr0 hple hsub j)
+
 /-- **From a real upper bound to a same-index rational bound** (the completeness bridge): if `a − b ≤ c`
     as reals (`c` a rational), then `aₙ − bₙ ≤ c + 2/(n+1)` for every index `n`. Regularity moves the
     comparison index `2m+1` back to `n`; the generalized Archimedean lemma kills the `3/(m+1)` tail. -/
