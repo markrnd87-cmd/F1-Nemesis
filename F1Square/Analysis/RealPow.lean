@@ -2727,4 +2727,18 @@ theorem logN_pow_two (k : Nat) :
       refine Req_trans (Req_symm (logN_mul (2 ^ k) (one_le_two_pow k))) ?_
       exact Radd_congr (Req_refl _) ih
 
+/-- `ofQ` is monotone. -/
+theorem Rle_ofQ_ofQ {a b : Q} (ha : 0 < a.den) (hb : 0 < b.den) (h : Qle a b) :
+    Rle (ofQ a ha) (ofQ b hb) := fun k => by
+  show Qle a (add b ⟨2, k + 1⟩)
+  exact Qle_trans hb h (Qle_self_add (by show (0 : Int) ≤ 2; decide))
+
+/-- **`log` is monotone**: `m ≤ n ⟹ log m ≤ log n` (via `exp` reflecting `≤`). -/
+theorem logN_mono {m n : Nat} (hm : 1 ≤ m) (hmn : m ≤ n) :
+    Rle (logN m hm) (logN n (Nat.le_trans hm hmn)) :=
+  RexpReal_reflects_le (Rnonneg_logN n (Nat.le_trans hm hmn))
+    (Rle_trans (Rle_of_Req (Rexp_logN m hm))
+      (Rle_trans (Rle_ofQ_ofQ Nat.one_pos Nat.one_pos (by simp only [Qle]; push_cast; omega))
+        (Rle_of_Req (Req_symm (Rexp_logN n (Nat.le_trans hm hmn))))))
+
 end UOR.Bridge.F1Square.Analysis
