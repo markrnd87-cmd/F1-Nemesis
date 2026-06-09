@@ -5022,4 +5022,40 @@ theorem Rexp_two_artanh_ofQ (τ g K : Q) (M' L C : Nat)
     exact Qle_trans (Qmul_den_pos Nat.one_pos (gPow_den_pos hτd N))
       (peval_twoacoef_abs_le_gpow τ hτd hτ0 N) (hmag N)
 
+/-- `tmap` of a natural number: `(tmap n).den = n+1`. -/
+theorem tmap_nat_den (n : Nat) : (tmap (⟨(n : Int), 1⟩ : Q)).den = n + 1 := by
+  unfold tmap mul Qsub add neg Qinv; simp
+
+/-- `tmap` of a natural number: `(tmap n).num = n−1` (so `tmap n = (n−1)/(n+1)`). -/
+theorem tmap_nat_num (n : Nat) : (tmap (⟨(n : Int), 1⟩ : Q)).num = (n : Int) - 1 := by
+  unfold tmap mul Qsub add neg Qinv; push_cast; omega
+
+/-- **`exp(log n) = n`** (the v0.15.1 ζ-convergence gate). Since `log n = 2·artanh((n−1)/(n+1))` (the constructive
+    definition of `Rlog`), this is `RexpReal (TwoArtanhConst (tmap n)) ≈ n`. Instantiates `Rexp_two_artanh_ofQ` at
+    `τ = tmap n = (n−1)/(n+1)`, `g = n`, `K = (n+1)/2`, `M' = n+1`; the closed forms `1−τ = 2/(n+1)`, `g·(1−τ) = 1+τ`,
+    `K·(1−τ) = 1` are pure `tmap`-arithmetic (`tmap_nat_den`/`num`). -/
+theorem Rexp_log_nat (n : Nat) (hn : 1 ≤ n)
+    (hτd : 0 < (tmap (⟨(n : Int), 1⟩ : Q)).den) (hτ0 : 0 ≤ (tmap (⟨(n : Int), 1⟩ : Q)).num)
+    (hτlt : (tmap (⟨(n : Int), 1⟩ : Q)).num.toNat < (tmap (⟨(n : Int), 1⟩ : Q)).den) :
+    Req (RexpReal (TwoArtanhConst (tmap (⟨(n : Int), 1⟩ : Q)) hτd hτ0 hτlt))
+      (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) := by
+  refine Rexp_two_artanh_ofQ (tmap (⟨(n : Int), 1⟩ : Q)) ⟨(n : Int), 1⟩ ⟨(n : Int) + 1, 2⟩
+    (n + 1) ((expM_U (n + 1) (2 * (n + 1))).num.toNat) ((n + 1) * (n + 1) * ((expM_U (n + 1) (2 * (n + 1))).num.toNat + 2))
+    hτd hτ0 ?_ hτlt Nat.one_pos ?_ (by decide : (0 : Nat) < 2) ?_ ?_ rfl ?_ ?_
+  · -- hτ1 : τ ≤ 1
+    simp only [Qle]; rw [tmap_nat_num n, tmap_nat_den n]; push_cast; omega
+  · -- hg : n·(1−τ) = 1+τ
+    simp only [Qeq, mul, Qsub, add, neg]; rw [tmap_nat_num n, tmap_nat_den n]; push_cast; ring_uor
+  · -- hK0 : 0 ≤ (n+1)
+    simp only [Qle]; push_cast; omega
+  · -- hKF : 1 ≤ K·(1−τ)  (= 1 exactly)
+    refine Qeq_le ?_
+    simp only [Qeq, mul, Qsub, add, neg]; rw [tmap_nat_num n, tmap_nat_den n]; push_cast; ring_uor
+  · -- hM2 : K·2 ≤ M'
+    simp only [Qle, mul]; push_cast; omega
+  · -- hBC
+    intro j
+    refine Qeq_le ?_
+    simp only [Qeq, add, mul]; rw [tmap_nat_den n]; push_cast; ring_uor
+
 end UOR.Bridge.F1Square.Analysis

@@ -1076,3 +1076,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rexp_two_artanh_via
 #print axioms Analysis.two_gPow_le
 #print axioms Analysis.Rexp_two_artanh_ofQ
+#print axioms Analysis.tmap_nat_den
+#print axioms Analysis.tmap_nat_num
+#print axioms Analysis.Rexp_log_nat
