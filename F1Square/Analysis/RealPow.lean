@@ -2746,4 +2746,17 @@ theorem logN_ge_k_log2 {k n : Nat} (hn : 2 ^ k ≤ n) :
     Rle (Rnsmul k (logN 2 (by omega))) (logN n (Nat.le_trans (one_le_two_pow k) hn)) :=
   Rle_trans (Rle_of_Req (Req_symm (logN_pow_two k))) (logN_mono (one_le_two_pow k) hn)
 
+/-- **`Rmul` is monotone in the right factor** for a non-negative left factor. -/
+theorem Rmul_le_Rmul_left {c a b : Real} (hc : Rnonneg c) (h : Rle a b) :
+    Rle (Rmul c a) (Rmul c b) :=
+  Rle_of_Rnonneg_Rsub (Rnonneg_congr (Rmul_sub_distrib c b a)
+    (Rnonneg_Rmul hc (Rnonneg_Rsub_of_Rle h)))
+
+/-- **The dyadic block modulus bound**: for `σ ≥ 0` and `2ᵏ ≤ n`, `exp(−σ·log n) ≤ exp(−σ·k·log 2)`.
+    The per-term bound that makes block `B_k` sum to `≤ 2ᵏ·exp(−σ·k·log 2) = (exp(−θ))ᵏ`. -/
+theorem exp_block_bound {σ : Real} (hσ : Rnonneg σ) {k n : Nat} (hn : 2 ^ k ≤ n) :
+    Rle (RexpReal (Rneg (Rmul σ (logN n (Nat.le_trans (one_le_two_pow k) hn)))))
+        (RexpReal (Rneg (Rmul σ (Rnsmul k (logN 2 (by omega)))))) :=
+  RexpReal_le_of_Rle (Rle_Rneg (Rmul_le_Rmul_left hσ (logN_ge_k_log2 hn)))
+
 end UOR.Bridge.F1Square.Analysis
