@@ -139,4 +139,16 @@ theorem czeta_im_diff_ge (s : Complex) {N M : Nat} (hNM : N ≤ M) :
     Rle (Rneg (Rsub (czetaExpSum s M) (czetaExpSum s N))) (Rsub (czetaImSum s M) (czetaImSum s N)) := by
   obtain ⟨d, rfl⟩ := Nat.le.dest hNM; exact czeta_im_diff_ge_aux s N d
 
+/-- **Block-sum bound**: if each of the `d` modulus terms over `(N, N+d]` is `≤ B`, then
+    `E(N+d) − E(N) ≤ d·B` (the dyadic block's `2ᵏ` terms each `≤ exp(−σ·k·log 2)`). -/
+theorem czetaExp_block_le (s : Complex) (N : Nat) (B : Real) : ∀ d,
+    (∀ i, i < d → Rle (RexpReal (czetaExpArg s (N + i + 1) (by omega))) B) →
+    Rle (Rsub (czetaExpSum s (N + d)) (czetaExpSum s N)) (Rnsmul d B)
+  | 0 => fun _ => Rle_of_Req (Radd_neg _)
+  | (d + 1) => fun h =>
+      Rle_trans (Rle_of_Req (Rsub_Radd_left (czetaExpSum s (N + d)) _ (czetaExpSum s N)))
+        (Rle_trans (Radd_le_add (czetaExp_block_le s N B d (fun i hi => h i (by omega)))
+            (h d (by omega)))
+          (Rle_of_Req (Radd_comm (Rnsmul d B) B)))
+
 end UOR.Bridge.F1Square.Analysis
