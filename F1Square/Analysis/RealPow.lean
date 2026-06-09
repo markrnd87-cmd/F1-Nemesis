@@ -2827,4 +2827,22 @@ theorem Rle_recip {a b : Real} {d : Q} (hdn : 0 < d.num) (hdd : 0 < d.den)
           (Rmul_one b)))
   exact Rle_trans (Rle_of_Req (Req_symm hL)) (Rle_trans h3 (Rle_of_Req (Rmul_one _)))
 
+/-- **The geometric ratio bound**: for a real `θ ≥ ofQ τ` (`τ > 0`), `exp(−θ) ≤ ofQ(1/(1+τ))`, a rational
+    `< 1`. (`exp θ ≥ ofQ(1+τ)` from `exp(t)≥1+t`, then `Rle_recip` on `exp(−θ)·exp θ = 1`.) -/
+theorem Rexp_neg_le_ratio {θ : Real} {τ : Q} (hτn : 0 < τ.num) (hτd : 0 < τ.den)
+    (hθ : Rle (ofQ τ hτd) θ) :
+    Rle (RexpReal (Rneg θ))
+      (ofQ (Qinv (add ⟨1, 1⟩ τ)) (Qinv_den_pos (by simp only [add]; push_cast; omega))) := by
+  have hτ0 : Rnonneg (ofQ τ hτd) := Rnonneg_ofQ hτd (Int.le_of_lt hτn)
+  have hθnn : Rnonneg θ :=
+    Rnonneg_congr (Rsub_zero θ) (Rnonneg_Rsub_of_Rle
+      (Rle_trans (Rle_ofQ_ofQ (by decide) hτd (by simp only [Qle]; push_cast; omega)) hθ))
+  have hab : Req (Rmul (RexpReal θ) (RexpReal (Rneg θ))) one :=
+    Req_trans (Rmul_comm _ _) (RexpReal_mul_neg θ)
+  have hda : Rle (ofQ (add ⟨1, 1⟩ τ) (add_den_pos (by decide) hτd)) (RexpReal θ) :=
+    Rle_trans (Rle_ofQ_add_Radd (by decide) hτd)
+      (Rle_trans (Radd_le_add (Rle_refl _) hθ) (RexpReal_ge_one_add_nonneg hθnn))
+  exact Rle_recip (by simp only [add]; push_cast; omega) (add_den_pos (by decide) hτd)
+    hab (RexpReal_nonneg _) hda
+
 end UOR.Bridge.F1Square.Analysis
