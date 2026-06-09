@@ -258,6 +258,49 @@ theorem geoFrom_den_pos (r : Q) (hrd : 0 < r.den) (j : Nat) : ∀ d, 0 < (geoFro
   | 0 => Nat.one_pos
   | (d + 1) => add_den_pos (qpow_den_pos hrd (j + d)) (geoFrom_den_pos r hrd j d)
 
+private theorem geo_step_id (X Y r : Q) :
+    Qeq (add (mul X (Qsub ⟨1, 1⟩ r)) (Qsub Y X)) (Qsub Y (mul r X)) := by
+  simp only [Qeq, mul, Qsub, add, neg]; push_cast; ring_uor
+
+/-- **Geometric telescoping**: `(Σ_{k=j}^{j+d−1} rᵏ)·(1−r) = rʲ − r^{j+d}`. -/
+theorem geoFrom_telescope (r : Q) (hrd : 0 < r.den) (j d : Nat) :
+    Qeq (mul (geoFrom r j d) (Qsub ⟨1, 1⟩ r)) (Qsub (qpow r j) (qpow r (j + d))) := by
+  induction d with
+  | zero => simp only [geoFrom, Nat.add_zero, Qeq, mul, Qsub, add, neg]; push_cast; ring_uor
+  | succ d ih =>
+      have e1 : Qeq (mul (geoFrom r j (d + 1)) (Qsub ⟨1, 1⟩ r))
+          (add (mul (qpow r (j + d)) (Qsub ⟨1, 1⟩ r)) (mul (geoFrom r j d) (Qsub ⟨1, 1⟩ r))) :=
+        Qmul_add_right _ _ _
+      refine Qeq_trans (add_den_pos (Qmul_den_pos (qpow_den_pos hrd _) (Qsub_den_pos Nat.one_pos hrd))
+          (Qmul_den_pos (geoFrom_den_pos r hrd j d) (Qsub_den_pos Nat.one_pos hrd))) e1 ?_
+      refine Qeq_trans (add_den_pos (Qmul_den_pos (qpow_den_pos hrd _) (Qsub_den_pos Nat.one_pos hrd))
+          (Qsub_den_pos (qpow_den_pos hrd j) (qpow_den_pos hrd (j + d))))
+        (Qadd_congr (Qeq_refl _) ih) ?_
+      have hjd : j + (d + 1) = (j + d) + 1 := by omega
+      rw [hjd]
+      exact geo_step_id (qpow r (j + d)) (qpow r j) r
+
+/-- **The tail is bounded by a vanishing geometric**: `Σ_{k=j}^{j+d−1} rᵏ ≤ rʲ/(1−r)` (for `0 ≤ r`, `r < 1`). -/
+theorem geoFrom_le (r : Q) (hrd : 0 < r.den) (hr0 : 0 ≤ r.num) (hr1 : 0 < (Qsub (⟨1, 1⟩ : Q) r).num)
+    (j d : Nat) :
+    Qle (geoFrom r j d) (mul (qpow r j) (Qinv (Qsub ⟨1, 1⟩ r))) := by
+  have hwd : 0 < (Qsub (⟨1, 1⟩ : Q) r).den := Qsub_den_pos Nat.one_pos hrd
+  refine Qmul_le_cancel_right hr1 hwd ?_
+  refine Qle_trans (Qsub_den_pos (qpow_den_pos hrd j) (qpow_den_pos hrd (j + d)))
+    (Qeq_le (geoFrom_telescope r hrd j d)) ?_
+  -- r^j − r^{j+d} ≤ (r^j/(1−r))·(1−r) = r^j
+  have hcancel : Qeq (mul (mul (qpow r j) (Qinv (Qsub ⟨1, 1⟩ r))) (Qsub ⟨1, 1⟩ r)) (qpow r j) :=
+    Qeq_trans (Qmul_den_pos (qpow_den_pos hrd j) (Qmul_den_pos (Qinv_den_pos hr1) hwd))
+      (Qmul_assoc (qpow r j) (Qinv (Qsub ⟨1, 1⟩ r)) (Qsub ⟨1, 1⟩ r))
+      (Qeq_trans (Qmul_den_pos (qpow_den_pos hrd j) Nat.one_pos)
+        (Qmul_congr (Qeq_refl _) (Qinv_mul hwd hr1)) (mul_one (qpow r j)))
+  refine Qle_trans (qpow_den_pos hrd j) ?_ (Qeq_le (Qeq_symm hcancel))
+  show Qle (Qsub (qpow r j) (qpow r (j + d))) (qpow r j)
+  have hnn : 0 ≤ (qpow r (j + d)).num := qpow_nonneg hr0 (j + d)
+  exact Qsub_le_of_le_add (qpow_den_pos hrd (j + d)) (qpow_den_pos hrd j)
+    (Qle_trans (add_den_pos (qpow_den_pos hrd j) (qpow_den_pos hrd (j + d)))
+      (Qle_self_add hnn) (Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor)))
+
 /-- **The dyadic tail telescopes to a geometric partial sum**: `E(2^{j+d}) − E(2ʲ) ≤ ofQ(Σ_{k=j}^{j+d−1} rᵏ)`. -/
 theorem czetaExp_tail (s : Complex) (hσ : Rnonneg s.re) {τ : Q} (hτn : 0 < τ.num) (hτd : 0 < τ.den)
     (hθ : Rle (ofQ τ hτd) (Rmul (Rsub s.re one) (logN 2 (by omega)))) (j : Nat) : ∀ d,

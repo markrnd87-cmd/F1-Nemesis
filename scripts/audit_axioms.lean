@@ -1284,3 +1284,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rsub_telescope
 #print axioms Analysis.geoFrom_den_pos
 #print axioms Analysis.czetaExp_tail
+#print axioms Analysis.geoFrom_den_pos
+#print axioms Analysis.geoFrom_telescope
+#print axioms Analysis.geoFrom_le
