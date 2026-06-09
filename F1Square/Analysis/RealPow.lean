@@ -1900,4 +1900,116 @@ theorem peval_fcomp_sacoef_artSum (w : Q) (hwd : 0 < w.den) (N : Nat) :
     (peval_congr (fun k => fcomp_sacoef_eq_acoef k) w (2 * N + 1))
     (peval_acoef_artSum w hwd N)
 
+-- The **generic composition-eval error machinery** (parametric in the inner series `b` and rational inner
+-- `u`), generalizing the doubling's `kcorner`/`per_m_step`/`per_m_bound`. Bounds `|peval(bᵐ,w,M) − uᵐ|`.
+
+/-- The truncation corner of `peval(bᵐ⁺¹) = q·peval(bᵐ) − corner` (generic; `= peval_fpow_succ`'s corner). -/
+def gcorner (b : Nat → Q) (w : Q) (m M : Nat) : Q :=
+  Fsum (fun i => Qsub
+    (Fsum (fun j => mul (mul (b i) (qpow w i)) (mul (fpow b m j) (qpow w j))) M)
+    (Fsum (fun j => mul (mul (b i) (qpow w i)) (mul (fpow b m j) (qpow w j))) (M - i))) M
+
+theorem gcorner_den (b : Nat → Q) (hb : ∀ i, 0 < (b i).den) (w : Q) (hwd : 0 < w.den) (m M : Nat) :
+    0 < (gcorner b w m M).den :=
+  Fsum_den_pos (fun i => Qsub_den_pos
+    (Fsum_den_pos (fun j => Qmul_den_pos (Qmul_den_pos (hb i) (qpow_den_pos hwd i))
+      (Qmul_den_pos (fpow_den_pos hb m j) (qpow_den_pos hwd j))) M)
+    (Fsum_den_pos (fun j => Qmul_den_pos (Qmul_den_pos (hb i) (qpow_den_pos hwd i))
+      (Qmul_den_pos (fpow_den_pos hb m j) (qpow_den_pos hwd j))) (M - i))) M
+
+/-- **Generic per-`m` error recursion step**: `|e_{m+1}| ≤ |q|·|e_m| + |q−u|·|uᵐ| + |corner_m|`. -/
+theorem per_m_step_gen (b : Nat → Q) (hb : ∀ i, 0 < (b i).den) (w : Q) (hwd : 0 < w.den)
+    (u : Q) (hud : 0 < u.den) (m M : Nat) :
+    Qle (Qabs (Qsub (peval (fpow b (m + 1)) w M) (qpow u (m + 1))))
+      (add (mul (Qabs (peval b w M)) (Qabs (Qsub (peval (fpow b m) w M) (qpow u m))))
+        (add (mul (Qabs (Qsub (peval b w M) u)) (Qabs (qpow u m)))
+          (Qabs (gcorner b w m M)))) := by
+  have hq : 0 < (peval b w M).den := peval_den_pos hb hwd M
+  have hpm : 0 < (peval (fpow b m) w M).den := peval_den_pos (fpow_den_pos hb m) hwd M
+  have hum : 0 < (qpow u m).den := qpow_den_pos hud m
+  have hem : 0 < (Qsub (peval (fpow b m) w M) (qpow u m)).den := Qsub_den_pos hpm hum
+  have hqu : 0 < (Qsub (peval b w M) u).den := Qsub_den_pos hq hud
+  have hcor : 0 < (gcorner b w m M).den := gcorner_den b hb w hwd m M
+  have hid : Qeq (Qsub (peval (fpow b (m + 1)) w M) (qpow u (m + 1)))
+      (add (mul (peval b w M) (Qsub (peval (fpow b m) w M) (qpow u m)))
+        (Qsub (mul (Qsub (peval b w M) u) (qpow u m)) (gcorner b w m M))) :=
+    Qeq_trans (Qsub_den_pos (Qsub_den_pos (Qmul_den_pos hq hpm) hcor) (qpow_den_pos hud (m + 1)))
+      (Qsub_congr (peval_fpow_succ b hb w hwd m M) (Qeq_refl _))
+      (e_rec_alg (peval b w M) (peval (fpow b m) w M) (qpow u m) u (gcorner b w m M))
+  refine Qle_trans (Qabs_den_pos (add_den_pos (Qmul_den_pos hq hem)
+      (Qsub_den_pos (Qmul_den_pos hqu hum) hcor))) (Qeq_le (Qabs_Qeq hid)) ?_
+  refine Qle_trans (add_den_pos (Qabs_den_pos (Qmul_den_pos hq hem))
+      (Qabs_den_pos (Qsub_den_pos (Qmul_den_pos hqu hum) hcor))) (Qabs_add_le _ _) ?_
+  refine Qadd_le_add (Qeq_le (by rw [Qabs_mul]; exact Qeq_refl _ :
+    Qeq (Qabs (mul (peval b w M) (Qsub (peval (fpow b m) w M) (qpow u m))))
+      (mul (Qabs (peval b w M)) (Qabs (Qsub (peval (fpow b m) w M) (qpow u m)))))) ?_
+  refine Qle_trans (add_den_pos (Qabs_den_pos (Qmul_den_pos hqu hum)) (Qabs_den_pos hcor))
+    (Qabs_sub_le_add _ _) ?_
+  exact Qadd_le_add (Qeq_le (by rw [Qabs_mul]; exact Qeq_refl _ :
+    Qeq (Qabs (mul (Qsub (peval b w M) u) (qpow u m)))
+      (mul (Qabs (Qsub (peval b w M) u)) (Qabs (qpow u m))))) (Qle_refl _)
+
+/-- **Generic per-`m` error bound**: `|peval(bᵐ⁺¹,w,M) − uᵐ⁺¹| ≤ Σ_{j≤m} (|q−u| + |corner_j|)`,
+    given `|q| ≤ 1`, `|u| ≤ 1`. By induction via `per_m_step_gen`. -/
+theorem per_m_bound_gen (b : Nat → Q) (hb : ∀ i, 0 < (b i).den) (w : Q) (M : Nat) (hwd : 0 < w.den)
+    (u : Q) (hud : 0 < u.den) (hq1 : Qle (Qabs (peval b w M)) ⟨1, 1⟩)
+    (hu1 : Qle (Qabs u) ⟨1, 1⟩) (m : Nat) :
+    Qle (Qabs (Qsub (peval (fpow b (m + 1)) w M) (qpow u (m + 1))))
+      (Fsum (fun j => add (Qabs (Qsub (peval b w M) u)) (Qabs (gcorner b w j M))) m) := by
+  have hqd : 0 < (peval b w M).den := peval_den_pos hb hwd M
+  have hqud : 0 < (Qsub (peval b w M) u).den := Qsub_den_pos hqd hud
+  have hpd : ∀ k, 0 < (peval (fpow b k) w M).den :=
+    fun k => peval_den_pos (fpow_den_pos hb k) hwd M
+  have hum1 : ∀ k, Qle (Qabs (qpow u k)) ⟨1, 1⟩ := by
+    intro k
+    induction k with
+    | zero => show Qle (Qabs (⟨1, 1⟩ : Q)) ⟨1, 1⟩; decide
+    | succ k ih =>
+        show Qle (Qabs (mul u (qpow u k))) ⟨1, 1⟩
+        refine Qle_trans (Qmul_den_pos (Qabs_den_pos hud) (Qabs_den_pos (qpow_den_pos hud k)))
+          (Qeq_le (by rw [Qabs_mul]; exact Qeq_refl _ :
+            Qeq (Qabs (mul u (qpow u k))) (mul (Qabs u) (Qabs (qpow u k))))) ?_
+        exact Qle_trans (Qmul_den_pos Nat.one_pos Nat.one_pos)
+          (Qmul_le_mul (Qabs_den_pos hud) Nat.one_pos (Qabs_den_pos (qpow_den_pos hud k))
+            (Qabs_num_nonneg _) (Qabs_num_nonneg _) hu1 ih)
+          (by decide : Qle (mul (⟨1, 1⟩ : Q) ⟨1, 1⟩) ⟨1, 1⟩)
+  have bound1 : ∀ {e : Q}, 0 < e.den → Qle (mul (Qabs (peval b w M)) (Qabs e)) (Qabs e) :=
+    fun {e} he => Qle_trans (Qmul_den_pos Nat.one_pos (Qabs_den_pos he))
+      (Qmul_le_mul_right (Qabs_num_nonneg _) hq1) (Qeq_le (Qone_mul _))
+  induction m with
+  | zero =>
+      have hz : Qeq (Qsub (peval (fpow b 0) w M) (qpow u 0)) ⟨0, 1⟩ := by
+        show Qeq (Qsub (peval fone w M) ⟨1, 1⟩) ⟨0, 1⟩
+        refine Qeq_trans (Qsub_den_pos Nat.one_pos Nat.one_pos)
+          (Qsub_congr (peval_fone w hwd M) (Qeq_refl _)) ?_
+        simp [Qeq, Qsub, add, neg]
+      have he0 : Qle (Qabs (Qsub (peval (fpow b 0) w M) (qpow u 0))) ⟨0, 1⟩ :=
+        Qeq_le (Qeq_trans Nat.one_pos (Qabs_Qeq hz) (by decide : Qeq (Qabs (⟨0, 1⟩ : Q)) ⟨0, 1⟩))
+      show Qle (Qabs (Qsub (peval (fpow b 1) w M) (qpow u 1)))
+        (add (Qabs (Qsub (peval b w M) u)) (Qabs (gcorner b w 0 M)))
+      refine Qle_trans (add_den_pos (Qmul_den_pos (Qabs_den_pos hqd)
+          (Qabs_den_pos (Qsub_den_pos (hpd 0) (qpow_den_pos hud 0))))
+          (add_den_pos (Qmul_den_pos (Qabs_den_pos hqud) (Qabs_den_pos (qpow_den_pos hud 0)))
+            (Qabs_den_pos (gcorner_den b hb w hwd 0 M))))
+        (per_m_step_gen b hb w hwd u hud 0 M) ?_
+      refine Qle_trans (add_den_pos Nat.one_pos
+          (add_den_pos (Qabs_den_pos hqud) (Qabs_den_pos (gcorner_den b hb w hwd 0 M))))
+        (Qadd_le_add (Qle_trans (Qabs_den_pos (Qsub_den_pos (hpd 0) (qpow_den_pos hud 0)))
+            (bound1 (Qsub_den_pos (hpd 0) (qpow_den_pos hud 0))) he0)
+          (Qadd_le_add (Qle_trans (Qmul_den_pos (Qabs_den_pos hqud) Nat.one_pos)
+            (Qmul_le_mul_left (Qabs_num_nonneg _) (hum1 0)) (Qeq_le (mul_one _))) (Qle_refl _))) ?_
+      exact Qeq_le (Qzero_add _)
+  | succ m ih =>
+      refine Qle_trans (add_den_pos (Qmul_den_pos (Qabs_den_pos hqd)
+          (Qabs_den_pos (Qsub_den_pos (hpd (m + 1)) (qpow_den_pos hud (m + 1)))))
+          (add_den_pos (Qmul_den_pos (Qabs_den_pos hqud) (Qabs_den_pos (qpow_den_pos hud (m + 1))))
+            (Qabs_den_pos (gcorner_den b hb w hwd (m + 1) M))))
+        (per_m_step_gen b hb w hwd u hud (m + 1) M) ?_
+      refine Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (hpd (m + 1)) (qpow_den_pos hud (m + 1))))
+          (add_den_pos (Qabs_den_pos hqud) (Qabs_den_pos (gcorner_den b hb w hwd (m + 1) M))))
+        (Qadd_le_add (bound1 (Qsub_den_pos (hpd (m + 1)) (qpow_den_pos hud (m + 1))))
+          (Qadd_le_add (Qle_trans (Qmul_den_pos (Qabs_den_pos hqud) Nat.one_pos)
+            (Qmul_le_mul_left (Qabs_num_nonneg _) (hum1 (m + 1))) (Qeq_le (mul_one _))) (Qle_refl _))) ?_
+      exact Qadd_le_add ih (Qle_refl _)
+
 end UOR.Bridge.F1Square.Analysis
