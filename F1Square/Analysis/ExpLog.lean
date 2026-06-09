@@ -2063,6 +2063,14 @@ theorem expSum_eq_peval_ecoef (q : Q) (hqd : 0 < q.den) :
         (add (peval ecoef q N) (mul (ecoef (N + 1)) (qpow q (N + 1))))
       exact Qadd_congr (expSum_eq_peval_ecoef q hqd N) hterm
 
+/-- **The `2·artanh` outer-eval = `2·artSum`**: `peval (2·acoef) t (2N+1) ≈ 2·artSum t N`. The inner series
+    of the `exp∘(2·artanh)` composition, as a doubled artanh partial sum. (`peval_smul` + `peval_acoef_artSum`.) -/
+theorem peval_twoacoef_artSum (t : Q) (htd : 0 < t.den) (N : Nat) :
+    Qeq (peval (fun i => mul ⟨2, 1⟩ (acoef i)) t (2 * N + 1)) (mul ⟨2, 1⟩ (artSum t N)) :=
+  Qeq_trans (Qmul_den_pos Nat.one_pos (peval_den_pos (fun k => acoef_den k) htd (2 * N + 1)))
+    (peval_smul ⟨2, 1⟩ Nat.one_pos acoef (fun k => acoef_den k) t htd (2 * N + 1))
+    (Qmul_congr (Qeq_refl _) (peval_acoef_artSum t htd N))
+
 /-- From `x = p + c` recover `p = x − c`. -/
 theorem Qeq_sub_of_eq_add {x p c : Q} (hp : 0 < p.den) (hc : 0 < c.den) (h : Qeq x (add p c)) :
     Qeq p (Qsub x c) :=
