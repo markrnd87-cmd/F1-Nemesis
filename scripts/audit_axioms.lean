@@ -1220,3 +1220,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rexp_logN
 #print axioms Analysis.Rnonneg_logN
 #print axioms Analysis.logN_mul
+#print axioms Analysis.logN_eq_of_eq
+#print axioms Analysis.logN_one
+#print axioms Analysis.logN_pow_two

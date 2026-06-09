@@ -2700,4 +2700,31 @@ theorem logN_mul (m : Nat) (hm : 1 ≤ m) :
   refine Req_trans (Rmul_ofQ_ofQ Nat.one_pos Nat.one_pos) ?_
   exact Req_trans (ofQ_two_mul m) (Req_symm (Rexp_logN (2 * m) h2m))
 
+/-- `log n ≈ log n'` when `n = n'` (proof-irrelevant on the `1 ≤ ·` argument). -/
+theorem logN_eq_of_eq {n n' : Nat} (h : n = n') (hn : 1 ≤ n) (hn' : 1 ≤ n') :
+    Req (logN n hn) (logN n' hn') := by subst h; exact Req_refl _
+
+private theorem one_le_two_pow : ∀ k, 1 ≤ 2 ^ k
+  | 0 => by omega
+  | (k + 1) => by rw [Nat.pow_succ]; have := one_le_two_pow k; omega
+
+/-- **`log 1 = 0`** (`exp(log 1) ≈ 1 ≈ exp 0`). -/
+theorem logN_one : Req (logN 1 (by omega)) zero :=
+  RexpReal_inj (Rnonneg_logN 1 (by omega)) Rnonneg_zero
+    (Req_trans (Rexp_logN 1 (by omega)) (Req_symm RexpReal_zero))
+
+/-- **`log(2ᵏ) = k·log 2`** — the dyadic-condensation input (`2^{1−s}` geometric ratio). -/
+theorem logN_pow_two (k : Nat) :
+    Req (logN (2 ^ k) (one_le_two_pow k)) (Rnsmul k (logN 2 (by omega))) := by
+  induction k with
+  | zero =>
+      refine Req_trans (logN_eq_of_eq (show 2 ^ 0 = 1 from rfl) _ (by omega)) ?_
+      rw [Rnsmul_zero]; exact logN_one
+  | succ k ih =>
+      rw [Rnsmul_succ]
+      refine Req_trans (logN_eq_of_eq (show 2 ^ (k + 1) = 2 * 2 ^ k by rw [Nat.pow_succ]; omega)
+        (one_le_two_pow (k + 1)) (by have := one_le_two_pow k; omega)) ?_
+      refine Req_trans (Req_symm (logN_mul (2 ^ k) (one_le_two_pow k))) ?_
+      exact Radd_congr (Req_refl _) ih
+
 end UOR.Bridge.F1Square.Analysis
