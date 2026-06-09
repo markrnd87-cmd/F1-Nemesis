@@ -4968,4 +4968,58 @@ theorem two_gPow_le (τ K : Q) (M' : Nat) (hτd : 0 < τ.den) (hτ0 : 0 ≤ τ.n
     (Qmul_num_nonneg (by decide) (gPow_num_nonneg hτ0 N)) (Qmul_den_pos Nat.one_pos hgd) hWd hKd hK0 hKF haF
   exact Qle_trans (Qmul_den_pos hKd (by decide)) hdiv hM2
 
+/-- The artanh factor `artanh τ` as a real, for a constant rational argument `τ` (`0 ≤ τ < 1`). -/
+def RartanhConst (τ : Q) (hτd : 0 < τ.den) (hτ0 : 0 ≤ τ.num) (hτlt : τ.num.toNat < τ.den) : Real :=
+  Rartanh (ofQ τ hτd) τ hτ0 hτd hτlt (fun _ => Qeq_le (Qabs_of_nonneg hτ0))
+
+/-- `2·artanh τ` as a real (`= log((1+τ)/(1−τ))`), for a constant rational argument. -/
+def TwoArtanhConst (τ : Q) (hτd : 0 < τ.den) (hτ0 : 0 ≤ τ.num) (hτlt : τ.num.toNat < τ.den) : Real :=
+  Rmul (ofQ ⟨2, 1⟩ (by decide)) (RartanhConst τ hτd hτ0 hτlt)
+
+/-- **The exp/artanh real identity**: `exp(2·artanh τ) = (1+τ)/(1−τ)` for a constant rational `τ` (`0 ≤ τ < 1`).
+    Instantiates the abstract reconciliation `Rexp_two_artanh_via` at `X = TwoArtanhConst τ`, whose diagonal
+    `X.seq m = 2·artSum τ Dₘ = peval(2acoef) τ (2Dₘ+1)` (`peval_twoacoef_artSum`); the depth `Dₘ = Rartanh_R τ (Ridx … m)`
+    grows past `m` (`Ridx_ge` + `Rartanh_R ≥ ·+1`), and the magnitudes are `≤ M'` (`two_gPow_le`). -/
+theorem Rexp_two_artanh_ofQ (τ g K : Q) (M' L C : Nat)
+    (hτd : 0 < τ.den) (hτ0 : 0 ≤ τ.num) (hτ1 : Qle τ ⟨1, 1⟩) (hτlt : τ.num.toNat < τ.den)
+    (hgd : 0 < g.den) (hg : Qeq (mul g (Qsub ⟨1, 1⟩ τ)) (add ⟨1, 1⟩ τ))
+    (hKd : 0 < K.den) (hK0 : 0 ≤ K.num) (hKF : Qle (⟨1, 1⟩ : Q) (mul K (Qsub ⟨1, 1⟩ τ)))
+    (hL : L = (expM_U M' (2 * M')).num.toNat) (hM2 : Qle (mul K ⟨2, 1⟩) ⟨(M' : Int), 1⟩)
+    (hBC : ∀ j, Qle (add (mul ⟨(L : Int), 1⟩ (mul K (mul ⟨2, 1⟩ (⟨(τ.den : Int), j + 1⟩ : Q))))
+        (mul K (mul ⟨4, 1⟩ (⟨(τ.den : Int), j + 1⟩ : Q)))) (⟨(C : Int), j + 1⟩ : Q)) :
+    Req (RexpReal (TwoArtanhConst τ hτd hτ0 hτlt)) (ofQ g hgd) := by
+  have htwd : ∀ k, 0 < ((fun i => mul ⟨2, 1⟩ (acoef i)) k).den :=
+    fun k => Qmul_den_pos Nat.one_pos (acoef_den k)
+  have hmag := two_gPow_le τ K M' hτd hτ0 hKd hK0 hKF hM2
+  -- the artanh-depth at diagonal index m
+  refine Rexp_two_artanh_via (TwoArtanhConst τ hτd hτ0 hτlt) τ g K M' L C
+    (fun m => 2 * Rartanh_R τ (Ridx (ofQ ⟨2, 1⟩ (by decide)) (RartanhConst τ hτd hτ0 hτlt) m) + 1)
+    hτd hτ0 hτ1 hτlt hgd hg hKd hK0 hKF hL ?_ ?_ ?_ ?_ hBC
+  · -- hψ : m ≤ 2·Rartanh_R τ (Ridx … m) + 1
+    intro m
+    show m ≤ 2 * Rartanh_R τ (Ridx (ofQ ⟨2, 1⟩ (by decide)) (RartanhConst τ hτd hτ0 hτlt) m) + 1
+    have hc : 0 < τ.den * τ.den + 4 * τ.den :=
+      Nat.add_pos_right _ (Nat.mul_pos (by decide) hτd)
+    have h2 : ∀ k, k + 1 ≤ Rartanh_R τ k := fun k => by unfold Rartanh_R; exact Nat.le_mul_of_pos_left _ hc
+    have h1 := Ridx_ge (ofQ ⟨2, 1⟩ (by decide)) (RartanhConst τ hτd hτ0 hτlt) m
+    have h3 := h2 (Ridx (ofQ ⟨2, 1⟩ (by decide)) (RartanhConst τ hτd hτ0 hτlt) m)
+    omega
+  · -- hXseq : X.seq (R_j) ≈ peval(2acoef) τ (2·Rartanh_R τ (Ridx … R_j) + 1)
+    intro j
+    exact Qeq_symm (peval_twoacoef_artSum τ hτd
+      (Rartanh_R τ (Ridx (ofQ ⟨2, 1⟩ (by decide)) (RartanhConst τ hτd hτ0 hτlt)
+        (RexpReal_R (TwoArtanhConst τ hτd hτ0 hτlt) j))))
+  · -- hXb : |X.seq m| ≤ M'
+    intro m
+    exact Qle_congr_left
+      (Qabs_den_pos (peval_den_pos htwd hτd _))
+      (Qabs_Qeq (peval_twoacoef_artSum τ hτd
+        (Rartanh_R τ (Ridx (ofQ ⟨2, 1⟩ (by decide)) (RartanhConst τ hτd hτ0 hτlt) m))))
+      (Qle_trans (Qmul_den_pos Nat.one_pos (gPow_den_pos hτd _))
+        (peval_twoacoef_abs_le_gpow τ hτd hτ0 _) (hmag _))
+  · -- hpb : |peval(2acoef) τ N| ≤ M'
+    intro N
+    exact Qle_trans (Qmul_den_pos Nat.one_pos (gPow_den_pos hτd N))
+      (peval_twoacoef_abs_le_gpow τ hτd hτ0 N) (hmag N)
+
 end UOR.Bridge.F1Square.Analysis
