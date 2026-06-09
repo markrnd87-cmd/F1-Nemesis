@@ -1276,3 +1276,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rnsmul_eq_Rmul_ofQ
 #print axioms Analysis.czetaExpB_eq_pow
 #print axioms Analysis.czetaExp_block_pow
+#print axioms Analysis.czeta_theta_arg_eq
+#print axioms Analysis.czetaU_2u_eq

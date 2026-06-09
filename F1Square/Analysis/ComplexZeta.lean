@@ -191,4 +191,28 @@ theorem czetaExp_block_pow (s : Complex) (hσ : Rnonneg s.re) (k : Nat) :
     (ofQ_congr (qpow_den_pos (by decide) k) Nat.one_pos
       (Qeq_trans Nat.one_pos (qpow_two_eq k) (by simp only [Qeq]; push_cast; ring_uor))))
 
+set_option maxHeartbeats 1000000 in
+/-- `log2 − Re s · log2 ≈ −(Re s − 1)·log2` (the exponent of `2u = exp(−θ)`). -/
+theorem czeta_theta_arg_eq (s : Complex) :
+    Req (Radd (logN 2 (by omega)) (Rneg (Rmul s.re (logN 2 (by omega)))))
+        (Rneg (Rmul (Rsub s.re one) (logN 2 (by omega)))) := by
+  have hL : Req (Radd (logN 2 (by omega)) (Rneg (Rmul s.re (logN 2 (by omega)))))
+      (Rmul (Rsub one s.re) (logN 2 (by omega))) :=
+    Req_trans (Radd_congr (Req_symm (Rone_mul (logN 2 (by omega))))
+        (Req_symm (Rmul_neg_left s.re (logN 2 (by omega)))))
+      (Req_symm (Rmul_distrib_right one (Rneg s.re) (logN 2 (by omega))))
+  have hR : Req (Rneg (Rmul (Rsub s.re one) (logN 2 (by omega))))
+      (Rmul (Rsub one s.re) (logN 2 (by omega))) :=
+    Req_trans (Req_symm (Rmul_neg_left (Rsub s.re one) (logN 2 (by omega))))
+      (Rmul_congr (Rneg_Rsub s.re one) (Req_refl _))
+  exact Req_trans hL (Req_symm hR)
+
+/-- **`2u = exp(−θ)`** where `θ = (Re s − 1)·log 2`: the dyadic ratio as a single exp. -/
+theorem czetaU_2u_eq (s : Complex) :
+    Req (Rmul (ofQ (⟨2, 1⟩ : Q) (by decide)) (czetaU s))
+        (RexpReal (Rneg (Rmul (Rsub s.re one) (logN 2 (by omega))))) :=
+  Req_trans (Rmul_congr (Req_symm (Rexp_logN 2 (by omega))) (Req_refl _))
+    (Req_trans (Req_symm (RexpReal_add (logN 2 (by omega)) (Rneg (Rmul s.re (logN 2 (by omega))))))
+      (RexpReal_congr (czeta_theta_arg_eq s)))
+
 end UOR.Bridge.F1Square.Analysis
