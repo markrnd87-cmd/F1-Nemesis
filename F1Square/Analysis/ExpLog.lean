@@ -1899,6 +1899,37 @@ theorem fderiv_inj {y z : Nat → Q} (hd : ∀ k, Qeq (fderiv y k) (fderiv z k))
       refine Int.eq_of_mul_eq_mul_left (a := (n : Int) + 1) (by omega) ?_
       rw [← Int.mul_assoc, ← Int.mul_assoc]; exact hh
 
+/-- **Multiplicative-ODE uniqueness**: if `y' = d·y` and `z' = d·z` (formally, `fderiv · ≈ fmul d ·`) with
+    `y 0 ≈ z 0`, then `y ≈ z`. Unlike `fderiv_inj` (additive: `y' = z'` given), here the derivative depends
+    on the unknown, so we use STRONG induction — the recursion `(k+1)·y_{k+1} = Σ_{i≤k} dᵢ·y_{k−i}` determines
+    `y_{k+1}` from `y_0..y_k`. The uniqueness behind `exp(2·artanh w) = (1+w)/(1−w)` (both solve `y'=d·y`). -/
+theorem fderiv_mul_inj {d y z : Nat → Q} (hyd : ∀ i, 0 < (y i).den) (hzd : ∀ i, 0 < (z i).den)
+    (hdd : ∀ i, 0 < (d i).den)
+    (hy : ∀ k, Qeq (fderiv y k) (fmul d y k)) (hz : ∀ k, Qeq (fderiv z k) (fmul d z k))
+    (h0 : Qeq (y 0) (z 0)) : ∀ k, Qeq (y k) (z k) := by
+  have aux : ∀ k j, j ≤ k → Qeq (y j) (z j) := by
+    intro k
+    induction k with
+    | zero => intro j hj; have : j = 0 := Nat.le_zero.mp hj; subst this; exact h0
+    | succ n ih =>
+        intro j hj
+        rcases Nat.lt_or_ge j (n + 1) with hlt | hge
+        · exact ih j (by omega)
+        · have hjn : j = n + 1 := by omega
+          subst hjn
+          have hfmul : Qeq (fmul d y n) (fmul d z n) :=
+            Fsum_congr_le (fun i _ => Qmul_congr (Qeq_refl _) (ih (n - i) (by omega)))
+          have hh : Qeq (fderiv y n) (fderiv z n) :=
+            Qeq_trans (fmul_den_pos hdd hyd n) (hy n)
+              (Qeq_trans (fmul_den_pos hdd hzd n) hfmul (Qeq_symm (hz n)))
+          simp only [Qeq, fderiv, mul, Nat.one_mul] at hh
+          push_cast at hh
+          show Qeq (y (n + 1)) (z (n + 1))
+          simp only [Qeq]; push_cast
+          refine Int.eq_of_mul_eq_mul_left (a := (n : Int) + 1) (by omega) ?_
+          rw [← Int.mul_assoc, ← Int.mul_assoc]; exact hh
+  exact fun k => aux k k (Nat.le_refl k)
+
 /-- **The artanh ODE** `(1−t²)·artanh' = 1` at the coefficient level. -/
 theorem artanh_ode (k : Nat) : Qeq (fmul oneMinusSq gcoef k) (fone k) :=
   Qeq_trans (add_den_pos (fmul_den_pos (fun i => fsmono_den Nat.one_pos 0 i) (fun _ => gcoef_den _) k)
@@ -1972,6 +2003,53 @@ theorem formal_doubling (k : Nat) :
     show Qeq (acoef 0) (mul ⟨2, 1⟩ (acoef 0))
     have h00 : acoef 0 = ⟨0, 1⟩ := by decide
     rw [h00]; decide
+
+/-- The `2·artanh` derivative coefficients equal `2/(1−w²)`: `fderiv (2·acoef) ≈ dexpderiv`. -/
+theorem fderiv_twoacoef (l : Nat) :
+    Qeq (fderiv (fun i => mul ⟨2, 1⟩ (acoef i)) l) (dexpderiv l) := by
+  have h1 : Qeq (fderiv (fun i => mul ⟨2, 1⟩ (acoef i)) l) (mul ⟨2, 1⟩ (gcoef l)) := by
+    show Qeq (mul ⟨(l + 1 : Int), 1⟩ (mul ⟨2, 1⟩ (acoef (l + 1)))) (mul ⟨2, 1⟩ (gcoef l))
+    refine Qeq_trans (Qmul_den_pos Nat.one_pos (Qmul_den_pos Nat.one_pos (acoef_den (l + 1)))) ?_
+      (Qmul_congr (Qeq_refl _) (fderiv_acoef l))
+    show Qeq (mul ⟨(l + 1 : Int), 1⟩ (mul ⟨2, 1⟩ (acoef (l + 1))))
+      (mul ⟨2, 1⟩ (mul ⟨(l + 1 : Int), 1⟩ (acoef (l + 1))))
+    simp only [Qeq, mul]; push_cast; ring_uor
+  refine Qeq_trans (Qmul_den_pos Nat.one_pos (gcoef_den l)) h1 ?_
+  rcases (by omega : l % 2 = 0 ∨ l % 2 = 1) with h | h
+  · have hg : gcoef l = ⟨1, 1⟩ := by unfold gcoef; rw [if_pos h]
+    rw [hg]; unfold dexpderiv; rw [h]; decide
+  · have hg : gcoef l = ⟨0, 1⟩ := by unfold gcoef; rw [if_neg (by omega)]
+    rw [hg]; unfold dexpderiv; rw [h]; decide
+
+/-- **★ THE FORMAL EXP IDENTITY** `exp∘(2·artanh) = (1+w)/(1−w)` (as coefficient sequences):
+    `fcomp ecoef (2·acoef) ≈ dgeom`. Both solve the MULTIPLICATIVE ODE `y' = (2/(1−w²))·y` with `y(0)=1`
+    (`fcomp` side: `fcomp_chain` + `exp'=exp` (`fderiv_ecoef`) + `fderiv(2·acoef)=dexpderiv`; `dgeom` side:
+    `dgeom_ode`), so they are equal by `fderiv_mul_inj`. The formal backbone of `exp(2·artanh t) = (1+t)/(1−t)`. -/
+theorem formal_exp_geom (k : Nat) :
+    Qeq (fcomp ecoef (fun i => mul ⟨2, 1⟩ (acoef i)) k) (dgeom k) := by
+  have htad : ∀ i, 0 < ((fun i => mul ⟨2, 1⟩ (acoef i)) i).den :=
+    fun i => Qmul_den_pos Nat.one_pos (acoef_den i)
+  have htz : Qeq ((fun i => mul ⟨2, 1⟩ (acoef i)) 0) ⟨0, 1⟩ := by
+    show Qeq (mul ⟨2, 1⟩ (acoef 0)) ⟨0, 1⟩
+    have h00 : acoef 0 = ⟨0, 1⟩ := by decide
+    rw [h00]; decide
+  have hfd : ∀ i, 0 < (fcomp ecoef (fun i => mul ⟨2, 1⟩ (acoef i)) i).den :=
+    fun i => fcomp_den_pos (fun m => ecoef_den m) htad i
+  refine fderiv_mul_inj (d := dexpderiv) (y := fcomp ecoef (fun i => mul ⟨2, 1⟩ (acoef i)))
+    (z := dgeom) hfd (fun i => dgeom_den i) (fun i => dexpderiv_den i) (fun l => ?_)
+    (fun l => dgeom_ode l) ?_ k
+  · refine Qeq_trans (fmul_den_pos (fun i => fcomp_den_pos
+        (fun m => fderiv_den_pos (fun p => ecoef_den p) m) htad i) (fun i => fderiv_den_pos htad i) l)
+      (fcomp_chain ecoef (fun i => mul ⟨2, 1⟩ (acoef i)) (fun m => ecoef_den m) htad htz l) ?_
+    refine Qeq_trans (fmul_den_pos hfd (fun i => fderiv_den_pos htad i) l)
+      (fmul_congr_left (fun i => fcomp_congr_left (fun m => fderiv_ecoef m) i) l) ?_
+    refine Qeq_trans (fmul_den_pos hfd (fun i => dexpderiv_den i) l)
+      (fmul_congr_right (fun i => fderiv_twoacoef i) l) ?_
+    exact fmul_comm (fcomp ecoef (fun i => mul ⟨2, 1⟩ (acoef i))) dexpderiv hfd
+      (fun i => dexpderiv_den i) l
+  · refine Qeq_trans (Qmul_den_pos (ecoef_den 0) (fpow_den_pos htad 0 0)) (fcomp_const ecoef _) ?_
+    show Qeq (ecoef 0) (dgeom 0)
+    decide
 
 /-- From `x = p + c` recover `p = x − c`. -/
 theorem Qeq_sub_of_eq_add {x p c : Q} (hp : 0 < p.den) (hc : 0 < c.den) (h : Qeq x (add p c)) :
