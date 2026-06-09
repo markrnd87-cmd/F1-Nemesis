@@ -1068,3 +1068,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.exp_corner_le
 #print axioms Analysis.dgeom_geom_gap_le
 #print axioms Analysis.exp_artanh_rat_cleared
+#print axioms Analysis.mul_div_gen

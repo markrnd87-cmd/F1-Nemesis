@@ -4771,4 +4771,16 @@ theorem exp_artanh_rat_cleared (τ g : Q) (hτd : 0 < τ.den) (hτ0 : 0 ≤ τ.n
     (Qadd_le_add hbound1 (dgeom_geom_gap_le τ g hτd hτ0 hτ1 hgd hg M)) ?_
   apply Qeq_le; simp only [Qeq, mul, add]; push_cast; ring_uor
 
+/-- **General clearing-division**: from `a·F ≤ B` and `K·F ≥ 1` (`a ≥ 0`) conclude `a ≤ K·B` — divide the
+    inequality by `F` (multiply by `K ≥ 1/F`). Generalizes `mul_div2` (which fixes `K = 2`, needs `F ≥ 1/2`). -/
+theorem mul_div_gen {a B F K : Q} (ha : 0 ≤ a.num) (had : 0 < a.den) (hFd : 0 < F.den)
+    (hKd : 0 < K.den) (hK0 : 0 ≤ K.num) (hKF : Qle (⟨1, 1⟩ : Q) (mul K F)) (hab : Qle (mul a F) B) :
+    Qle a (mul K B) := by
+  have h1 : Qle a (mul a (mul K F)) :=
+    Qle_trans (Qmul_den_pos had Nat.one_pos) (Qeq_le (Qeq_symm (mul_one a))) (Qmul_le_mul_left ha hKF)
+  have h2 : Qeq (mul a (mul K F)) (mul K (mul a F)) := by simp only [Qeq, mul]; push_cast; ring_uor
+  exact Qle_trans (Qmul_den_pos hKd (Qmul_den_pos had hFd))
+    (Qle_trans (Qmul_den_pos had (Qmul_den_pos hKd hFd)) h1 (Qeq_le h2))
+    (Qmul_le_mul_left hK0 hab)
+
 end UOR.Bridge.F1Square.Analysis
