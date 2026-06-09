@@ -4368,4 +4368,43 @@ theorem Rlog_sq (Y : Real) (B : Q) (hBd : 0 < B.den) (hBge : Qle (⟨1, 1⟩ : Q
     hρd hρ0 hρ1 h2ρ hρ4 hρ2 hρ8 hlt16 hρlt hσ0 hσd hσ2 hσlt hσ1
     (fun m => hbtρ (Rlog_R m)) (fun m => hbtσ m) (fun m => hbu m) (fun m => hbtY2 (Rlog_R m)) htsq
 
+/-- **Composition-eval gap ≤ Σ corners**: `|peval(a∘b) w M − peval a (peval b w M) M| ≤ Σ_{m≤M} |aₘ|·Cₘ`
+    where `Cₘ = (peval b w M)ᵐ − peval(bᵐ) w M ≥ 0` is the degree-`>M` corner (`peval_fpow_le_pow`). The generic
+    backbone of the exp eval bridge: with `a=ecoef` (`|aₘ|=1/m!`) the corner sum converges for `|w|<1`. -/
+theorem comp_eval_gap_le (a b : Nat → Q) (ha : ∀ i, 0 < (a i).den) (hb : ∀ i, 0 < (b i).den)
+    (hb0 : Qeq (b 0) ⟨0, 1⟩) (hbn : ∀ k, 0 ≤ (b k).num) (w : Q) (hwd : 0 < w.den)
+    (hw0 : 0 ≤ w.num) (M : Nat) :
+    Qle (Qabs (Qsub (peval (fcomp a b) w M) (peval a (peval b w M) M)))
+      (Fsum (fun m => mul (Qabs (a m))
+        (Qsub (qpow (peval b w M) m) (peval (fpow b m) w M))) M) := by
+  have hS1d : ∀ m, 0 < (mul (a m) (peval (fpow b m) w M)).den :=
+    fun m => Qmul_den_pos (ha m) (peval_den_pos (fpow_den_pos hb m) hwd M)
+  have hS2d : ∀ m, 0 < (mul (a m) (qpow (peval b w M) m)).den :=
+    fun m => Qmul_den_pos (ha m) (qpow_den_pos (peval_den_pos hb hwd M) m)
+  refine Qle_trans (Qabs_den_pos (Qsub_den_pos (Fsum_den_pos hS1d M)
+      (peval_den_pos ha (peval_den_pos hb hwd M) M)))
+    (Qeq_le (Qabs_Qeq (Qsub_congr (peval_fcomp_swap a b ha hb hb0 w hwd M) (Qeq_refl _)))) ?_
+  refine Qle_trans (Qabs_den_pos (Fsum_den_pos (fun m => Qsub_den_pos (hS1d m) (hS2d m)) M))
+    (Qeq_le (Qabs_Qeq (Qeq_symm (Fsum_sub hS1d hS2d M)))) ?_
+  refine Qle_trans (Fsum_den_pos (fun m => Qabs_den_pos (Qsub_den_pos (hS1d m) (hS2d m))) M)
+    (Fsum_abs_le (fun m => Qsub_den_pos (hS1d m) (hS2d m)) M) ?_
+  refine Fsum_le_congr (fun m _ => ?_)
+  have hpfd : 0 < (peval (fpow b m) w M).den := peval_den_pos (fpow_den_pos hb m) hwd M
+  have hqpd : 0 < (qpow (peval b w M) m).den := qpow_den_pos (peval_den_pos hb hwd M) m
+  have hple : Qle (peval (fpow b m) w M) (qpow (peval b w M) m) :=
+    peval_fpow_le_pow b hb hbn w hwd hw0 M m
+  have hnn : 0 ≤ (Qsub (qpow (peval b w M) m) (peval (fpow b m) w M)).num := by
+    have h := hple; simp only [Qle] at h
+    show 0 ≤ (qpow (peval b w M) m).num * ((peval (fpow b m) w M).den : Int)
+      + -(peval (fpow b m) w M).num * ((qpow (peval b w M) m).den : Int)
+    rw [Int.neg_mul]; omega
+  apply Qeq_le
+  refine Qeq_trans (Qabs_den_pos (Qmul_den_pos (ha m) (Qsub_den_pos hpfd hqpd)))
+    (Qabs_Qeq (Qeq_symm (Qmul_sub_distrib (a m) (peval (fpow b m) w M)
+      (qpow (peval b w M) m)))) ?_
+  rw [Qabs_mul]
+  refine Qmul_congr (Qeq_refl _) ?_
+  rw [Qabs_Qsub_comm]
+  exact Qabs_of_nonneg hnn
+
 end UOR.Bridge.F1Square.Analysis
