@@ -1181,3 +1181,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.per_m_bound_gen
 #print axioms Analysis.qpow_third_abs_le_one
 #print axioms Analysis.dcoef_abs_le_one
+#print axioms Analysis.drat_den
+#print axioms Analysis.drat_rel

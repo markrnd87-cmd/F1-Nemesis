@@ -2040,4 +2040,26 @@ theorem dcoef_abs_le_one : ∀ k, Qle (Qabs (dcoef k)) ⟨1, 1⟩
         (Qmul_le_mul_left (Qabs_num_nonneg _) (qpow_third_abs_le_one k)) ?_
       exact (by decide : Qle (mul (Qabs (⟨8, 9⟩ : Q)) ⟨1, 1⟩) ⟨1, 1⟩)
 
+/-- The **exact rational inner** `δ_rat(w) = 8w/(9+3w) = gval(w)−⅓` (the sum of the δ-series), a direct
+    rational (like `uval`). The composition-eval's inner `u`. -/
+def drat (w : Q) : Q := ⟨8 * w.num, (9 * (w.den : Int) + 3 * w.num).natAbs⟩
+
+theorem drat_den (w : Q) (hwd : 0 < w.den) (hwn : 0 ≤ w.num) : 0 < (drat w).den := by
+  show 0 < (9 * (w.den : Int) + 3 * w.num).natAbs
+  have : (0 : Int) < (w.den : Int) := by exact_mod_cast hwd
+  omega
+
+/-- Fresh-`Int`-var core for `drat_rel` (dodges `ring_uor`'s cast-reifier issue). -/
+private theorem drat_rel_core (wn d : Int) :
+    (9 * (1 * d) + 3 * wn * 1) * (8 * wn) * (1 * d)
+      = 8 * wn * (1 * (1 * d) * (9 * d + 3 * wn)) := by ring_uor
+
+/-- The defining relation `(9+3w)·δ_rat = 8w` (for `w ≥ 0`). -/
+theorem drat_rel (w : Q) (hwd : 0 < w.den) (hwn : 0 ≤ w.num) :
+    Qeq (mul (add ⟨9, 1⟩ (mul ⟨3, 1⟩ w)) (drat w)) (mul ⟨8, 1⟩ w) := by
+  have h : (0 : Int) ≤ 9 * (w.den : Int) + 3 * w.num := by
+    have : (0 : Int) ≤ (w.den : Int) := Int.ofNat_nonneg _; omega
+  simp only [Qeq, mul, add, drat]; push_cast [Int.natAbs_of_nonneg h]
+  exact drat_rel_core w.num (w.den : Int)
+
 end UOR.Bridge.F1Square.Analysis
