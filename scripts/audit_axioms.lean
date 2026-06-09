@@ -1072,3 +1072,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Fsum_smul
 #print axioms Analysis.peval_twoacoef_cauchy
 #print axioms Analysis.peval_twoacoef_abs_le_gpow
+#print axioms Analysis.exp_artanh_recip

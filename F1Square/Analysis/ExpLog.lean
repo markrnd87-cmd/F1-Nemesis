@@ -4858,4 +4858,24 @@ theorem peval_twoacoef_abs_le_gpow (τ : Q) (hτd : 0 < τ.den) (hτ0 : 0 ≤ τ
     (peval_abs_bound (fun i => mul ⟨2, 1⟩ (acoef i)) (fun i => Qmul_den_pos Nat.one_pos (acoef_den i))
       τ hτd Nat.one_pos hτd hb2 (Qeq_le (Qabs_of_nonneg hτ0)) N) (Qeq_le hFsumg)
 
+/-- **The rational exp identity, reciprocal form**: `|expSum(peval 2acoef τ M, M) − g| ≤ K·4·(τ.den/(n+1))`
+    for `n ≤ M`, `K·(1−τ) ≥ 1` (`K = 1/(1−τ)`). Divides `exp_artanh_rat_cleared` by `(1−τ)` (`mul_div_gen`)
+    and converts the geometric `τ^{M+1}` to `1/(n+1)` (`qpow_le_recip`). The per-depth bound for the reconciliation. -/
+theorem exp_artanh_recip (τ g K : Q) (hτd : 0 < τ.den) (hτ0 : 0 ≤ τ.num) (hτ1 : Qle τ ⟨1, 1⟩)
+    (hτlt : τ.num.toNat < τ.den) (hgd : 0 < g.den) (hg : Qeq (mul g (Qsub ⟨1, 1⟩ τ)) (add ⟨1, 1⟩ τ))
+    (hKd : 0 < K.den) (hK0 : 0 ≤ K.num) (hKF : Qle (⟨1, 1⟩ : Q) (mul K (Qsub ⟨1, 1⟩ τ))) (M n : Nat)
+    (hnM : n ≤ M) :
+    Qle (Qabs (Qsub (expSum (peval (fun i => mul ⟨2, 1⟩ (acoef i)) τ M) M) g))
+      (mul K (mul ⟨4, 1⟩ (⟨(τ.den : Int), n + 1⟩ : Q))) := by
+  have hSd : 0 < (peval (fun i => mul ⟨2, 1⟩ (acoef i)) τ M).den :=
+    peval_den_pos (fun i => Qmul_den_pos Nat.one_pos (acoef_den i)) hτd M
+  have hAd : 0 < (Qabs (Qsub (expSum (peval (fun i => mul ⟨2, 1⟩ (acoef i)) τ M) M) g)).den :=
+    Qabs_den_pos (Qsub_den_pos (expSum_den_pos hSd M) hgd)
+  have hdiv := mul_div_gen (a := Qabs (Qsub (expSum (peval (fun i => mul ⟨2, 1⟩ (acoef i)) τ M) M) g))
+    (B := mul ⟨4, 1⟩ (qpow τ (M + 1))) (F := Qsub ⟨1, 1⟩ τ) (K := K) (Qabs_num_nonneg _) hAd
+    (Qsub_den_pos Nat.one_pos hτd) hKd hK0 hKF (exp_artanh_rat_cleared τ g hτd hτ0 hτ1 hgd hg M)
+  exact Qle_trans (Qmul_den_pos hKd (Qmul_den_pos Nat.one_pos (qpow_den_pos hτd (M + 1)))) hdiv
+    (Qmul_le_mul_left hK0 (Qmul_le_mul_left (by decide)
+      (qpow_le_recip hτ0 hτd hτlt (by omega : n + 1 ≤ M + 1))))
+
 end UOR.Bridge.F1Square.Analysis
