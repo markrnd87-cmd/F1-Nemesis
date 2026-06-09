@@ -1121,4 +1121,30 @@ theorem fmul_nine3w_cancel {X Y : Nat → Q} (hX : ∀ i, 0 < (X i).den) (hY : �
       (Qsub_congr (Qeq_refl _) (Qeq_symm (h m))) (by simp only [Qeq, Qsub, add, neg]; push_cast; ring_uor)
   exact Qeq_of_Qsub_zero (nine3w_zero_cancel hZ hzero k)
 
+-- ===========================================================================
+-- STEP 2c — the **key δ-ODE identity** `9·(1−w²)·δ' = 8 − 6δ − 9δ²` (i.e. `9(1−g²)`). This is where
+-- the geometry `g'(1−w²)=1−g²` lives. Proved by clearing `A²=(9+3w)²` (two `fmul_nine3w_cancel`s):
+-- after clearing, both sides collapse (via `dcoef_rel`/`dcoef_deriv_rel`) to the δ-free `648(1−w²)`.
+-- ===========================================================================
+
+/-- `threeFone = 3·t⁰` as a scaled monomial. -/
+theorem threeFone_eq_fsmono (k : Nat) : Qeq (threeFone k) (fsmono ⟨3, 1⟩ 0 k) := by
+  unfold threeFone fsmono; by_cases h : k = 0 <;> simp only [if_pos, if_neg, h] <;> decide
+
+/-- The rearranged differentiated relation: `(9+3w)·δ' = 8 − 3δ`. -/
+theorem nine3w_dderiv (k : Nat) :
+    Qeq (fmul nine3w (fderiv dcoef) k) (Qsub (eightFone k) (mul ⟨3, 1⟩ (dcoef k))) := by
+  have h3 : Qeq (fmul threeFone dcoef k) (mul ⟨3, 1⟩ (dcoef k)) := by
+    refine Qeq_trans (fmul_den_pos (fun i => fsmono_den (by decide) 0 i) dcoef_den k)
+      (fmul_congr_left threeFone_eq_fsmono k) ?_
+    have hh := fmul_fsmono (c := ⟨3, 1⟩) (by decide) dcoef dcoef_den 0 (Nat.zero_le k)
+    rwa [Nat.sub_zero] at hh
+  have hrw : Qeq (fmul nine3w (fderiv dcoef) k)
+      (Qsub (add (fmul threeFone dcoef k) (fmul nine3w (fderiv dcoef) k))
+        (fmul threeFone dcoef k)) := by simp only [Qeq, Qsub, add, neg]; push_cast; ring_uor
+  refine Qeq_trans (Qsub_den_pos (add_den_pos (fmul_den_pos (fun i => threeFone_den i) dcoef_den k)
+      (fmul_den_pos nine3w_den (fun i => fderiv_den_pos dcoef_den i) k))
+      (fmul_den_pos (fun i => threeFone_den i) dcoef_den k)) hrw ?_
+  exact Qsub_congr (dcoef_deriv_rel k) h3
+
 end UOR.Bridge.F1Square.Analysis

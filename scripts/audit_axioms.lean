@@ -1134,3 +1134,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.nine3w_eval_succ
 #print axioms Analysis.nine3w_zero_cancel
 #print axioms Analysis.fmul_nine3w_cancel
+#print axioms Analysis.threeFone_eq_fsmono
+#print axioms Analysis.nine3w_dderiv
