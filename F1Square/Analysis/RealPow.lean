@@ -2433,4 +2433,54 @@ theorem corner_inner_eq_gen (b : Nat → Q) (hb : ∀ i, 0 < (b i).den) (w : Q) 
     (Qeq_symm (Qmul_sub_left_loc (mul (b i) (qpow w i))
       (peval (fpow b m) w M) (peval (fpow b m) w (M - i))))
 
+/-- `|δ_a·wᵇ| ≤ ρᵇ` for `|w| ≤ ρ` (`|δ_a|≤1`). -/
+theorem Qabs_dcoef_qpow_le (ρ w : Q) (hρd : 0 < ρ.den) (hwd : 0 < w.den) (hw : Qle (Qabs w) ρ)
+    (a b : Nat) : Qle (Qabs (mul (dcoef a) (qpow w b))) (qpow ρ b) := by
+  refine Qle_trans (Qmul_den_pos (Qabs_den_pos (dcoef_den a)) (Qabs_den_pos (qpow_den_pos hwd b)))
+    (Qeq_le (by rw [Qabs_mul]; exact Qeq_refl _ :
+      Qeq (Qabs (mul (dcoef a) (qpow w b))) (mul (Qabs (dcoef a)) (Qabs (qpow w b))))) ?_
+  refine Qle_trans (Qmul_den_pos Nat.one_pos (qpow_den_pos hρd b))
+    (Qmul_le_mul (Qabs_den_pos (dcoef_den a)) Nat.one_pos (Qabs_den_pos (qpow_den_pos hwd b))
+      (Qabs_num_nonneg _) (Qabs_num_nonneg _) (dcoef_abs_le_one a)
+      (Qle_trans (qpow_den_pos (Qabs_den_pos hwd) b) (Qeq_le (qpow_abs w b))
+        (qpow_base_mono (Qabs_den_pos hwd) hρd (Qabs_num_nonneg w) hw b)))
+    (Qeq_le (Qone_mul _))
+
+/-- **The per-`i` corner bound** `|cornerᵢ|·(1−2ρ) ≤ (2ρ)^{M+1}` (`corner_term_le` analog; cleaner, no `4ᵐ`). -/
+theorem dcoef_corner_term (ρ w : Q) (hρd : 0 < ρ.den) (hρ0 : 0 ≤ ρ.num) (hwd : 0 < w.den)
+    (hw : Qle (Qabs w) ρ) (h2ρ : 0 ≤ (Qsub (⟨1, 1⟩ : Q) (mul ⟨2, 1⟩ ρ)).num) (m M i : Nat) (hiM : i ≤ M) :
+    Qle (mul (Qabs (Qsub
+          (Fsum (fun j => mul (mul (dcoef i) (qpow w i)) (mul (fpow dcoef m j) (qpow w j))) M)
+          (Fsum (fun j => mul (mul (dcoef i) (qpow w i)) (mul (fpow dcoef m j) (qpow w j))) (M - i))))
+        (Qsub ⟨1, 1⟩ (mul ⟨2, 1⟩ ρ)))
+      (qpow (mul ⟨2, 1⟩ ρ) (M + 1)) := by
+  have hpd : ∀ N, 0 < (peval (fpow dcoef m) w N).den :=
+    fun N => peval_den_pos (fpow_den_pos dcoef_den m) hwd N
+  have hC : 0 < (mul (dcoef i) (qpow w i)).den := Qmul_den_pos (dcoef_den i) (qpow_den_pos hwd i)
+  have hgap : 0 < (Qsub (peval (fpow dcoef m) w M) (peval (fpow dcoef m) w (M - i))).den :=
+    Qsub_den_pos (hpd M) (hpd (M - i))
+  have h2d : 0 < (mul (⟨2, 1⟩ : Q) ρ).den := Qmul_den_pos (by decide) hρd
+  have hr0 : 0 ≤ (mul (⟨2, 1⟩ : Q) ρ).num := Qmul_num_nonneg (by decide) hρ0
+  have hwd1 : 0 < (Qsub (⟨1, 1⟩ : Q) (mul ⟨2, 1⟩ ρ)).den := Qsub_den_pos Nat.one_pos h2d
+  have heq : Qeq (Qabs (Qsub
+        (Fsum (fun j => mul (mul (dcoef i) (qpow w i)) (mul (fpow dcoef m j) (qpow w j))) M)
+        (Fsum (fun j => mul (mul (dcoef i) (qpow w i)) (mul (fpow dcoef m j) (qpow w j))) (M - i))))
+      (mul (Qabs (mul (dcoef i) (qpow w i)))
+        (Qabs (Qsub (peval (fpow dcoef m) w M) (peval (fpow dcoef m) w (M - i))))) :=
+    Qeq_trans (Qabs_den_pos (Qmul_den_pos hC hgap))
+      (Qabs_Qeq (corner_inner_eq_gen dcoef dcoef_den w hwd m M i))
+      (by rw [Qabs_mul]; exact Qeq_refl _)
+  refine Qle_trans (Qmul_den_pos (Qmul_den_pos (Qabs_den_pos hC) (Qabs_den_pos hgap)) hwd1)
+    (Qeq_le (Qmul_congr heq (Qeq_refl _))) ?_
+  refine Qle_trans (Qmul_den_pos (Qabs_den_pos hC) (Qmul_den_pos (Qabs_den_pos hgap) hwd1))
+    (Qeq_le (Qmul_assoc (Qabs (mul (dcoef i) (qpow w i)))
+      (Qabs (Qsub (peval (fpow dcoef m) w M) (peval (fpow dcoef m) w (M - i))))
+      (Qsub ⟨1, 1⟩ (mul ⟨2, 1⟩ ρ)))) ?_
+  refine Qle_trans (Qmul_den_pos (Qabs_den_pos hC) (qpow_den_pos h2d _))
+    (Qmul_le_mul_left (Qabs_num_nonneg _)
+      (peval_dcoef_pow_cauchy ρ w hρd hρ0 hwd hw h2ρ m (M := M - i) (M' := M) (by omega))) ?_
+  refine Qle_trans (Qmul_den_pos (qpow_den_pos hρd i) (qpow_den_pos h2d _))
+    (Qmul_le_mul_right (qpow_nonneg hr0 _) (Qabs_dcoef_qpow_le ρ w hρd hwd hw i i)) ?_
+  exact qpow_conv_le ρ hρd hρ0 i M hiM
+
 end UOR.Bridge.F1Square.Analysis
