@@ -4174,4 +4174,88 @@ theorem Rlog_eq_Rmul (x : Real) (M : Q) (hMd : 0 < M.den) (hMge : Qle (⟨1, 1�
           (Rartanh ⟨Rlog_seq x, Rlog_regular x hxpos, hden⟩
             ⟨M.num - (M.den : Int), M.num.toNat + M.den⟩ hρ0 hρd hlt hb) := rfl
 
+set_option maxHeartbeats 800000 in
+/-- **★ The log-doubling** `Rlog(Y²) = 2·Rlog Y` for real `Y` (bounded near 1). With `ρ_B = (B−1)/(B+1)`
+    and `σ = (B²−1)/(B²+1)`, given `Y ≤ B`, `Y² ≤ B²` (`B ≥ 1`), `ρ_B ≤ σ`, and the convergence-radius
+    smallness `ρ_B < 1/16`, `σ ≤ 1/2`, the two `Rlog`s agree. Unfolds both via `Rlog_eq_Rmul` and applies
+    `Rlog_sq_via`; bounds via `Rlog_tbound` (+ `tmap_sq_uval` for `hbu`), `htsq` via `tsq_uvalReal_via`. -/
+theorem Rlog_sq (Y : Real) (B : Q) (hBd : 0 < B.den) (hBge : Qle (⟨1, 1⟩ : Q) B)
+    (hYpos : ∀ n, 0 < (Y.seq n).num) (hYhiB : ∀ n, Qle (Y.seq n) B)
+    (hYloB : ∀ n, Qle (⟨1, 1⟩ : Q) (mul (Y.seq n) B)) (hB2d : 0 < (mul B B).den)
+    (hB2ge : Qle (⟨1, 1⟩ : Q) (mul B B)) (hY2pos : ∀ n, 0 < ((Rmul Y Y).seq n).num)
+    (hY2hi : ∀ n, Qle ((Rmul Y Y).seq n) (mul B B))
+    (hY2lo : ∀ n, Qle (⟨1, 1⟩ : Q) (mul ((Rmul Y Y).seq n) (mul B B)))
+    (hρσ : Qle (⟨B.num - (B.den : Int), B.num.toNat + B.den⟩ : Q)
+              (⟨(mul B B).num - ((mul B B).den : Int), (mul B B).num.toNat + (mul B B).den⟩ : Q))
+    (h2ρ : 0 ≤ (Qsub (⟨1, 1⟩ : Q) (mul ⟨2, 1⟩ ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩)).num)
+    (hρ4 : Qle (⟨1, 2⟩ : Q) (Qsub ⟨1, 1⟩ (mul ⟨2, 1⟩ ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩)))
+    (hρ2 : Qle (⟨1, 2⟩ : Q) (Qsub ⟨1, 1⟩ (mul ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩
+              ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩)))
+    (hρ8 : Qle (mul ⟨4, 1⟩ ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩) ⟨1, 1⟩)
+    (hlt16 : (mul ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩ ⟨16, 1⟩).num.toNat
+              < (mul ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩ ⟨16, 1⟩).den)
+    (hσ2 : Qle (⟨1, 2⟩ : Q) (Qsub ⟨1, 1⟩ (mul ⟨(mul B B).num - ((mul B B).den : Int),
+              (mul B B).num.toNat + (mul B B).den⟩ ⟨(mul B B).num - ((mul B B).den : Int),
+              (mul B B).num.toNat + (mul B B).den⟩))) :
+    Req (Radd (Rlog Y B hBd hBge hYpos hYhiB hYloB) (Rlog Y B hBd hBge hYpos hYhiB hYloB))
+        (Rlog (Rmul Y Y) (mul B B) hB2d hB2ge hY2pos hY2hi hY2lo) := by
+  obtain ⟨hBn, hB1, hρ0, hρd, hρlt, hρ1⟩ := Rlog_radius_facts B hBd hBge
+  obtain ⟨hB2n, hB21, hσ0, hσd, hσlt, hσ1⟩ := Rlog_radius_facts (mul B B) hB2d hB2ge
+  have hden_Y : ∀ n, 0 < (Rlog_seq Y n).den := by
+    intro n; refine Qmul_den_pos (Qsub_den_pos (Y.den_pos _) Nat.one_pos) (Qinv_den_pos ?_)
+    have := hYpos (Rlog_R n); have h := Int.ofNat_nonneg (Y.seq (Rlog_R n)).den
+    show 0 < (Y.seq (Rlog_R n)).num * 1 + 1 * ((Y.seq (Rlog_R n)).den : Int); omega
+  have hden_Y2 : ∀ n, 0 < (Rlog_seq (Rmul Y Y) n).den := by
+    intro n; refine Qmul_den_pos (Qsub_den_pos ((Rmul Y Y).den_pos _) Nat.one_pos) (Qinv_den_pos ?_)
+    have := hY2pos (Rlog_R n); have h := Int.ofNat_nonneg ((Rmul Y Y).seq (Rlog_R n)).den
+    show 0 < ((Rmul Y Y).seq (Rlog_R n)).num * 1 + 1 * (((Rmul Y Y).seq (Rlog_R n)).den : Int); omega
+  have hbtρ := Rlog_tbound Y B hBd hBn hB1 hYhiB hYloB hYpos
+  have hbtY2 := Rlog_tbound (Rmul Y Y) (mul B B) hB2d hB2n hB21 hY2hi hY2lo hY2pos
+  have hbtσ : ∀ m, Qle (Qabs (tmap (Y.seq (Rlog_R m))))
+      (⟨(mul B B).num - ((mul B B).den : Int), (mul B B).num.toNat + (mul B B).den⟩ : Q) :=
+    fun m => Qle_trans hρd (hbtρ (Rlog_R m)) hρσ
+  have hbu : ∀ m, Qle (Qabs (uval (tmap (Y.seq (Rlog_R m)))))
+      (⟨(mul B B).num - ((mul B B).den : Int), (mul B B).num.toNat + (mul B B).den⟩ : Q) := by
+    intro m
+    have hqd := Y.den_pos (Rlog_R m)
+    have hq1 : 0 < (add (Y.seq (Rlog_R m)) ⟨1, 1⟩).num := by
+      have := hYpos (Rlog_R m); have h := Int.ofNat_nonneg (Y.seq (Rlog_R m)).den
+      show 0 < (Y.seq (Rlog_R m)).num * 1 + 1 * ((Y.seq (Rlog_R m)).den : Int); omega
+    have hq2 : 0 < (add (mul (Y.seq (Rlog_R m)) (Y.seq (Rlog_R m))) ⟨1, 1⟩).num := by
+      have h1 : 0 ≤ (Y.seq (Rlog_R m)).num * (Y.seq (Rlog_R m)).num := by
+        rw [← Int.natAbs_mul_self]; exact Int.ofNat_nonneg _
+      have h2 : 0 < (((Y.seq (Rlog_R m)).den * (Y.seq (Rlog_R m)).den : Nat) : Int) := by
+        exact_mod_cast Nat.mul_pos hqd hqd
+      show 0 < (Y.seq (Rlog_R m)).num * (Y.seq (Rlog_R m)).num * 1
+        + 1 * (((Y.seq (Rlog_R m)).den * (Y.seq (Rlog_R m)).den : Nat) : Int); omega
+    have hq2leB2 : Qle (mul (Y.seq (Rlog_R m)) (Y.seq (Rlog_R m))) (mul B B) :=
+      Qmul_le_mul hqd hBd hqd (Int.le_of_lt (hYpos _)) (Int.le_of_lt (hYpos _)) (hYhiB _) (hYhiB _)
+    have hq2B2ge : Qle (⟨1, 1⟩ : Q) (mul (mul (Y.seq (Rlog_R m)) (Y.seq (Rlog_R m))) (mul B B)) := by
+      have hsq : Qle (mul (⟨1, 1⟩ : Q) ⟨1, 1⟩)
+          (mul (mul (Y.seq (Rlog_R m)) B) (mul (Y.seq (Rlog_R m)) B)) :=
+        Qmul_le_mul Nat.one_pos (Qmul_den_pos hqd hBd) Nat.one_pos (by decide) (by decide)
+          (hYloB _) (hYloB _)
+      refine Qle_trans (Qmul_den_pos (Qmul_den_pos hqd hBd) (Qmul_den_pos hqd hBd))
+        (Qle_trans (Qmul_den_pos Nat.one_pos Nat.one_pos)
+          (Qeq_le (by decide : Qeq (⟨1, 1⟩ : Q) (mul ⟨1, 1⟩ ⟨1, 1⟩))) hsq) ?_
+      exact Qeq_le (Qmul_rearrange4b (Y.seq (Rlog_R m)) B (Y.seq (Rlog_R m)) B)
+    refine Qle_trans (Qabs_den_pos (Qmul_den_pos (Qsub_den_pos (Qmul_den_pos hqd hqd) Nat.one_pos)
+        (Qinv_den_pos hq2)))
+      (Qeq_le (Qabs_Qeq (Qeq_symm (tmap_sq_uval (Y.seq (Rlog_R m)) hqd hq1 hq2)))) ?_
+    refine Qle_trans (show 0 < (tmap (mul B B)).den from
+        Qmul_den_pos (Qsub_den_pos hB2d Nat.one_pos) (Qinv_den_pos hB21))
+      (tmap_abs_le (Qmul_den_pos hqd hqd) hB2d hq2 hB21 hq2leB2 hq2B2ge) ?_
+    exact Qeq_le (tmap_M_eq hB2d hB2n)
+  have htsq := tsq_uvalReal_via Y ⟨Rlog_seq (Rmul Y Y), Rlog_regular (Rmul Y Y) hY2pos, hden_Y2⟩
+    (uvalReal ⟨Rlog_seq Y, Rlog_regular Y hYpos, hden_Y⟩
+      ⟨(mul B B).num - ((mul B B).den : Int), (mul B B).num.toNat + (mul B B).den⟩ hσd hσ1
+      (fun m => hbtσ m)) ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩ hρd hρ1 hYpos hbtρ
+    (fun _ => rfl) (fun _ => rfl)
+  exact Rlog_sq_via (ofQ ⟨2, 1⟩ (by decide)) ⟨Rlog_seq Y, Rlog_regular Y hYpos, hden_Y⟩
+    ⟨Rlog_seq (Rmul Y Y), Rlog_regular (Rmul Y Y) hY2pos, hden_Y2⟩
+    ⟨B.num - (B.den : Int), B.num.toNat + B.den⟩
+    ⟨(mul B B).num - ((mul B B).den : Int), (mul B B).num.toNat + (mul B B).den⟩
+    hρd hρ0 hρ1 h2ρ hρ4 hρ2 hρ8 hlt16 hρlt hσ0 hσd hσ2 hσlt hσ1
+    (fun m => hbtρ (Rlog_R m)) (fun m => hbtσ m) (fun m => hbu m) (fun m => hbtY2 (Rlog_R m)) htsq
+
 end UOR.Bridge.F1Square.Analysis
