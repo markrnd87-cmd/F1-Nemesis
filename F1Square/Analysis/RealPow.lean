@@ -1240,4 +1240,52 @@ theorem g2_final (j : Nat) :
         if_neg (show ¬(m + 3 = 2) by omega), if_neg (show ¬(m + 3 = 2) by omega)]
       decide
 
+/-- `a·(b−c) = a·b − a·c` (right sub-distribution, via `fmul_comm` + `fmul_sub_left`). -/
+theorem fmul_sub_right {a b c : Nat → Q} (ha : ∀ i, 0 < (a i).den) (hb : ∀ i, 0 < (b i).den)
+    (hc : ∀ i, 0 < (c i).den) (k : Nat) :
+    Qeq (fmul a (fun i => Qsub (b i) (c i)) k) (Qsub (fmul a b k) (fmul a c k)) := by
+  refine Qeq_trans (fmul_den_pos (fun i => Qsub_den_pos (hb i) (hc i)) ha k)
+    (fmul_comm a (fun i => Qsub (b i) (c i)) ha (fun i => Qsub_den_pos (hb i) (hc i)) k) ?_
+  refine Qeq_trans (Qsub_den_pos (fmul_den_pos hb ha k) (fmul_den_pos hc ha k))
+    (fmul_sub_left hb hc ha k) ?_
+  exact Qsub_congr (fmul_comm b a hb ha k) (fmul_comm c a hc ha k)
+
+/-- `eightFone = 8·t⁰` as a scaled series. -/
+theorem eightFone_eq_fsmul (k : Nat) : Qeq (eightFone k) (fsmul ⟨8, 1⟩ fone k) := by
+  unfold eightFone fsmul fone; by_cases h : k = 0 <;> simp only [if_pos, if_neg, h] <;> decide
+
+/-- `8·(9+3w) − 3·8w = 72` (δ-free, both `= 72`). -/
+theorem eight_n_three_e (k : Nat) :
+    Qeq (Qsub (mul ⟨8, 1⟩ (nine3w k)) (mul ⟨3, 1⟩ (eightT k))) (mul ⟨72, 1⟩ (fone k)) := by
+  match k with
+  | 0 => decide
+  | 1 => decide
+  | (m + 2) =>
+      have hn : nine3w (m + 2) = ⟨0, 1⟩ := by unfold nine3w; rw [if_neg (by omega), if_neg (by omega)]
+      have he : eightT (m + 2) = ⟨0, 1⟩ := by unfold eightT; rw [if_neg (by omega)]
+      have hf : fone (m + 2) = ⟨0, 1⟩ := by unfold fone; rw [if_neg (by omega)]
+      rw [hn, he, hf]; decide
+
+/-- **H1**: `(9+3w)·(8 − 3δ) = 72` — the δ-cancelling collapse (`δ` killed by `dcoef_rel`). -/
+theorem nine3w_8m3d (k : Nat) :
+    Qeq (fmul nine3w (fun i => Qsub (eightFone i) (mul ⟨3, 1⟩ (dcoef i))) k) (mul ⟨72, 1⟩ (fone k)) := by
+  have hb : ∀ i, 0 < (eightFone i).den := eightFone_den
+  have hc : ∀ i, 0 < (mul ⟨3, 1⟩ (dcoef i)).den := fun i => Qmul_den_pos (by decide) (dcoef_den i)
+  -- (9+3w)·(8fone − 3δ) = (9+3w)·8fone − (9+3w)·3δ
+  refine Qeq_trans (Qsub_den_pos (fmul_den_pos nine3w_den hb k)
+    (fmul_den_pos nine3w_den hc k)) (fmul_sub_right nine3w_den hb hc k) ?_
+  -- (9+3w)·8fone ≈ 8·(9+3w); (9+3w)·3δ ≈ 3·8w
+  have e1 : Qeq (fmul nine3w eightFone k) (mul ⟨8, 1⟩ (nine3w k)) := by
+    refine Qeq_trans (fmul_den_pos nine3w_den (fun i => fsmul_den (by decide) (fun _ => fone_den_pos _) i) k)
+      (fmul_congr_right eightFone_eq_fsmul k) ?_
+    exact Qeq_trans (Qmul_den_pos (by decide) (fmul_den_pos nine3w_den (fun _ => fone_den_pos _) k))
+      (fmul_smul_right nine3w fone ⟨8, 1⟩ (by decide) nine3w_den (fun _ => fone_den_pos _) k)
+      (Qmul_congr (Qeq_refl _) (fmul_one nine3w nine3w_den k))
+  have e2 : Qeq (fmul nine3w (fun i => mul ⟨3, 1⟩ (dcoef i)) k) (mul ⟨3, 1⟩ (eightT k)) := by
+    refine Qeq_trans (Qmul_den_pos (by decide) (fmul_den_pos nine3w_den dcoef_den k))
+      (fmul_smul_right nine3w dcoef ⟨3, 1⟩ (by decide) nine3w_den dcoef_den k) ?_
+    exact Qmul_congr (Qeq_refl _) (dcoef_rel k)
+  exact Qeq_trans (Qsub_den_pos (Qmul_den_pos (by decide) (nine3w_den k))
+    (Qmul_den_pos (by decide) (eightT_den k))) (Qsub_congr e1 e2) (eight_n_three_e k)
+
 end UOR.Bridge.F1Square.Analysis
