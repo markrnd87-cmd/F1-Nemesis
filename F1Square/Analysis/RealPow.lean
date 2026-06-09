@@ -392,6 +392,62 @@ theorem RexpReal_le_of_Rle {a b : Real} (h : Rle a b) : Rle (RexpReal a) (RexpRe
       (Req_trans (Radd_Rsub_self (RexpReal a) (Rmul (RexpReal a) (RexpReal (Rsub b a)))) hmulexp)
   exact Rle_trans (Rle_self_Radd_right hD) (Rle_of_Req halg)
 
+-- ===========================================================================
+-- **`Pos` order algebra** (toward `exp` injectivity = the reflection-free route to log-mult).
+-- ===========================================================================
+
+/-- **`Pos` ⟹ rational lower bound**: a positive real `x` exceeds the fixed positive rational
+    `xₙ − 1/(n+1)` (`n` the `Pos` witness), since the real is within `1/(n+1)` of its `n`-th approximant. -/
+theorem Pos_imp_ofQ_le {x : Real} (h : Pos x) :
+    ∃ (c : Q) (hcd : 0 < c.den), 0 < c.num ∧ Rle (ofQ c hcd) x := by
+  obtain ⟨n, hn⟩ := h
+  refine ⟨Qsub (x.seq n) (Qbound n), Qsub_den_pos (x.den_pos n) (Qbound_den_pos n), ?_, ?_⟩
+  · simp only [Qlt, Qbound] at hn; simp only [Qsub, add, neg, Qbound]; push_cast at hn ⊢; omega
+  · intro m
+    show Qle (Qsub (x.seq n) (Qbound n)) (add (x.seq m) ⟨2, m + 1⟩)
+    have hreg : Qle (x.seq n) (add (x.seq m) (add (Qbound n) (Qbound m))) :=
+      Qle_add_of_Qabs_sub (x.den_pos n) (x.den_pos m)
+        (add_den_pos (Qbound_den_pos n) (Qbound_den_pos m)) (x.reg n m)
+    have hassoc : Qle (x.seq n) (add (Qbound n) (add (x.seq m) (Qbound m))) :=
+      Qle_trans (add_den_pos (x.den_pos m) (add_den_pos (Qbound_den_pos n) (Qbound_den_pos m))) hreg
+        (Qeq_le (by simp only [Qeq, add, Qbound]; push_cast; ring_uor))
+    have hsub : Qle (Qsub (x.seq n) (Qbound n)) (add (x.seq m) (Qbound m)) :=
+      Qsub_le_of_le_add (Qbound_den_pos n) (add_den_pos (x.den_pos m) (Qbound_den_pos m)) hassoc
+    exact Qle_trans (add_den_pos (x.den_pos m) (Qbound_den_pos m)) hsub
+      (Qadd_le_add (Qle_refl _) (by simp only [Qle, Qbound]; push_cast; omega))
+
+/-- **`Pos` is monotone** under `≤`: `a ≤ b` and `Pos a` give `Pos b`. -/
+theorem Pos_mono {a b : Real} (hab : Rle a b) (ha : Pos a) : Pos b := by
+  obtain ⟨c, hcd, hcn, hca⟩ := Pos_imp_ofQ_le ha
+  exact Pos_of_Rle_ofQ hcn hcd (Rle_trans hca hab)
+
+/-- **`Pos` ⟹ `Rnonneg`**: a positive real is non-negative. -/
+theorem Rnonneg_of_Pos {x : Real} (h : Pos x) : Rnonneg x := by
+  obtain ⟨c, hcd, hcn, hca⟩ := Pos_imp_ofQ_le h
+  have h0c : Rle zero (ofQ c hcd) := by
+    intro n
+    show Qle (⟨0, 1⟩ : Q) (add c ⟨2, n + 1⟩)
+    have h1 : (0 : Int) ≤ c.num * ((n : Int) + 1) :=
+      Int.mul_nonneg (Int.le_of_lt hcn) (by omega)
+    have h2 : (0 : Int) ≤ (c.den : Int) := by exact_mod_cast Nat.zero_le c.den
+    simp only [Qle, add]; push_cast; omega
+  exact Rnonneg_congr (Rsub_zero x) (Rnonneg_Rsub_of_Rle (Rle_trans h0c hca))
+
+/-- `¬Pos z` and `Rnonneg(−z)` are the same (both: `∀n, zₙ ≤ 1/(n+1)`). -/
+theorem Rnonneg_neg_of_not_Pos {z : Real} (h : ¬ Pos z) : Rnonneg (Rneg z) := by
+  intro n
+  show Qle (neg (Qbound n)) (neg (z.seq n))
+  have hle : Qle (z.seq n) (Qbound n) := by
+    have hnn : ¬ Qlt (Qbound n) (z.seq n) := fun hc => h ⟨n, hc⟩
+    simp only [Qle, Qlt] at hnn ⊢; omega
+  exact Qneg_le_neg hle
+
+/-- `Pos z` and `Rnonneg(−z)` are contradictory. -/
+theorem not_Pos_of_Rnonneg_neg {z : Real} (h : Rnonneg (Rneg z)) : ¬ Pos z := by
+  rintro ⟨n, hn⟩
+  have hle : Qle (neg (Qbound n)) (neg (z.seq n)) := h n
+  simp only [Qle, Qlt, neg, Int.neg_mul] at hle hn; omega
+
 /-- **Real powers, abstract form**: if `exp L ≈ N` then `exp(k·L) ≈ Nᵏ`. With `L = log n` and
     `N = n` (the v0.15.1 gate `Rexp_log_nat_Rlog`), this is `exp(k·log n) ≈ nᵏ`. Decoupled from the
     `Rlog` plumbing so that any logarithm witness `exp L ≈ N` produces its powers — the established

@@ -1200,3 +1200,8 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qabs_dcoef_qpow_le
 #print axioms Analysis.dcoef_corner_term
 #print axioms Analysis.dcoef_gcorner_bound
+#print axioms Analysis.Pos_imp_ofQ_le
+#print axioms Analysis.Pos_mono
+#print axioms Analysis.Rnonneg_of_Pos
+#print axioms Analysis.Rnonneg_neg_of_not_Pos
+#print axioms Analysis.not_Pos_of_Rnonneg_neg
