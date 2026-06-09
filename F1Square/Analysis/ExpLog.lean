@@ -1172,6 +1172,18 @@ theorem acoef_den (k : Nat) : 0 < (acoef k).den := by
   · rw [if_pos h]; show 0 < k; omega
   · rw [if_neg h]; exact Nat.one_pos
 
+/-- The exp coefficients `Σ wᵏ/k!`: `1/k!` at every degree. -/
+def ecoef (k : Nat) : Q := ⟨1, fct k⟩
+
+theorem ecoef_den (k : Nat) : 0 < (ecoef k).den := fct_pos k
+
+/-- **Exp is its own formal derivative**: `fderiv ecoef ≈ ecoef` (since `(k+1)·(1/(k+1)!) = 1/k!`). The
+    formal backbone of `exp' = exp` driving the `exp(2·artanh w) = (1+w)/(1−w)` ODE. -/
+theorem fderiv_ecoef (k : Nat) : Qeq (fderiv ecoef k) (ecoef k) := by
+  have hsucc : (↑(fct (k + 1)) : Int) = (↑(k + 1)) * ↑(fct k) := by exact_mod_cast fct_succ k
+  show Qeq (mul ⟨(k + 1 : Int), 1⟩ ⟨1, fct (k + 1)⟩) ⟨1, fct k⟩
+  simp only [Qeq, mul]; push_cast [hsucc]; ring_uor
+
 /-- The even-index terms of the formal artanh evaluation vanish. -/
 theorem acoef_even_zero (w : Q) (n : Nat) :
     Qeq (mul (acoef (2 * n)) (qpow w (2 * n))) ⟨0, 1⟩ := by

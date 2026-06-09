@@ -1044,3 +1044,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rlog_tbound
 #print axioms Analysis.Rlog_radius_facts
 #print axioms Analysis.Rlog_sq
+#print axioms Analysis.ecoef_den
+#print axioms Analysis.fderiv_ecoef
