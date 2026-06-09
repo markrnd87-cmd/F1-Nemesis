@@ -215,4 +215,22 @@ theorem czetaU_2u_eq (s : Complex) :
     (Req_trans (Req_symm (RexpReal_add (logN 2 (by omega)) (Rneg (Rmul s.re (logN 2 (by omega))))))
       (RexpReal_congr (czeta_theta_arg_eq s)))
 
+/-- **`2u ≤ 1/(1+τ) < 1`** whenever `θ = (Re s−1)·log2 ≥ ofQ τ` (`τ > 0`): the dyadic ratio bound. -/
+theorem czetaU_2u_le_of_theta (s : Complex) {τ : Q} (hτn : 0 < τ.num) (hτd : 0 < τ.den)
+    (hθ : Rle (ofQ τ hτd) (Rmul (Rsub s.re one) (logN 2 (by omega)))) :
+    Rle (Rmul (ofQ (⟨2, 1⟩ : Q) (by decide)) (czetaU s))
+        (ofQ (Qinv (add ⟨1, 1⟩ τ)) (Qinv_den_pos (by simp only [add]; push_cast; omega))) :=
+  Rle_trans (Rle_of_Req (czetaU_2u_eq s)) (Rexp_neg_le_ratio hτn hτd hθ)
+
+/-- **`θ ≥ ofQ(ε/2)`** from `Re s > 1` (`Pos(s.re−1)`): extracts the positive rational lower bound on the
+    dyadic exponent (`σ−1 ≥ ε` via `Pos_imp_ofQ_le`, `log2 ≥ ½`). -/
+theorem czeta_theta_ge (s : Complex) (hs : Pos (Rsub s.re one)) :
+    ∃ (τ : Q) (hτd : 0 < τ.den), 0 < τ.num ∧
+      Rle (ofQ τ hτd) (Rmul (Rsub s.re one) (logN 2 (by omega))) := by
+  obtain ⟨ε, hεd, hεn, hε⟩ := Pos_imp_ofQ_le hs
+  refine ⟨mul ε ⟨1, 2⟩, Qmul_den_pos hεd (by decide), by simp only [mul]; omega, ?_⟩
+  refine Rle_trans (Rle_of_Req (Req_symm (Rmul_ofQ_ofQ hεd (by decide)))) ?_
+  exact Rle_trans (Rmul_le_Rmul_left (Rnonneg_ofQ hεd (Int.le_of_lt hεn)) logN_2_ge_half)
+    (Rmul_le_Rmul_right (Rnonneg_logN 2 (by omega)) hε)
+
 end UOR.Bridge.F1Square.Analysis
