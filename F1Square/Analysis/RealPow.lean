@@ -2108,4 +2108,92 @@ theorem peval_eightT (w : Q) (hwd : 0 < w.den) :
       refine Qeq_trans (add_den_pos (Qmul_den_pos (by decide) hwd) Nat.one_pos)
         (Qadd_congr (peval_eightT w hwd m) hz) (Qadd_zero_right _)
 
+/-- Difference-ring core for the base of `nine3w_peval_dcoef`: `(9+3w)(d₁w) − (8w + 3d₁w²) = (9d₁−8)w`. -/
+private theorem inner_base_core (d1 wv : Q) :
+    Qeq (Qsub (mul (add ⟨9, 1⟩ (mul ⟨3, 1⟩ wv)) (mul d1 wv))
+          (add (mul ⟨8, 1⟩ wv) (mul (mul ⟨3, 1⟩ d1) (mul wv wv))))
+        (mul (Qsub (mul ⟨9, 1⟩ d1) ⟨8, 1⟩) wv) := by
+  simp only [Qeq, Qsub, add, mul, neg]; push_cast; ring_uor
+
+/-- Difference-ring core for the step: collapses to `(9d₂+3d₁)·P`. -/
+private theorem inner_step_core (eightw d1 d2 P wv : Q) :
+    Qeq (Qsub (add (add eightw (mul (mul ⟨3, 1⟩ d1) P)) (mul (add ⟨9, 1⟩ (mul ⟨3, 1⟩ wv)) (mul d2 P)))
+          (add eightw (mul (mul ⟨3, 1⟩ d2) (mul wv P))))
+        (mul (add (mul ⟨9, 1⟩ d2) (mul ⟨3, 1⟩ d1)) P) := by
+  simp only [Qeq, Qsub, add, mul, neg]; push_cast; ring_uor
+
+/-- `mul (≈0) P ≈ 0`. -/
+private theorem mul_zero_of_zero {z : Q} (hz : Qeq z ⟨0, 1⟩) (P : Q) (hPd : 0 < P.den) :
+    Qeq (mul z P) ⟨0, 1⟩ := by
+  refine Qeq_trans (Qmul_den_pos Nat.one_pos hPd) (Qmul_congr hz (Qeq_refl _)) ?_
+  simp [Qeq, mul]
+
+/-- **The inner eval relation** `(9+3w)·peval(δ,w,M) = 8w + 3·δ_M·w^{M+1}` (M≥1). The corner is a SINGLE
+    term (since the cleared denominator `9+3w` has degree 1); the middle collapses by the δ-recurrence. -/
+theorem nine3w_peval_dcoef (w : Q) (hwd : 0 < w.den) :
+    ∀ m, Qeq (mul (add ⟨9, 1⟩ (mul ⟨3, 1⟩ w)) (peval dcoef w (m + 1)))
+      (add (mul ⟨8, 1⟩ w) (mul (mul ⟨3, 1⟩ (dcoef (m + 1))) (qpow w (m + 1 + 1))))
+  | 0 => by
+      have h9d1 : Qeq (mul ⟨9, 1⟩ (dcoef 1)) ⟨8, 1⟩ := by
+        show Qeq (mul ⟨9, 1⟩ (mul ⟨8, 9⟩ (qpow ⟨-1, 3⟩ 0))) ⟨8, 1⟩; decide
+      have hp1 : Qeq (peval dcoef w 1) (mul (dcoef 1) w) := by
+        show Qeq (add (mul (dcoef 0) (qpow w 0)) (mul (dcoef 1) (qpow w 1))) (mul (dcoef 1) w)
+        have h0 : Qeq (mul (dcoef 0) (qpow w 0)) ⟨0, 1⟩ := by
+          show Qeq (mul ⟨0, 1⟩ (qpow w 0)) ⟨0, 1⟩; simp [Qeq, mul]
+        have h1 : Qeq (mul (dcoef 1) (qpow w 1)) (mul (dcoef 1) w) :=
+          Qmul_congr (Qeq_refl _) (by show Qeq (mul w ⟨1, 1⟩) w; simp [Qeq, mul])
+        exact Qeq_trans (add_den_pos Nat.one_pos (Qmul_den_pos (dcoef_den 1) hwd))
+          (Qadd_congr h0 h1) (Qzero_add _)
+      -- (9+3w)·peval ≈ (9+3w)(d₁w), then base_core + 9d₁=8 ⇒ 8w + 3d₁w², then qpow w 2 ≈ w²
+      refine Qeq_trans (Qmul_den_pos (add_den_pos Nat.one_pos (Qmul_den_pos (by decide) hwd))
+        (Qmul_den_pos (dcoef_den 1) hwd)) (Qmul_congr (Qeq_refl _) hp1) ?_
+      have hqp2 : Qeq (qpow w (0 + 1 + 1)) (mul w w) := by
+        show Qeq (mul w (mul w (qpow w 0))) (mul w w)
+        exact Qmul_congr (Qeq_refl _) (by show Qeq (mul w ⟨1, 1⟩) w; simp [Qeq, mul])
+      have hbase : Qeq (mul (add ⟨9, 1⟩ (mul ⟨3, 1⟩ w)) (mul (dcoef 1) w))
+          (add (mul ⟨8, 1⟩ w) (mul (mul ⟨3, 1⟩ (dcoef 1)) (mul w w))) := by
+        refine Qeq_of_Qsub_zero (Qeq_trans (Qmul_den_pos (Qsub_den_pos (Qmul_den_pos (by decide)
+          (dcoef_den 1)) Nat.one_pos) hwd) (inner_base_core (dcoef 1) w) ?_)
+        exact mul_zero_of_zero (Qeq_trans (Qsub_den_pos Nat.one_pos Nat.one_pos)
+          (Qsub_congr h9d1 (Qeq_refl _)) (by simp [Qeq, Qsub, add, neg])) w hwd
+      exact Qeq_trans (add_den_pos (Qmul_den_pos (by decide) hwd)
+        (Qmul_den_pos (Qmul_den_pos (by decide) (dcoef_den 1)) (Qmul_den_pos hwd hwd))) hbase
+        (Qadd_congr (Qeq_refl _) (Qmul_congr (Qeq_refl _) (Qeq_symm hqp2)))
+  | (m + 1) => by
+      have hP : 0 < (qpow w (m + 1 + 1)).den := qpow_den_pos hwd (m + 1 + 1)
+      have hpd : ∀ k, 0 < (peval dcoef w k).den := fun k => peval_den_pos dcoef_den hwd k
+      -- peval dcoef w (m+2) = add (peval dcoef w (m+1)) (dcoef_{m+2} · w^{m+2})
+      -- distribute (9+3w), apply IH, then step_core + cancellation
+      refine Qeq_trans (Qmul_den_pos (add_den_pos Nat.one_pos (Qmul_den_pos (by decide) hwd))
+        (hpd (m + 1 + 1))) (Qmul_congr (Qeq_refl _) (show Qeq (peval dcoef w (m + 1 + 1))
+          (add (peval dcoef w (m + 1)) (mul (dcoef (m + 1 + 1)) (qpow w (m + 1 + 1)))) from Qeq_refl _)) ?_
+      refine Qeq_trans (add_den_pos (Qmul_den_pos (add_den_pos Nat.one_pos (Qmul_den_pos (by decide) hwd))
+        (hpd (m + 1))) (Qmul_den_pos (add_den_pos Nat.one_pos (Qmul_den_pos (by decide) hwd))
+          (Qmul_den_pos (dcoef_den (m + 1 + 1)) hP)))
+        (mul_add (add ⟨9, 1⟩ (mul ⟨3, 1⟩ w)) (peval dcoef w (m + 1))
+          (mul (dcoef (m + 1 + 1)) (qpow w (m + 1 + 1)))) ?_
+      -- now: add ((9+3w)·peval(m+1)) ((9+3w)·(d_{m+2}·P)) ≈ RHS
+      have hIH := nine3w_peval_dcoef w hwd m
+      have h93 : 0 < (add ⟨9, 1⟩ (mul ⟨3, 1⟩ w)).den := add_den_pos Nat.one_pos (Qmul_den_pos (by decide) hwd)
+      have hB : 0 < (mul (add ⟨9, 1⟩ (mul ⟨3, 1⟩ w)) (mul (dcoef (m + 1 + 1)) (qpow w (m + 1 + 1)))).den :=
+        Qmul_den_pos h93 (Qmul_den_pos (dcoef_den (m + 1 + 1)) hP)
+      have hrw_a : 0 < (add (add (mul ⟨8, 1⟩ w) (mul (mul ⟨3, 1⟩ (dcoef (m + 1))) (qpow w (m + 1 + 1))))
+          (mul (add ⟨9, 1⟩ (mul ⟨3, 1⟩ w)) (mul (dcoef (m + 1 + 1)) (qpow w (m + 1 + 1))))).den :=
+        add_den_pos (add_den_pos (Qmul_den_pos (by decide) hwd)
+          (Qmul_den_pos (Qmul_den_pos (by decide) (dcoef_den (m + 1))) hP)) hB
+      have hrw_b : 0 < (add (mul ⟨8, 1⟩ w)
+          (mul (mul ⟨3, 1⟩ (dcoef (m + 1 + 1))) (mul w (qpow w (m + 1 + 1))))).den :=
+        add_den_pos (Qmul_den_pos (by decide) hwd)
+          (Qmul_den_pos (Qmul_den_pos (by decide) (dcoef_den (m + 1 + 1))) (Qmul_den_pos hwd hP))
+      have hcanc : 0 < (mul (add (mul ⟨9, 1⟩ (dcoef (m + 1 + 1))) (mul ⟨3, 1⟩ (dcoef (m + 1))))
+          (qpow w (m + 1 + 1))).den :=
+        Qmul_den_pos (add_den_pos (Qmul_den_pos (by decide) (dcoef_den (m + 1 + 1)))
+          (Qmul_den_pos (by decide) (dcoef_den (m + 1)))) hP
+      refine Qeq_of_Qsub_zero (Qeq_trans (Qsub_den_pos hrw_a hrw_b)
+        (Qsub_congr (Qadd_congr hIH (Qeq_refl _))
+          (Qadd_congr (Qeq_refl _) (Qmul_congr (Qeq_refl _)
+            (show Qeq (qpow w (m + 1 + 1 + 1)) (mul w (qpow w (m + 1 + 1))) from Qeq_refl _))))
+        (Qeq_trans hcanc (inner_step_core (mul ⟨8, 1⟩ w) (dcoef (m + 1)) (dcoef (m + 1 + 1))
+          (qpow w (m + 1 + 1)) w) (mul_zero_of_zero (dcoef_shift_cancel m) (qpow w (m + 1 + 1)) hP)))
+
 end UOR.Bridge.F1Square.Analysis
