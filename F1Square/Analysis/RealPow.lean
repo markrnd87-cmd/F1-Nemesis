@@ -2766,4 +2766,37 @@ theorem Rexp_k_log2 (k : Nat) :
         (Rpow (ofQ (⟨(2 : Int), 1⟩ : Q) Nat.one_pos) k) :=
   RexpReal_nsmul_eq (Rexp_logN 2 (by omega)) k
 
+/-- `Σ_{k≤N} (1/2)ᵏ ≤ 2` (geometric, via `gPow·(1−½)=1−(½)^{N+1}≤1`). -/
+private theorem gPow_half_le (N : Nat) : Qle (gPow (⟨1, 2⟩ : Q) N) ⟨2, 1⟩ := by
+  have hhd : 0 < (⟨1, 2⟩ : Q).den := by decide
+  have hc : Qle (mul (gPow (⟨1, 2⟩ : Q) N) (Qsub ⟨1, 1⟩ ⟨1, 2⟩))
+      (mul (⟨2, 1⟩ : Q) (Qsub ⟨1, 1⟩ ⟨1, 2⟩)) := by
+    refine Qle_trans (Qsub_den_pos Nat.one_pos (qpow_den_pos hhd (N + 1)))
+      (Qeq_le (gPow_telescope hhd N)) ?_
+    refine Qle_trans Nat.one_pos ?_
+      (Qeq_le (Qeq_symm (show Qeq (mul (⟨2, 1⟩ : Q) (Qsub ⟨1, 1⟩ ⟨1, 2⟩)) ⟨1, 1⟩ by decide)))
+    show Qle (Qsub (⟨1, 1⟩ : Q) (qpow ⟨1, 2⟩ (N + 1))) ⟨1, 1⟩
+    have hnn : 0 ≤ (qpow (⟨1, 2⟩ : Q) (N + 1)).num := qpow_nonneg (by decide) (N + 1)
+    have hd : (0 : Int) ≤ ((qpow (⟨1, 2⟩ : Q) (N + 1)).den : Int) := by
+      exact_mod_cast Nat.zero_le (qpow (⟨1, 2⟩ : Q) (N + 1)).den
+    simp only [Qle, Qsub, add, neg]; push_cast; omega
+  exact Qmul_le_cancel_right (show (0 : Int) < (Qsub (⟨1, 1⟩ : Q) ⟨1, 2⟩).num by decide)
+    (show 0 < (Qsub (⟨1, 1⟩ : Q) ⟨1, 2⟩).den by decide) hc
+
+/-- `expSum(1/2, N) ≤ 2`. -/
+private theorem expHalf_le (N : Nat) : Qle (expSum (⟨1, 2⟩ : Q) N) ⟨2, 1⟩ :=
+  Qle_trans (gPow_den_pos (by decide) N) (expSum_le_gPow (by decide) (by decide) N) (gPow_half_le N)
+
+/-- **`exp(1/2) ≤ 2`** (`exp(½)` diagonal `= expSum(½,R) ≤ 2`). -/
+theorem Rexp_half_le : Rle (RexpReal (ofQ (⟨1, 2⟩ : Q) (by decide))) (ofQ (⟨2, 1⟩ : Q) (by decide)) := by
+  intro n
+  show Qle (expSum (⟨1, 2⟩ : Q) (RexpReal_R (ofQ (⟨1, 2⟩ : Q) (by decide)) n))
+    (add (⟨2, 1⟩ : Q) ⟨2, n + 1⟩)
+  exact Qle_trans (by decide) (expHalf_le _) (Qle_self_add (by show (0 : Int) ≤ 2; decide))
+
+/-- **`log 2 ≥ 1/2`** — the positive rational lower bound for `θ = (σ−1)·log 2` (via `exp(½)≤2` + `exp` reflects `≤`). -/
+theorem logN_2_ge_half : Rle (ofQ (⟨1, 2⟩ : Q) (by decide)) (logN 2 (by omega)) :=
+  RexpReal_reflects_le (Rnonneg_logN 2 (by omega))
+    (Rle_trans Rexp_half_le (Rle_of_Req (Req_symm (Rexp_logN 2 (by omega)))))
+
 end UOR.Bridge.F1Square.Analysis

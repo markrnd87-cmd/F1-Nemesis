@@ -1229,3 +1229,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rmul_le_Rmul_left
 #print axioms Analysis.exp_block_bound
 #print axioms Analysis.Rexp_k_log2
+#print axioms Analysis.Rexp_half_le
+#print axioms Analysis.logN_2_ge_half
