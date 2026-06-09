@@ -1115,3 +1115,12 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.gval_den_pos
 #print axioms Analysis.gval_rel
 #print axioms Analysis.tmap_two_law
+#print axioms Analysis.dcoef_den
+#print axioms Analysis.dcoef_zero
+#print axioms Analysis.nine3w_den
+#print axioms Analysis.eightT_den
+#print axioms Analysis.nine3w_split
+#print axioms Analysis.dcoef_cancel_scalar
+#print axioms Analysis.dcoef_shift_cancel
+#print axioms Analysis.dcoef_main
+#print axioms Analysis.dcoef_rel

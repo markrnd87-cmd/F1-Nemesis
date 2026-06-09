@@ -898,4 +898,92 @@ theorem tmap_two_law (b : Q) (hbd : 0 < b.den) (hb1 : 0 < (add b ⟨1, 1⟩).num
     (Qeq_trans (add_den_pos Nat.one_pos (Qmul_den_pos (by decide) htd)) rel1
       (Qeq_symm (gval_rel (tmap b) htd htn)))
 
+-- ===========================================================================
+-- STEP 2a — the **δ-series** `δ(w) = g(w) − ⅓ = 8w/(9+3w)` (the vanishing inner of the artanh
+-- addition: `δ(0)=0`, `δₖ = (8/9)(−1/3)^{k−1}` for `k≥1`) and its cleared defining relation
+-- `(9+3w)·δ = 8w`. Mirrors `kdbl`/`kdbl_rel` (using scaled monomials `fsmono`).
+-- ===========================================================================
+
+/-- The δ-series `δ(w) = 8w/(9+3w)`: `δ₀=0`, `δ_{k+1} = (8/9)(−1/3)ᵏ`. Vanishes at `0`. -/
+def dcoef : Nat → Q
+  | 0 => ⟨0, 1⟩
+  | (k + 1) => mul ⟨8, 9⟩ (qpow ⟨-1, 3⟩ k)
+
+theorem dcoef_den : ∀ k, 0 < (dcoef k).den
+  | 0 => Nat.one_pos
+  | (k + 1) => Qmul_den_pos (by decide) (qpow_den_pos (by decide) k)
+
+theorem dcoef_zero : Qeq (dcoef 0) ⟨0, 1⟩ := Qeq_refl _
+
+/-- The `(9+3w)` series (the cleared denominator of `δ`). -/
+def nine3w (k : Nat) : Q := ⟨(if k = 0 then 9 else if k = 1 then 3 else 0 : Int), 1⟩
+theorem nine3w_den (k : Nat) : 0 < (nine3w k).den := Nat.one_pos
+
+/-- The `8w` series. -/
+def eightT (k : Nat) : Q := ⟨(if k = 1 then 8 else 0 : Int), 1⟩
+theorem eightT_den (k : Nat) : 0 < (eightT k).den := Nat.one_pos
+
+/-- `(9+3w) = 9·t⁰ + 3·t¹` as scaled monomials. -/
+theorem nine3w_split (k : Nat) :
+    Qeq (nine3w k) (add (fsmono ⟨9, 1⟩ 0 k) (fsmono ⟨3, 1⟩ 1 k)) := by
+  unfold nine3w fsmono
+  by_cases h0 : k = 0
+  · subst h0; decide
+  · by_cases h1 : k = 1
+    · subst h1; decide
+    · simp only [if_neg h0, if_neg h1]; decide
+
+/-- The scalar cancellation `9·(8/9)(−1/3)·P + 3·(8/9)·P = 0` (the `(−1/3)`-ratio collapse). -/
+theorem dcoef_cancel_scalar (P : Q) :
+    Qeq (add (mul ⟨9, 1⟩ (mul ⟨8, 9⟩ (mul ⟨-1, 3⟩ P))) (mul ⟨3, 1⟩ (mul ⟨8, 9⟩ P))) ⟨0, 1⟩ := by
+  simp only [Qeq, mul, add]; push_cast; ring_uor
+
+/-- The two-term sign cancellation `9·δ_{m+2} + 3·δ_{m+1} = 0` (`(−1/3)` ratio). -/
+theorem dcoef_shift_cancel (m : Nat) :
+    Qeq (add (mul ⟨9, 1⟩ (dcoef (m + 2))) (mul ⟨3, 1⟩ (dcoef (m + 1)))) ⟨0, 1⟩ := by
+  show Qeq (add (mul ⟨9, 1⟩ (mul ⟨8, 9⟩ (qpow ⟨-1, 3⟩ (m + 1))))
+      (mul ⟨3, 1⟩ (mul ⟨8, 9⟩ (qpow ⟨-1, 3⟩ m)))) ⟨0, 1⟩
+  rw [qpow_succ]
+  exact dcoef_cancel_scalar (qpow ⟨-1, 3⟩ m)
+
+/-- The per-degree split `((9+3w)·δ)_k = 9δ_k + 3δ_{k−1} = (8w)_k`. -/
+theorem dcoef_main : ∀ k,
+    Qeq (add (fmul (fsmono ⟨9, 1⟩ 0) dcoef k) (fmul (fsmono ⟨3, 1⟩ 1) dcoef k)) (eightT k)
+  | 0 => by
+      have h0 : Qeq (fmul (fsmono ⟨9, 1⟩ 0) dcoef 0) (mul ⟨9, 1⟩ (dcoef 0)) :=
+        fmul_fsmono (by decide) dcoef dcoef_den 0 (by omega)
+      have h1 : Qeq (fmul (fsmono ⟨3, 1⟩ 1) dcoef 0) ⟨0, 1⟩ :=
+        fmul_fsmono_zero (by decide) dcoef dcoef_den 1 (by omega)
+      exact Qeq_trans (add_den_pos (Qmul_den_pos (by decide) (dcoef_den 0)) Nat.one_pos)
+        (Qadd_congr h0 h1) (by decide)
+  | 1 => by
+      have h0 : Qeq (fmul (fsmono ⟨9, 1⟩ 0) dcoef 1) (mul ⟨9, 1⟩ (dcoef 1)) :=
+        fmul_fsmono (by decide) dcoef dcoef_den 0 (by omega)
+      have h1 : Qeq (fmul (fsmono ⟨3, 1⟩ 1) dcoef 1) (mul ⟨3, 1⟩ (dcoef 0)) :=
+        fmul_fsmono (by decide) dcoef dcoef_den 1 (by omega)
+      exact Qeq_trans (add_den_pos (Qmul_den_pos (by decide) (dcoef_den 1))
+        (Qmul_den_pos (by decide) (dcoef_den 0))) (Qadd_congr h0 h1) (by decide)
+  | (m + 2) => by
+      have h0 : Qeq (fmul (fsmono ⟨9, 1⟩ 0) dcoef (m + 2)) (mul ⟨9, 1⟩ (dcoef (m + 2))) :=
+        fmul_fsmono (by decide) dcoef dcoef_den 0 (by omega)
+      have h1 : Qeq (fmul (fsmono ⟨3, 1⟩ 1) dcoef (m + 2)) (mul ⟨3, 1⟩ (dcoef (m + 1))) :=
+        fmul_fsmono (by decide) dcoef dcoef_den 1 (by omega)
+      refine Qeq_trans (add_den_pos (Qmul_den_pos (by decide) (dcoef_den (m + 2)))
+        (Qmul_den_pos (by decide) (dcoef_den (m + 1)))) (Qadd_congr h0 h1) ?_
+      have ht : Qeq (⟨0, 1⟩ : Q) (eightT (m + 2)) := by
+        unfold eightT; rw [if_neg (by omega)]; exact Qeq_refl _
+      exact Qeq_trans Nat.one_pos (dcoef_shift_cancel m) ht
+
+/-- **The δ defining relation** `(9+3w)·δ = 8w`. -/
+theorem dcoef_rel (k : Nat) : Qeq (fmul nine3w dcoef k) (eightT k) := by
+  have hsplit_den : ∀ i, 0 < (add (fsmono ⟨9, 1⟩ 0 i) (fsmono ⟨3, 1⟩ 1 i)).den :=
+    fun i => add_den_pos (fsmono_den (by decide) 0 i) (fsmono_den (by decide) 1 i)
+  have e1 : Qeq (fmul nine3w dcoef k)
+      (add (fmul (fsmono ⟨9, 1⟩ 0) dcoef k) (fmul (fsmono ⟨3, 1⟩ 1) dcoef k)) :=
+    Qeq_trans (fmul_den_pos hsplit_den dcoef_den k)
+      (fmul_congr_left nine3w_split k)
+      (fmul_add_left (fsmono_den (by decide) 0) (fsmono_den (by decide) 1) dcoef_den k)
+  exact Qeq_trans (add_den_pos (fmul_den_pos (fsmono_den (by decide) 0) dcoef_den k)
+    (fmul_den_pos (fsmono_den (by decide) 1) dcoef_den k)) e1 (dcoef_main k)
+
 end UOR.Bridge.F1Square.Analysis
