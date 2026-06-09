@@ -1264,3 +1264,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.czetaExp_block_le
 #print axioms Analysis.czetaExp_term_le
 #print axioms Analysis.czetaExp_block
+#print axioms Analysis.Rnonneg_Rpow
+#print axioms Analysis.Rpow_ofQ
+#print axioms Analysis.Rpow_mono

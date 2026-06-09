@@ -2926,4 +2926,24 @@ theorem Rneg_one_le_Rsin (x : Real) : Rle (Rneg one) (Rsin x) :=
         (Rle_trans (Rsin_sq_le_one x) (Rle_of_Req (Req_symm (Rmul_one one)))))))
     (Rle_of_Req (Rneg_neg (Rsin x)))
 
+/-- `xᵏ ≥ 0` for `x ≥ 0`. -/
+theorem Rnonneg_Rpow {x : Real} (hx : Rnonneg x) : ∀ k, Rnonneg (Rpow x k)
+  | 0 => Rnonneg_one
+  | (k + 1) => Rnonneg_Rmul hx (Rnonneg_Rpow hx k)
+
+/-- `(ofQ c)ᵏ ≈ ofQ(cᵏ)`. -/
+theorem Rpow_ofQ {c : Q} (hc : 0 < c.den) :
+    ∀ k, Req (Rpow (ofQ c hc) k) (ofQ (qpow c k) (qpow_den_pos hc k))
+  | 0 => Req_of_seq_Qeq (fun _ => by show Qeq (⟨1, 1⟩ : Q) ⟨1, 1⟩; decide)
+  | (k + 1) =>
+      Req_trans (Rmul_congr (Req_refl _) (Rpow_ofQ hc k)) (Rmul_ofQ_ofQ hc (qpow_den_pos hc k))
+
+/-- `xᵏ ≤ yᵏ` for `0 ≤ x ≤ y`. -/
+theorem Rpow_mono {x y : Real} (hx : Rnonneg x) (hy : Rnonneg y) (h : Rle x y) :
+    ∀ k, Rle (Rpow x k) (Rpow y k)
+  | 0 => Rle_refl _
+  | (k + 1) =>
+      Rle_trans (Rmul_le_Rmul_right (Rnonneg_Rpow hx k) h)
+        (Rmul_le_Rmul_left hy (Rpow_mono hx hy h k))
+
 end UOR.Bridge.F1Square.Analysis
