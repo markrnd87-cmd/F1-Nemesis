@@ -151,4 +151,11 @@ theorem czetaExp_block_le (s : Complex) (N : Nat) (B : Real) : ∀ d,
             (h d (by omega)))
           (Rle_of_Req (Radd_comm (Rnsmul d B) B)))
 
+/-- **Per-term block bound**: for `n ≥ 2ᵏ` (and `Re s ≥ 0`), the `n`-th modulus term
+    `exp(−Re s · log n) ≤ exp(−Re s · k · log 2)`. The bound `B` feeding `czetaExp_block_le`. -/
+theorem czetaExp_term_le (s : Complex) (hσ : Rnonneg s.re) (k n : Nat) (hn : 1 ≤ n) (hkn : 2 ^ k ≤ n) :
+    Rle (RexpReal (czetaExpArg s n hn))
+        (RexpReal (Rneg (Rmul s.re (Rnsmul k (logN 2 (by omega)))))) :=
+  Rle_trans (Rle_of_Req (RexpReal_congr (Rmul_neg_left s.re (logN n hn)))) (exp_block_bound hσ hkn)
+
 end UOR.Bridge.F1Square.Analysis
