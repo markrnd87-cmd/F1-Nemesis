@@ -1170,3 +1170,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.fcomp_sub
 #print axioms Analysis.fmul_fsmono_smul
 #print axioms Analysis.p2_sacD
+#print axioms Analysis.qcomp_add
+#print axioms Analysis.composed_ode

@@ -1732,4 +1732,95 @@ theorem p2_sacD (k : Nat) :
     (fmul_den_pos hf9 sacD_den k)) e0 ?_
   exact Qadd_congr (Qadd_congr h8 h6) h9
 
+/-- `qcomp` in additive (negative-coefficient) form. -/
+theorem qcomp_add (k : Nat) :
+    Qeq (qcomp k) (add (add (mul ⟨8, 1⟩ (fone k)) (mul ⟨-6, 1⟩ (dcoef k)))
+      (mul ⟨-9, 1⟩ (fmul dcoef dcoef k))) := by
+  unfold qcomp; simp only [Qeq, Qsub, add, neg, mul]; push_cast; ring_uor
+
+/-- **★ THE COMPOSED ODE** `qcomp·(sacD∘δ) = 9` — `sacD`'s ODE composed with `δ`, via the monomial-shift
+    laws (`fcomp_shift1/2`) and `fcomp`/`fmul` linearity (avoids general `fcomp_fmul`). With `dcoef_ode`
+    this gives `(1−w²)·fderiv(fcomp sacoef δ)=1`, hence `fderiv(fcomp sacoef δ)=gcoef`. -/
+theorem composed_ode (k : Nat) :
+    Qeq (fmul qcomp (fcomp sacD dcoef) k) (mul ⟨9, 1⟩ (fone k)) := by
+  have hP : ∀ i, 0 < (fcomp sacD dcoef i).den := fun i => fcomp_den_pos sacD_den dcoef_den i
+  have hm1 : ∀ i, 0 < (fmul (fmono 1) sacD i).den := fun i => fmul_den_pos (fun j => fmono_den 1 j) sacD_den i
+  have hm2 : ∀ i, 0 < (fmul (fmono 2) sacD i).den := fun i => fmul_den_pos (fun j => fmono_den 2 j) sacD_den i
+  -- MID = 8P − 6(δ·P) − 9(δ·(δ·P))
+  -- hLM : fmul qcomp P ≈ MID
+  have hLM : Qeq (fmul qcomp (fcomp sacD dcoef) k)
+      (add (add (mul ⟨8, 1⟩ (fcomp sacD dcoef k))
+        (mul ⟨-6, 1⟩ (fmul dcoef (fcomp sacD dcoef) k)))
+        (mul ⟨-9, 1⟩ (fmul dcoef (fmul dcoef (fcomp sacD dcoef)) k))) := by
+    have hAd : ∀ i, 0 < (add (mul ⟨8, 1⟩ (fone i)) (mul ⟨-6, 1⟩ (dcoef i))).den :=
+      fun i => add_den_pos (Qmul_den_pos (by decide) (fone_den_pos i)) (Qmul_den_pos (by decide) (dcoef_den i))
+    have hBd : ∀ i, 0 < (mul ⟨-9, 1⟩ (fmul dcoef dcoef i)).den :=
+      fun i => Qmul_den_pos (by decide) (fmul_den_pos dcoef_den dcoef_den i)
+    refine Qeq_trans (fmul_den_pos (fun i => add_den_pos (hAd i) (hBd i)) hP k)
+      (fmul_congr_left qcomp_add k) ?_
+    refine Qeq_trans (add_den_pos (fmul_den_pos hAd hP k) (fmul_den_pos hBd hP k))
+      (fmul_add_left hAd hBd hP k) ?_
+    refine Qadd_congr ?_ ?_
+    · refine Qeq_trans (add_den_pos (fmul_den_pos (fun i => Qmul_den_pos (by decide) (fone_den_pos i)) hP k)
+        (fmul_den_pos (fun i => Qmul_den_pos (by decide) (dcoef_den i)) hP k))
+        (fmul_add_left (fun i => Qmul_den_pos (by decide) (fone_den_pos i))
+          (fun i => Qmul_den_pos (by decide) (dcoef_den i)) hP k) ?_
+      refine Qadd_congr ?_ ?_
+      · -- fmul (8·fone) P = 8·(fmul fone P) = 8·P
+        refine Qeq_trans (Qmul_den_pos (by decide) (fmul_den_pos (fun _ => fone_den_pos _) hP k))
+          (fmul_smul_left fone (fcomp sacD dcoef) ⟨8, 1⟩ (by decide) (fun _ => fone_den_pos _) hP k) ?_
+        refine Qmul_congr (Qeq_refl _) ?_
+        exact Qeq_trans (fmul_den_pos hP (fun _ => fone_den_pos _) k)
+          (fmul_comm fone (fcomp sacD dcoef) (fun _ => fone_den_pos _) hP k)
+          (fmul_one (fcomp sacD dcoef) hP k)
+      · exact fmul_smul_left dcoef (fcomp sacD dcoef) ⟨-6, 1⟩ (by decide) dcoef_den hP k
+    · -- fmul (−9·δ²) P = −9·(δ·(δ·P))
+      refine Qeq_trans (Qmul_den_pos (by decide) (fmul_den_pos (fun i => fmul_den_pos dcoef_den dcoef_den i) hP k))
+        (fmul_smul_left (fmul dcoef dcoef) (fcomp sacD dcoef) ⟨-9, 1⟩ (by decide)
+          (fun i => fmul_den_pos dcoef_den dcoef_den i) hP k) ?_
+      exact Qmul_congr (Qeq_refl _) (fmul_assoc dcoef dcoef (fcomp sacD dcoef) dcoef_den dcoef_den hP k)
+  -- hFM : fcomp (fmul p2 sacD) δ ≈ MID  (forward linearity into MID)
+  have hAd' : ∀ i, 0 < (add (mul ⟨8, 1⟩ (sacD i)) (mul ⟨-6, 1⟩ (fmul (fmono 1) sacD i))).den :=
+    fun i => add_den_pos (Qmul_den_pos (by decide) (sacD_den i)) (Qmul_den_pos (by decide) (hm1 i))
+  have hBd' : ∀ i, 0 < (mul ⟨-9, 1⟩ (fmul (fmono 2) sacD i)).den :=
+    fun i => Qmul_den_pos (by decide) (hm2 i)
+  have hFM : Qeq (fcomp (fmul p2 sacD) dcoef k)
+      (add (add (mul ⟨8, 1⟩ (fcomp sacD dcoef k))
+        (mul ⟨-6, 1⟩ (fmul dcoef (fcomp sacD dcoef) k)))
+        (mul ⟨-9, 1⟩ (fmul dcoef (fmul dcoef (fcomp sacD dcoef)) k))) := by
+    refine Qeq_trans (fcomp_den_pos (fun i => add_den_pos (hAd' i) (hBd' i)) dcoef_den k)
+      (fcomp_congr_left (fun i => p2_sacD i) k) ?_
+    refine Qeq_trans (add_den_pos (fcomp_den_pos hAd' dcoef_den k) (fcomp_den_pos hBd' dcoef_den k))
+      (fcomp_add hAd' hBd' dcoef_den k) ?_
+    refine Qadd_congr ?_ ?_
+    · refine Qeq_trans (add_den_pos
+        (fcomp_den_pos (fun i => Qmul_den_pos (by decide) (sacD_den i)) dcoef_den k)
+        (fcomp_den_pos (fun i => Qmul_den_pos (by decide) (hm1 i)) dcoef_den k))
+        (fcomp_add (fun i => Qmul_den_pos (by decide) (sacD_den i))
+          (fun i => Qmul_den_pos (by decide) (hm1 i)) dcoef_den k) ?_
+      refine Qadd_congr ?_ ?_
+      · exact fcomp_smul ⟨8, 1⟩ sacD dcoef (by decide) sacD_den dcoef_den k
+      · refine Qeq_trans (Qmul_den_pos (by decide) (fcomp_den_pos hm1 dcoef_den k))
+          (fcomp_smul ⟨-6, 1⟩ (fmul (fmono 1) sacD) dcoef (by decide) hm1 dcoef_den k) ?_
+        exact Qmul_congr (Qeq_refl _) (fcomp_shift1 sacD dcoef sacD_den dcoef_den dcoef_zero k)
+    · refine Qeq_trans (Qmul_den_pos (by decide) (fcomp_den_pos hm2 dcoef_den k))
+        (fcomp_smul ⟨-9, 1⟩ (fmul (fmono 2) sacD) dcoef (by decide) hm2 dcoef_den k) ?_
+      exact Qmul_congr (Qeq_refl _) (fcomp_shift2 sacD dcoef sacD_den dcoef_den dcoef_zero k)
+  -- hode : fcomp (fmul p2 sacD) δ ≈ 9·fone  (sacD_ode + fcomp linearity)
+  have hode : Qeq (fcomp (fmul p2 sacD) dcoef k) (mul ⟨9, 1⟩ (fone k)) := by
+    refine Qeq_trans (fcomp_den_pos (fun i => Qmul_den_pos (by decide) (fone_den_pos i)) dcoef_den k)
+      (fcomp_congr_left (fun i => sacD_ode i) k) ?_
+    refine Qeq_trans (Qmul_den_pos (by decide) (fcomp_den_pos (fun _ => fone_den_pos _) dcoef_den k))
+      (fcomp_smul ⟨9, 1⟩ fone dcoef (by decide) (fun _ => fone_den_pos _) dcoef_den k) ?_
+    exact Qmul_congr (Qeq_refl _) (fcomp_fone dcoef_den k)
+  have hMIDden : 0 < (add (add (mul ⟨8, 1⟩ (fcomp sacD dcoef k))
+      (mul ⟨-6, 1⟩ (fmul dcoef (fcomp sacD dcoef) k)))
+      (mul ⟨-9, 1⟩ (fmul dcoef (fmul dcoef (fcomp sacD dcoef)) k))).den :=
+    add_den_pos (add_den_pos (Qmul_den_pos (by decide) (hP k))
+      (Qmul_den_pos (by decide) (fmul_den_pos dcoef_den hP k)))
+      (Qmul_den_pos (by decide) (fmul_den_pos dcoef_den (fun i => fmul_den_pos dcoef_den hP i) k))
+  exact Qeq_trans hMIDden hLM
+    (Qeq_trans (fcomp_den_pos (fun i => fmul_den_pos p2_den sacD_den i) dcoef_den k)
+      (Qeq_symm hFM) hode)
+
 end UOR.Bridge.F1Square.Analysis
