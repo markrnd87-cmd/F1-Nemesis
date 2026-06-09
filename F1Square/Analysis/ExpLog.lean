@@ -4483,4 +4483,15 @@ theorem peval_truncTo {b : Nat → Q} (hb : ∀ i, 0 < (b i).den) (t : Q) (htd :
         (Qadd_congr (peval_truncTo hb t htd M d) ?_) (Qadd_zero_right _)
       rw [hz]; exact mul_left_zero _
 
+/-- **Extending a finite sum over zero terms**: `Fsum f (a+d) ≈ Fsum f a` when `f j ≈ 0` for `a < j ≤ a+d`. -/
+theorem Fsum_ext_zero {f : Nat → Q} (hf : ∀ k, 0 < (f k).den) (a : Nat) :
+    ∀ d, (∀ j, a < j → j ≤ a + d → Qeq (f j) ⟨0, 1⟩) → Qeq (Fsum f (a + d)) (Fsum f a)
+  | 0, _ => Qeq_refl _
+  | (d + 1), hz => by
+      rw [Nat.add_succ]
+      show Qeq (add (Fsum f (a + d)) (f (a + d + 1))) (Fsum f a)
+      refine Qeq_trans (add_den_pos (Fsum_den_pos hf a) Nat.one_pos)
+        (Qadd_congr (Fsum_ext_zero hf a d (fun j hj1 hj2 => hz j hj1 (by omega)))
+          (hz (a + d + 1) (by omega) (by omega))) (Qadd_zero_right _)
+
 end UOR.Bridge.F1Square.Analysis

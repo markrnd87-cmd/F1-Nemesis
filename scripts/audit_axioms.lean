@@ -1057,3 +1057,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.truncTo_den
 #print axioms Analysis.truncTo_le
 #print axioms Analysis.peval_truncTo
+#print axioms Analysis.Fsum_ext_zero
