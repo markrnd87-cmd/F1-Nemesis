@@ -1152,3 +1152,10 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.qcomp_den
 #print axioms Analysis.nine3w_qcomp2
 #print axioms Analysis.dcoef_ode
+#print axioms Analysis.sacDpair_den
+#print axioms Analysis.sacD_den
+#print axioms Analysis.sacD_succ_succ
+#print axioms Analysis.p2_den
+#print axioms Analysis.p2_split
+#print axioms Analysis.sacD_cancel
+#print axioms Analysis.sacD_ode

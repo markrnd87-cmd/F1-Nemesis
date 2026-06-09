@@ -1429,4 +1429,105 @@ theorem dcoef_ode (k : Nat) :
         (Qmul_den_pos (by decide) (fmul_den_pos eightT_den eightT_den j)))
       (g2_final j) (Qeq_symm (nine3w_qcomp2 j)))
 
+-- ===========================================================================
+-- STEP 2d — the **shifted-artanh derivative** `sacD = sacoef' = artanh'(⅓+u) = 9/(8−6u−9u²)` (RATIONAL,
+-- the reciprocal of the quadratic `8−6u−9u²`), via its 3-term recurrence `8 sacDₖ = 6 sacD_{k−1} + 9 sacD_{k−2}`.
+-- Its ODE `(8−6u−9u²)·sacD = 9` is the defining relation, composed with δ in STEP 2e.
+-- ===========================================================================
+
+/-- Pair-recursion carrying `(sacD_k, sacD_{k−1})` for the 3-term recurrence. -/
+def sacDpair : Nat → Q × Q
+  | 0 => (⟨9, 8⟩, ⟨0, 1⟩)
+  | (k + 1) => let p := sacDpair k; (mul ⟨1, 8⟩ (add (mul ⟨6, 1⟩ p.1) (mul ⟨9, 1⟩ p.2)), p.1)
+
+/-- `sacD = sacoef' = 9/(8−6u−9u²)`. -/
+def sacD (k : Nat) : Q := (sacDpair k).1
+
+theorem sacDpair_den : ∀ k, 0 < (sacDpair k).1.den ∧ 0 < (sacDpair k).2.den
+  | 0 => ⟨by decide, by decide⟩
+  | (k + 1) => ⟨Qmul_den_pos (by decide)
+      (add_den_pos (Qmul_den_pos (by decide) (sacDpair_den k).1)
+        (Qmul_den_pos (by decide) (sacDpair_den k).2)), (sacDpair_den k).1⟩
+
+theorem sacD_den (k : Nat) : 0 < (sacD k).den := (sacDpair_den k).1
+
+/-- The recurrence `sacD_{m+2} = (6 sacD_{m+1} + 9 sacD_m)/8`. -/
+theorem sacD_succ_succ (m : Nat) :
+    sacD (m + 2) = mul ⟨1, 8⟩ (add (mul ⟨6, 1⟩ (sacD (m + 1))) (mul ⟨9, 1⟩ (sacD m))) := rfl
+
+/-- The quadratic `8 − 6u − 9u²` coefficient series. -/
+def p2 (k : Nat) : Q := ⟨(if k = 0 then 8 else if k = 1 then -6 else if k = 2 then -9 else 0 : Int), 1⟩
+theorem p2_den (k : Nat) : 0 < (p2 k).den := Nat.one_pos
+
+theorem p2_split (k : Nat) :
+    Qeq (p2 k) (add (add (fsmono ⟨8, 1⟩ 0 k) (fsmono ⟨-6, 1⟩ 1 k)) (fsmono ⟨-9, 1⟩ 2 k)) := by
+  unfold p2 fsmono
+  by_cases h0 : k = 0
+  · subst h0; decide
+  · by_cases h1 : k = 1
+    · subst h1; decide
+    · by_cases h2 : k = 2
+      · subst h2; decide
+      · simp only [if_neg h0, if_neg h1, if_neg h2]; decide
+
+/-- The 3-term recurrence cancellation `8·((6a+9b)/8) − 6a − 9b = 0`. -/
+theorem sacD_cancel (a b : Q) :
+    Qeq (add (add (mul ⟨8, 1⟩ (mul ⟨1, 8⟩ (add (mul ⟨6, 1⟩ a) (mul ⟨9, 1⟩ b))))
+      (mul ⟨-6, 1⟩ a)) (mul ⟨-9, 1⟩ b)) ⟨0, 1⟩ := by
+  simp only [Qeq, add, mul]; push_cast; ring_uor
+
+/-- **The sacD ODE** `(8−6u−9u²)·sacD = 9` (the defining reciprocal relation, `sacD = sacoef'`). -/
+theorem sacD_ode (k : Nat) : Qeq (fmul p2 sacD k) (mul ⟨9, 1⟩ (fone k)) := by
+  have hsd : ∀ i, 0 < (add (add (fsmono ⟨8, 1⟩ 0 i) (fsmono ⟨-6, 1⟩ 1 i)) (fsmono ⟨-9, 1⟩ 2 i)).den :=
+    fun i => add_den_pos (add_den_pos (fsmono_den (by decide) 0 i) (fsmono_den (by decide) 1 i))
+      (fsmono_den (by decide) 2 i)
+  have hid : ∀ i, 0 < (add (fsmono ⟨8, 1⟩ 0 i) (fsmono ⟨-6, 1⟩ 1 i)).den :=
+    fun i => add_den_pos (fsmono_den (by decide) 0 i) (fsmono_den (by decide) 1 i)
+  have e0 : Qeq (fmul p2 sacD k)
+      (add (add (fmul (fsmono ⟨8, 1⟩ 0) sacD k) (fmul (fsmono ⟨-6, 1⟩ 1) sacD k))
+        (fmul (fsmono ⟨-9, 1⟩ 2) sacD k)) := by
+    refine Qeq_trans (fmul_den_pos hsd sacD_den k) (fmul_congr_left p2_split k) ?_
+    refine Qeq_trans (add_den_pos (fmul_den_pos hid sacD_den k)
+      (fmul_den_pos (fsmono_den (by decide) 2) sacD_den k))
+      (fmul_add_left hid (fsmono_den (by decide) 2) sacD_den k) ?_
+    exact Qadd_congr (fmul_add_left (fsmono_den (by decide) 0) (fsmono_den (by decide) 1) sacD_den k)
+      (Qeq_refl _)
+  have hd3 : ∀ i, 0 < (fmul (fsmono ⟨9, 1⟩ 0) sacD i).den := fun i => fmul_den_pos (fsmono_den (by decide) 0) sacD_den i
+  match k with
+  | 0 =>
+      have h8 : Qeq (fmul (fsmono ⟨8, 1⟩ 0) sacD 0) (mul ⟨8, 1⟩ (sacD 0)) := fmul_fsmono (by decide) sacD sacD_den 0 (by omega)
+      have h6 : Qeq (fmul (fsmono ⟨-6, 1⟩ 1) sacD 0) ⟨0, 1⟩ := fmul_fsmono_zero (by decide) sacD sacD_den 1 (by omega)
+      have h9 : Qeq (fmul (fsmono ⟨-9, 1⟩ 2) sacD 0) ⟨0, 1⟩ := fmul_fsmono_zero (by decide) sacD sacD_den 2 (by omega)
+      refine Qeq_trans (add_den_pos (add_den_pos (fmul_den_pos (fsmono_den (by decide) 0) sacD_den 0)
+        (fmul_den_pos (fsmono_den (by decide) 1) sacD_den 0)) (fmul_den_pos (fsmono_den (by decide) 2) sacD_den 0)) e0 ?_
+      exact Qeq_trans (add_den_pos (add_den_pos (Qmul_den_pos (by decide) (sacD_den 0)) Nat.one_pos) Nat.one_pos)
+        (Qadd_congr (Qadd_congr h8 h6) h9) (by decide)
+  | 1 =>
+      have h8 : Qeq (fmul (fsmono ⟨8, 1⟩ 0) sacD 1) (mul ⟨8, 1⟩ (sacD 1)) := by
+        have hh := fmul_fsmono (c := ⟨8, 1⟩) (by decide) sacD sacD_den 0 (show 0 ≤ 1 by omega); rwa [Nat.sub_zero] at hh
+      have h6 : Qeq (fmul (fsmono ⟨-6, 1⟩ 1) sacD 1) (mul ⟨-6, 1⟩ (sacD 0)) := fmul_fsmono (by decide) sacD sacD_den 1 (by omega)
+      have h9 : Qeq (fmul (fsmono ⟨-9, 1⟩ 2) sacD 1) ⟨0, 1⟩ := fmul_fsmono_zero (by decide) sacD sacD_den 2 (by omega)
+      refine Qeq_trans (add_den_pos (add_den_pos (fmul_den_pos (fsmono_den (by decide) 0) sacD_den 1)
+        (fmul_den_pos (fsmono_den (by decide) 1) sacD_den 1)) (fmul_den_pos (fsmono_den (by decide) 2) sacD_den 1)) e0 ?_
+      exact Qeq_trans (add_den_pos (add_den_pos (Qmul_den_pos (by decide) (sacD_den 1))
+        (Qmul_den_pos (by decide) (sacD_den 0))) Nat.one_pos) (Qadd_congr (Qadd_congr h8 h6) h9) (by decide)
+  | (m + 2) =>
+      have h8 : Qeq (fmul (fsmono ⟨8, 1⟩ 0) sacD (m + 2)) (mul ⟨8, 1⟩ (sacD (m + 2))) := by
+        have hh := fmul_fsmono (c := ⟨8, 1⟩) (by decide) sacD sacD_den 0 (show 0 ≤ m + 2 by omega); rwa [Nat.sub_zero] at hh
+      have h6 : Qeq (fmul (fsmono ⟨-6, 1⟩ 1) sacD (m + 2)) (mul ⟨-6, 1⟩ (sacD (m + 1))) := by
+        have hh := fmul_fsmono (c := ⟨-6, 1⟩) (by decide) sacD sacD_den 1 (show 1 ≤ m + 2 by omega)
+        rwa [show m + 2 - 1 = m + 1 from by omega] at hh
+      have h9 : Qeq (fmul (fsmono ⟨-9, 1⟩ 2) sacD (m + 2)) (mul ⟨-9, 1⟩ (sacD m)) := by
+        have hh := fmul_fsmono (c := ⟨-9, 1⟩) (by decide) sacD sacD_den 2 (show 2 ≤ m + 2 by omega)
+        rwa [show m + 2 - 2 = m from by omega] at hh
+      refine Qeq_trans (add_den_pos (add_den_pos (fmul_den_pos (fsmono_den (by decide) 0) sacD_den (m + 2))
+        (fmul_den_pos (fsmono_den (by decide) 1) sacD_den (m + 2))) (fmul_den_pos (fsmono_den (by decide) 2) sacD_den (m + 2))) e0 ?_
+      refine Qeq_trans (add_den_pos (add_den_pos (Qmul_den_pos (by decide) (sacD_den (m + 2)))
+        (Qmul_den_pos (by decide) (sacD_den (m + 1)))) (Qmul_den_pos (by decide) (sacD_den m)))
+        (Qadd_congr (Qadd_congr h8 h6) h9) ?_
+      rw [sacD_succ_succ m]
+      have hf : fone (m + 2) = ⟨0, 1⟩ := by unfold fone; rw [if_neg (by omega)]
+      rw [hf]
+      exact Qeq_trans Nat.one_pos (sacD_cancel (sacD (m + 1)) (sacD m)) (by decide)
+
 end UOR.Bridge.F1Square.Analysis
