@@ -4086,4 +4086,36 @@ theorem Rlog_double_algebra (c X Xdbl R2 : Real) (hdbl : Req (Radd X X) Xdbl) (h
   Req_trans (Req_symm (Rmul_distrib c X X))
     (Rmul_congr (Req_refl c) (Req_trans hdbl hcong))
 
+/-- **Log-doubling (abstract wiring)**: with `c = ofQ 2`, `t_Y` (radius `ρ`, bound on `t_Y`), `t_{Y²}` (radius
+    `σ = ρ_{B²}`), and `t_{Y²} ≈ uvalReal t_Y` (from `(a)`), the two `Rmul c (Rartanh …)` reals — i.e.
+    `2·Rlog Y` and `Rlog (Y²)` — agree. Chains `Rartanh_radius_indep` (`ρ→σ`), `Rartanh_double_real_via`
+    (doubling), `Rartanh_congr` (`(a)`), `Rlog_double_algebra` (`Rmul_distrib`). Pure wiring, no new analysis. -/
+theorem Rlog_sq_via (c tY tY2 : Real) (ρ σ : Q) (hρd : 0 < ρ.den) (hρ0 : 0 ≤ ρ.num)
+    (hρ1 : Qle ρ ⟨1, 1⟩) (h2ρ : 0 ≤ (Qsub (⟨1, 1⟩ : Q) (mul ⟨2, 1⟩ ρ)).num)
+    (hρ4 : Qle (⟨1, 2⟩ : Q) (Qsub ⟨1, 1⟩ (mul ⟨2, 1⟩ ρ))) (hρ2 : Qle (⟨1, 2⟩ : Q) (Qsub ⟨1, 1⟩ (mul ρ ρ)))
+    (hρ8 : Qle (mul ⟨4, 1⟩ ρ) ⟨1, 1⟩) (hlt : (mul ρ ⟨16, 1⟩).num.toNat < (mul ρ ⟨16, 1⟩).den)
+    (hρlt : ρ.num.toNat < ρ.den) (hσ0 : 0 ≤ σ.num) (hσd : 0 < σ.den)
+    (hσ2 : Qle (⟨1, 2⟩ : Q) (Qsub ⟨1, 1⟩ (mul σ σ))) (hσlt : σ.num.toNat < σ.den) (hσ1 : Qle σ ⟨1, 1⟩)
+    (hbtρ : ∀ m, Qle (Qabs (tY.seq m)) ρ) (hbtσ : ∀ m, Qle (Qabs (tY.seq m)) σ)
+    (hbu : ∀ m, Qle (Qabs (uval (tY.seq m))) σ) (hbtY2 : ∀ m, Qle (Qabs (tY2.seq m)) σ)
+    (htsq : Req tY2 (uvalReal tY σ hσd hσ1 hbtσ)) :
+    Req (Radd (Rmul c (Rartanh tY ρ hρ0 hρd hρlt hbtρ)) (Rmul c (Rartanh tY ρ hρ0 hρd hρlt hbtρ)))
+        (Rmul c (Rartanh tY2 σ hσ0 hσd hσlt hbtY2)) := by
+  have hbur : ∀ n, Qle (Qabs ((uvalReal tY σ hσd hσ1 hbtσ).seq n)) σ := fun n => hbu (4 * n + 3)
+  have hrad : Req (Rartanh tY ρ hρ0 hρd hρlt hbtρ) (Rartanh tY σ hσ0 hσd hσlt hbtσ) :=
+    Rartanh_radius_indep tY (Rartanh tY ρ hρ0 hρd hρlt hbtρ) (Rartanh tY σ hσ0 hσd hσlt hbtσ)
+      ρ σ ρ hρd hσd hρ0 hρd hρlt hρ2 hbtρ (fun _ => rfl) (fun _ => rfl)
+  have hdbl : Req (Radd (Rartanh tY σ hσ0 hσd hσlt hbtσ) (Rartanh tY σ hσ0 hσd hσlt hbtσ))
+      (Rartanh (uvalReal tY σ hσd hσ1 hbtσ) σ hσ0 hσd hσlt hbur) :=
+    Rartanh_double_real_via tY (Rartanh tY σ hσ0 hσd hσlt hbtσ)
+      (Rartanh (uvalReal tY σ hσd hσ1 hbtσ) σ hσ0 hσd hσlt hbur) ρ σ
+      hρd hρ0 hρ1 h2ρ hρ4 hρ2 hρ8 hlt hσ0 hσd hσ2 hσlt hbtρ hbu (fun _ => rfl) (fun _ => rfl)
+  have hcong : Req (Rartanh (uvalReal tY σ hσd hσ1 hbtσ) σ hσ0 hσd hσlt hbur)
+      (Rartanh tY2 σ hσ0 hσd hσlt hbtY2) :=
+    Rartanh_congr (uvalReal tY σ hσd hσ1 hbtσ) tY2 σ hσ0 hσd hσlt hσ2 hbur hbtY2 (Req_symm htsq)
+  exact Req_trans (Radd_congr (Rmul_congr (Req_refl c) hrad) (Rmul_congr (Req_refl c) hrad))
+    (Rlog_double_algebra c (Rartanh tY σ hσ0 hσd hσlt hbtσ)
+      (Rartanh (uvalReal tY σ hσd hσ1 hbtσ) σ hσ0 hσd hσlt hbur)
+      (Rartanh tY2 σ hσ0 hσd hσlt hbtY2) hdbl hcong)
+
 end UOR.Bridge.F1Square.Analysis
