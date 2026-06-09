@@ -158,4 +158,14 @@ theorem czetaExp_term_le (s : Complex) (hσ : Rnonneg s.re) (k n : Nat) (hn : 1 
         (RexpReal (Rneg (Rmul s.re (Rnsmul k (logN 2 (by omega)))))) :=
   Rle_trans (Rle_of_Req (RexpReal_congr (Rmul_neg_left s.re (logN n hn)))) (exp_block_bound hσ hkn)
 
+/-- **The dyadic block bound**: `E(2ᵏ⁺¹) − E(2ᵏ) ≤ 2ᵏ · exp(−Re s · k · log 2)` (`2ᵏ` terms, each
+    `≤ exp(−Re s · k · log 2)`). The `k`-th block of the modulus sum. -/
+theorem czetaExp_block (s : Complex) (hσ : Rnonneg s.re) (k : Nat) :
+    Rle (Rsub (czetaExpSum s (2 ^ (k + 1))) (czetaExpSum s (2 ^ k)))
+        (Rnsmul (2 ^ k) (RexpReal (Rneg (Rmul s.re (Rnsmul k (logN 2 (by omega))))))) := by
+  have he : 2 ^ k + 2 ^ k = 2 ^ (k + 1) := by rw [Nat.pow_succ]; omega
+  rw [← he]
+  exact czetaExp_block_le s (2 ^ k) _ (2 ^ k)
+    (fun i _ => czetaExp_term_le s hσ k (2 ^ k + i + 1) (by omega) (by omega))
+
 end UOR.Bridge.F1Square.Analysis
