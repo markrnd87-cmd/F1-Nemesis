@@ -597,4 +597,135 @@ theorem expSum_mul_one_sub_le {q : Q} (hq0 : 0 ≤ q.num) (hqd : 0 < q.den) (hq1
   exact Qle_trans (Qmul_den_pos (gPow_den_pos hqd N) (Qsub_den_pos (by decide) hqd)) h1
     (Qle_trans (Qsub_den_pos (by decide) (qpow_den_pos hqd (N + 1))) (Qeq_le (gPow_telescope hqd N)) h3)
 
+-- ===========================================================================
+-- **Division by a positive real** (the cancellation linchpin): `Rnonneg (x·c) ∧ Pos c ⟹ Rnonneg x`.
+-- The standard Bishop division — at a deep product index `c ≥ RL > 0` (`Inv.lean`'s witnessed floor),
+-- so `x_I ≥ −1/((m+1)·RL)`; an Archimedean reindex (`Qarch_gen`) then recovers the tight `x ≥ −1/(p+1)`.
+-- ===========================================================================
+
+/-- The integer core of the division step: from `−dA·dc ≤ A·C·mp` (the product `≥ −1/mp`) and
+    `RLn·dc ≤ C·RLd` (`c ≥ RL`), with all of `dA, dc, RLn, RLd, mp > 0`, conclude `−RLd·dA ≤ A·mp·RLn`
+    (i.e. `x_I ≥ −1/(mp·RL)`). Cases on the sign of `A`; the `A<0` case divides out `dc`. -/
+private theorem div_int_core {A C dA dc RLn RLd mp : Int}
+    (hdA : 0 < dA) (hdc : 0 < dc) (hRLn : 0 < RLn) (hRLd : 0 < RLd) (_hmp : 0 < mp)
+    (h1 : -(dA * dc) ≤ A * C * mp) (h2 : RLn * dc ≤ C * RLd) :
+    -(RLd * dA) ≤ A * mp * RLn := by
+  by_cases hA : 0 ≤ A
+  · have h3 : 0 ≤ A * mp * RLn := Int.mul_nonneg (Int.mul_nonneg hA (by omega)) (by omega)
+    have h4 : 0 ≤ RLd * dA := Int.mul_nonneg (by omega) (by omega)
+    omega
+  · have ha' : 0 ≤ -A := by omega
+    have h1' : (-A) * C * mp ≤ dA * dc := by
+      have e : (-A) * C * mp = -(A * C * mp) := by ring_uor
+      rw [e]; omega
+    have c1 : (-A) * mp * (RLn * dc) ≤ (-A) * mp * (C * RLd) :=
+      Int.mul_le_mul_of_nonneg_left h2 (Int.mul_nonneg ha' (by omega))
+    have c2 : ((-A) * C * mp) * RLd ≤ (dA * dc) * RLd :=
+      Int.mul_le_mul_of_nonneg_right h1' (by omega)
+    have e2 : (-A) * mp * (C * RLd) = ((-A) * C * mp) * RLd := by ring_uor
+    have e3 : (-A) * mp * (RLn * dc) = ((-A) * mp * RLn) * dc := by ring_uor
+    have e4 : (dA * dc) * RLd = (RLd * dA) * dc := by ring_uor
+    have c3 : ((-A) * mp * RLn) * dc ≤ (RLd * dA) * dc := by
+      rw [e2] at c1; rw [← e3, ← e4]; exact Int.le_trans c1 c2
+    have c4 : (-A) * mp * RLn ≤ RLd * dA := Int.le_of_mul_le_mul_right c3 hdc
+    have e5 : A * mp * RLn = -((-A) * mp * RLn) := by ring_uor
+    rw [e5]; omega
+
+/-- The `ℚ` division step: `−1/m ≤ xI·cI` and `L ≤ cI` (`L > 0`) give `−1/(m·L) ≤ xI`. -/
+private theorem div_lo_core (xI cI L : Q) (m : Nat) (hxd : 0 < xI.den) (hcd : 0 < cI.den)
+    (hLn : 0 < L.num) (hLd : 0 < L.den) (h1 : Qle (neg (Qbound m)) (mul xI cI)) (h2 : Qle L cI) :
+    Qle (neg (mul (Qbound m) (Qinv L))) xI := by
+  have H1 : -((xI.den : Int) * (cI.den : Int)) ≤ xI.num * cI.num * ((m : Int) + 1) := by
+    have h := h1; simp only [Qle, neg, Qbound, mul] at h; push_cast at h; omega
+  have H2 : L.num * (cI.den : Int) ≤ cI.num * (L.den : Int) := by
+    have h := h2; simp only [Qle] at h; push_cast at h; omega
+  have hcore := div_int_core (A := xI.num) (C := cI.num) (dA := (xI.den : Int))
+    (dc := (cI.den : Int)) (RLn := L.num) (RLd := (L.den : Int)) (mp := (m : Int) + 1)
+    (by exact_mod_cast hxd) (by exact_mod_cast hcd) hLn (by exact_mod_cast hLd) (by omega) H1 H2
+  simp only [Qle, neg, mul, Qbound, Qinv]
+  push_cast [Int.toNat_of_nonneg (Int.le_of_lt hLn)]
+  have e2 : -((1 : Int) * (L.den : Int)) * (xI.den : Int) = -((L.den : Int) * (xI.den : Int)) := by
+    ring_uor
+  have e : xI.num * (((m : Int) + 1) * L.num) = xI.num * ((m : Int) + 1) * L.num := by ring_uor
+  rw [e2, e]; exact hcore
+
+/-- `1/((m+1)·L) ≤ L.den/(aux+1)` when `aux ≤ m` and `L > 0` (the first tail piece of the cancellation). -/
+private theorem qbound_qinv_le {L : Q} (hLn : 0 < L.num) (m aux : Nat) (h : aux ≤ m) :
+    Qle (mul (Qbound m) (Qinv L)) (⟨(L.den : Int), aux + 1⟩ : Q) := by
+  simp only [Qle, mul, Qbound, Qinv]
+  push_cast [Int.toNat_of_nonneg (Int.le_of_lt hLn)]
+  have ha : (aux : Int) + 1 ≤ (m : Int) + 1 := by exact_mod_cast Nat.succ_le_succ h
+  have hc : ((aux : Int) + 1) * 1 ≤ ((m : Int) + 1) * L.num :=
+    Int.mul_le_mul ha (by omega) (by omega) (by omega)
+  have hd : (0 : Int) ≤ (L.den : Int) := Int.ofNat_nonneg _
+  have key : (1 : Int) * (L.den : Int) * ((aux : Int) + 1)
+      ≤ (L.den : Int) * (((m : Int) + 1) * L.num) := by
+    calc (1 : Int) * (L.den : Int) * ((aux : Int) + 1)
+        = (L.den : Int) * (((aux : Int) + 1) * 1) := by ring_uor
+      _ ≤ (L.den : Int) * (((m : Int) + 1) * L.num) := Int.mul_le_mul_of_nonneg_left hc hd
+  exact key
+
+/-- **Division by a positive real**: `Rnonneg (x·c)` and `Pos c` give `Rnonneg x`. The Bishop quotient:
+    at a deep product index `c ≥ RL > 0` (`Rinv_lb`), `div_lo_core` gives `x_I ≥ −1/((m+1)·RL)`, and a
+    `Qarch_gen` reindex (with `C = (RL c k).den + 1`) recovers the tight `x ≥ −1/(p+1)`. -/
+theorem Rnonneg_of_Rmul_Pos {x c : Real} (hc : Pos c) (hxc : Rnonneg (Rmul x c)) : Rnonneg x := by
+  obtain ⟨k, hk⟩ := hc
+  intro p
+  refine Qarch_gen (C := (RL c k).den + 1) (neg_den_pos (Qbound_den_pos p)) (x.den_pos p) (fun aux => ?_)
+  -- m := aux + 2·δ.den, I := Ridx x c m
+  have hmge : aux ≤ aux + 2 * (Rdelta c k).den := by omega
+  have hIge : aux ≤ Ridx x c (aux + 2 * (Rdelta c k).den) :=
+    Nat.le_trans hmge (Ridx_ge x c _)
+  have hIdeep : 2 * (Rdelta c k).den ≤ Ridx x c (aux + 2 * (Rdelta c k).den) :=
+    Nat.le_trans (by omega) (Ridx_ge x c _)
+  have hprod : Qle (neg (Qbound (aux + 2 * (Rdelta c k).den)))
+      (mul (x.seq (Ridx x c (aux + 2 * (Rdelta c k).den)))
+        (c.seq (Ridx x c (aux + 2 * (Rdelta c k).den)))) :=
+    hxc (aux + 2 * (Rdelta c k).den)
+  have hclb : Qle (RL c k) (c.seq (Ridx x c (aux + 2 * (Rdelta c k).den))) := Rinv_lb hk hIdeep
+  have hxI : Qle (neg (mul (Qbound (aux + 2 * (Rdelta c k).den)) (Qinv (RL c k))))
+      (x.seq (Ridx x c (aux + 2 * (Rdelta c k).den))) :=
+    div_lo_core _ _ _ _ (x.den_pos _) (c.den_pos _) (RL_num_pos hk) RL_den_pos hprod hclb
+  have hreg : Qle (x.seq (Ridx x c (aux + 2 * (Rdelta c k).den)))
+      (add (x.seq p) (add (Qbound (Ridx x c (aux + 2 * (Rdelta c k).den))) (Qbound p))) :=
+    Qle_add_of_Qabs_sub (x.den_pos _) (x.den_pos p)
+      (add_den_pos (Qbound_den_pos _) (Qbound_den_pos p))
+      (x.reg (Ridx x c (aux + 2 * (Rdelta c k).den)) p)
+  -- the key rational tail bound: X + Qbound I ≤ ⟨den+1, aux+1⟩
+  have hkey : Qle (add (mul (Qbound (aux + 2 * (Rdelta c k).den)) (Qinv (RL c k)))
+      (Qbound (Ridx x c (aux + 2 * (Rdelta c k).den)))) (⟨((RL c k).den : Int) + 1, aux + 1⟩ : Q) := by
+    have hk2 : Qle (Qbound (Ridx x c (aux + 2 * (Rdelta c k).den))) (⟨1, aux + 1⟩ : Q) := by
+      have hIge' := hIge
+      simp only [Qle, Qbound]; push_cast; omega
+    refine Qle_trans (add_den_pos (Nat.succ_pos aux) (Nat.succ_pos aux))
+      (Qadd_le_add (qbound_qinv_le (RL_num_pos hk) _ aux hmge) hk2) (Qeq_le ?_)
+    simp only [Qeq, add]; push_cast; ring_uor
+  have hcomb : Qle (neg (mul (Qbound (aux + 2 * (Rdelta c k).den)) (Qinv (RL c k))))
+      (add (x.seq p) (add (Qbound (Ridx x c (aux + 2 * (Rdelta c k).den))) (Qbound p))) :=
+    Qle_trans (x.den_pos _) hxI hreg
+  -- (−X) − (Qbound I + Qbound p) ≤ x.seq p
+  have hxp_lb : Qle (add (neg (mul (Qbound (aux + 2 * (Rdelta c k).den)) (Qinv (RL c k))))
+      (neg (add (Qbound (Ridx x c (aux + 2 * (Rdelta c k).den))) (Qbound p)))) (x.seq p) := by
+    refine Qle_trans (add_den_pos (add_den_pos (x.den_pos p) (add_den_pos (Qbound_den_pos _)
+      (Qbound_den_pos p))) (neg_den_pos (add_den_pos (Qbound_den_pos _) (Qbound_den_pos p))))
+      (Qadd_le_add hcomb (Qle_refl _)) (Qeq_le ?_)
+    simp only [Qeq, add, neg]; push_cast; ring_uor
+  -- 0 ≤ (BD − (X + Qbound I)).num   (from hkey)
+  have hnn : 0 ≤ (Qsub (⟨((RL c k).den + 1 : Nat), aux + 1⟩ : Q)
+      (add (mul (Qbound (aux + 2 * (Rdelta c k).den)) (Qinv (RL c k)))
+        (Qbound (Ridx x c (aux + 2 * (Rdelta c k).den))))).num :=
+    Qsub_num_nonneg hkey
+  -- neg(Qbound p) ≤ M := (−X − (Qbound I + Qbound p)) + BD
+  have h_a : Qle (neg (Qbound p))
+      (add (add (neg (mul (Qbound (aux + 2 * (Rdelta c k).den)) (Qinv (RL c k))))
+        (neg (add (Qbound (Ridx x c (aux + 2 * (Rdelta c k).den))) (Qbound p))))
+        (⟨((RL c k).den + 1 : Nat), aux + 1⟩ : Q)) := by
+    refine Qle_trans (add_den_pos (neg_den_pos (Qbound_den_pos p)) (Qsub_den_pos (Nat.succ_pos _)
+      (add_den_pos (Qmul_den_pos (Qbound_den_pos _) (Qinv_den_pos (RL_num_pos hk)))
+        (Qbound_den_pos _)))) (Qle_self_add hnn) (Qeq_le ?_)
+    simp only [Qeq, add, neg, Qsub]; push_cast; ring_uor
+  exact Qle_trans (add_den_pos (add_den_pos (neg_den_pos (Qmul_den_pos (Qbound_den_pos _)
+    (Qinv_den_pos (RL_num_pos hk)))) (neg_den_pos (add_den_pos (Qbound_den_pos _) (Qbound_den_pos p))))
+    (Nat.succ_pos _)) h_a (Qadd_le_add hxp_lb (Qle_refl _))
+
 end UOR.Bridge.F1Square.Analysis
