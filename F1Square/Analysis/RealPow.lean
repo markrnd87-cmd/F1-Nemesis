@@ -1316,4 +1316,51 @@ theorem nine3w_M2 (k : Nat) :
       (fun _ => fone_den_pos _) k) ?_
   exact Qmul_congr (Qeq_refl _) (fmul_one oneMinusSq (fun j => oneMinusSq_den j) k)
 
+/-- The composed-quadratic series `Qcomp = 8 − 6δ − 9δ²` (= eval of `8−6u−9u²` at δ = `9(1−g²)`). -/
+def qcomp (k : Nat) : Q :=
+  Qsub (Qsub (mul ⟨8, 1⟩ (fone k)) (mul ⟨6, 1⟩ (dcoef k))) (mul ⟨9, 1⟩ (fmul dcoef dcoef k))
+
+theorem qcomp_den (k : Nat) : 0 < (qcomp k).den :=
+  Qsub_den_pos (Qsub_den_pos (Qmul_den_pos (by decide) (fone_den_pos k))
+    (Qmul_den_pos (by decide) (dcoef_den k))) (Qmul_den_pos (by decide) (fmul_den_pos dcoef_den dcoef_den k))
+
+/-- `(9+3w)·(δ·8w) = (8w)²` (commute, swap `nine3w` onto `δ`, then `dcoef_rel`). -/
+theorem nine3w_de (k : Nat) :
+    Qeq (fmul nine3w (fmul dcoef eightT) k) (fmul eightT eightT k) := by
+  refine Qeq_trans (fmul_den_pos nine3w_den (fun i => fmul_den_pos eightT_den dcoef_den i) k)
+    (fmul_congr_right (fun i => fmul_comm dcoef eightT dcoef_den eightT_den i) k) ?_
+  refine Qeq_trans (fmul_den_pos eightT_den (fun i => fmul_den_pos nine3w_den dcoef_den i) k)
+    (fmul_swap_left nine3w eightT dcoef nine3w_den eightT_den dcoef_den k) ?_
+  exact fmul_congr_right (fun i => dcoef_rel i) k
+
+/-- **H2** (1st level): `(9+3w)·Qcomp = 8(9+3w) − 6·8w − 9·(δ·8w)`. -/
+theorem nine3w_qcomp1 (k : Nat) :
+    Qeq (fmul nine3w qcomp k)
+      (Qsub (Qsub (mul ⟨8, 1⟩ (nine3w k)) (mul ⟨6, 1⟩ (eightT k))) (mul ⟨9, 1⟩ (fmul dcoef eightT k))) := by
+  have hAd : ∀ i, 0 < (Qsub (mul ⟨8, 1⟩ (fone i)) (mul ⟨6, 1⟩ (dcoef i))).den :=
+    fun i => Qsub_den_pos (Qmul_den_pos (by decide) (fone_den_pos i)) (Qmul_den_pos (by decide) (dcoef_den i))
+  have hBd : ∀ i, 0 < (mul ⟨9, 1⟩ (fmul dcoef dcoef i)).den :=
+    fun i => Qmul_den_pos (by decide) (fmul_den_pos dcoef_den dcoef_den i)
+  -- fmul nine3w (Qsub A B) = Qsub (fmul nine3w A) (fmul nine3w B)
+  refine Qeq_trans (Qsub_den_pos (fmul_den_pos nine3w_den hAd k) (fmul_den_pos nine3w_den hBd k))
+    (fmul_sub_right nine3w_den hAd hBd k) ?_
+  refine Qsub_congr ?_ ?_
+  · -- fmul nine3w (Qsub 8fone 6δ) = Qsub (8 nine3w) (6 eightT)
+    refine Qeq_trans (Qsub_den_pos (fmul_den_pos nine3w_den (fun i => Qmul_den_pos (by decide) (fone_den_pos i)) k)
+        (fmul_den_pos nine3w_den (fun i => Qmul_den_pos (by decide) (dcoef_den i)) k))
+      (fmul_sub_right nine3w_den (fun i => Qmul_den_pos (by decide) (fone_den_pos i))
+        (fun i => Qmul_den_pos (by decide) (dcoef_den i)) k) ?_
+    refine Qsub_congr ?_ ?_
+    · exact Qeq_trans (Qmul_den_pos (by decide) (fmul_den_pos nine3w_den (fun _ => fone_den_pos _) k))
+        (fmul_smul_right nine3w fone ⟨8, 1⟩ (by decide) nine3w_den (fun _ => fone_den_pos _) k)
+        (Qmul_congr (Qeq_refl _) (fmul_one nine3w nine3w_den k))
+    · exact Qeq_trans (Qmul_den_pos (by decide) (fmul_den_pos nine3w_den dcoef_den k))
+        (fmul_smul_right nine3w dcoef ⟨6, 1⟩ (by decide) nine3w_den dcoef_den k)
+        (Qmul_congr (Qeq_refl _) (dcoef_rel k))
+  · -- fmul nine3w (9 δ²) = 9 (δ·8w)
+    exact Qeq_trans (Qmul_den_pos (by decide) (fmul_den_pos nine3w_den (fun i => fmul_den_pos dcoef_den dcoef_den i) k))
+      (fmul_smul_right nine3w (fmul dcoef dcoef) ⟨9, 1⟩ (by decide) nine3w_den
+        (fun i => fmul_den_pos dcoef_den dcoef_den i) k)
+      (Qmul_congr (Qeq_refl _) (nine3w_dsq k))
+
 end UOR.Bridge.F1Square.Analysis
