@@ -304,6 +304,52 @@ theorem RexpReal_nonneg (t : Real) : Rnonneg (RexpReal t) := by
     Req_trans (RexpReal_congr (Req_symm (Rhalf_double t))) (RexpReal_add (Rhalf t) (Rhalf t))
   exact Rnonneg_congr (Req_symm hsq) (Rnonneg_Rmul_self (RexpReal (Rhalf t)))
 
+-- ===========================================================================
+-- **The exponential is monotone**: `a ≤ b ⟹ exp a ≤ exp b`. Via `exp b ≈ exp a + exp a·(exp(b−a)−1)`
+-- with the increment `≥ 0` (`exp a ≥ 0`, `exp(b−a) ≥ 1` since `b−a ≥ 0`).
+-- ===========================================================================
+
+/-- `b − a ≥ 0` (Bishop) from `a ≤ b` (order) — tight, read off at the `Radd` reindex `2n+1`. -/
+theorem Rnonneg_Rsub_of_Rle {a b : Real} (h : Rle a b) : Rnonneg (Rsub b a) := by
+  intro n
+  show Qle (neg (Qbound n)) (add (b.seq (2 * n + 1)) (neg (a.seq (2 * n + 1))))
+  have hab : Qle (a.seq (2 * n + 1)) (add (b.seq (2 * n + 1)) ⟨2, (2 * n + 1) + 1⟩) := h (2 * n + 1)
+  have hsub : Qle (Qsub (a.seq (2 * n + 1)) (b.seq (2 * n + 1))) (⟨2, (2 * n + 1) + 1⟩ : Q) :=
+    Qsub_le_of_le_add (b.den_pos _) (Nat.succ_pos _) hab
+  have heq1 : Qeq (neg (Qbound n)) (neg (⟨2, (2 * n + 1) + 1⟩ : Q)) := by
+    simp only [Qeq, neg, Qbound]; push_cast; ring_uor
+  have heq2 : Qeq (neg (Qsub (a.seq (2 * n + 1)) (b.seq (2 * n + 1))))
+      (add (b.seq (2 * n + 1)) (neg (a.seq (2 * n + 1)))) := by
+    simp only [Qeq, neg, Qsub, add]; push_cast; ring_uor
+  exact Qle_trans (neg_den_pos (Nat.succ_pos _)) (Qeq_le heq1)
+    (Qle_trans (neg_den_pos (Qsub_den_pos (a.den_pos _) (b.den_pos _))) (Qneg_le_neg hsub)
+      (Qeq_le heq2))
+
+/-- **`a + (x − a) ≈ x`** — the additive cancellation used to read `exp b` off the difference form. -/
+theorem Radd_Rsub_self (a x : Real) : Req (Radd a (Rsub x a)) x :=
+  Req_trans (Req_symm (Radd_assoc a x (Rneg a)))
+    (Req_trans (Radd_congr (Radd_comm a x) (Req_refl (Rneg a)))
+      (Req_trans (Radd_assoc x a (Rneg a))
+        (Req_trans (Radd_congr (Req_refl x) (Radd_neg a)) (Radd_zero x))))
+
+/-- **The exponential is monotone**: `a ≤ b ⟹ exp a ≤ exp b`. The increment `exp a·(exp(b−a)−1)` is
+    `≥ 0` (`RexpReal_nonneg`, `RexpReal_sub_one_nonneg`, `Rnonneg_Rmul`), and `exp a` plus it is `exp b`
+    (`RexpReal_add` + `Radd_Rsub_self`). -/
+theorem RexpReal_le_of_Rle {a b : Real} (h : Rle a b) : Rle (RexpReal a) (RexpReal b) := by
+  have hD : Rnonneg (Rmul (RexpReal a) (Rsub (RexpReal (Rsub b a)) one)) :=
+    Rnonneg_Rmul (RexpReal_nonneg a) (RexpReal_sub_one_nonneg (Rnonneg_Rsub_of_Rle h))
+  have hRmul : Req (Rmul (RexpReal a) (Rsub (RexpReal (Rsub b a)) one))
+      (Rsub (Rmul (RexpReal a) (RexpReal (Rsub b a))) (RexpReal a)) :=
+    Req_trans (Rmul_sub_distrib (RexpReal a) (RexpReal (Rsub b a)) one)
+      (Rsub_congr (Req_refl _) (Rmul_one (RexpReal a)))
+  have hmulexp : Req (Rmul (RexpReal a) (RexpReal (Rsub b a))) (RexpReal b) :=
+    Req_trans (Req_symm (RexpReal_add a (Rsub b a))) (RexpReal_congr (Radd_Rsub_self a b))
+  have halg : Req (Radd (RexpReal a) (Rmul (RexpReal a) (Rsub (RexpReal (Rsub b a)) one)))
+      (RexpReal b) :=
+    Req_trans (Radd_congr (Req_refl _) hRmul)
+      (Req_trans (Radd_Rsub_self (RexpReal a) (Rmul (RexpReal a) (RexpReal (Rsub b a)))) hmulexp)
+  exact Rle_trans (Rle_self_Radd_right hD) (Rle_of_Req halg)
+
 /-- **Real powers, abstract form**: if `exp L ≈ N` then `exp(k·L) ≈ Nᵏ`. With `L = log n` and
     `N = n` (the v0.15.1 gate `Rexp_log_nat_Rlog`), this is `exp(k·log n) ≈ nᵏ`. Decoupled from the
     `Rlog` plumbing so that any logarithm witness `exp L ≈ N` produces its powers — the established
