@@ -1303,3 +1303,11 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.czetaRe_RReg
 #print axioms Analysis.czetaIm_RReg
 #print axioms Analysis.czeta_two_theta
+#print axioms Analysis.czetaExp_mono
+#print axioms Analysis.czetaExp_tail_full
+#print axioms Analysis.czetaRe_tail_full
+#print axioms Analysis.czetaRe_tail_full_neg
+#print axioms Analysis.czetaIm_tail_full
+#print axioms Analysis.czetaIm_tail_full_neg
+#print axioms Analysis.czetaRe_cauchy_full
+#print axioms Analysis.czetaIm_cauchy_full

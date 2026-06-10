@@ -580,4 +580,24 @@ example :
   ⟨Analysis.Czeta_re_tendsTo ⟨Analysis.ofQ (⟨2, 1⟩ : Analysis.Q) (by decide), Analysis.zero⟩
       (Analysis.Rnonneg_ofQ (by decide) (by decide)) (by decide) (by decide) Analysis.czeta_two_theta, rfl⟩
 
+/-- Elaboration-checked witness that ζ(s) converges as a **genuine series** — not merely along the dyadic
+    subsequence. For any complex `s` with `Re s > 1` (witness `τ`), the *full* real and imaginary partial-sum
+    sequences are uniformly Cauchy: for *every* `N, N' ≥ 2^{M(j)}`, `|S(N) − S(N')| ≤ 2/(j+1)`
+    (`czetaRe/Im_cauchy_full`). So every partial sum `Σ_{n=1}^N n⁻ˢ` past the dyadic anchor agrees within
+    `2/(j+1)` — `Σ_{n≥1} n⁻ˢ` converges in the strong (full-sequence) sense, with the crux still open. -/
+example :
+    (∀ (s : Analysis.Complex) (hσ : Analysis.Rnonneg s.re) (τ : Analysis.Q)
+        (hτn : 0 < τ.num) (hτd : 0 < τ.den)
+        (_hθ : Analysis.Rle (Analysis.ofQ τ hτd)
+          (Analysis.Rmul (Analysis.Rsub s.re Analysis.one) (Analysis.logN 2 (by omega))))
+        (j N N' : Nat), 2 ^ Analysis.czetaMidx τ j ≤ N → 2 ^ Analysis.czetaMidx τ j ≤ N' →
+        Analysis.Rle (Analysis.Rsub (Analysis.czetaReSum s N) (Analysis.czetaReSum s N'))
+            (Analysis.ofQ ⟨2, j + 1⟩ (Nat.succ_pos j))
+          ∧ Analysis.Rle (Analysis.Rsub (Analysis.czetaImSum s N) (Analysis.czetaImSum s N'))
+            (Analysis.ofQ ⟨2, j + 1⟩ (Nat.succ_pos j)))
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨fun s hσ τ hτn hτd hθ j N N' hN hN' =>
+    ⟨Analysis.czetaRe_cauchy_full s hσ hτn hτd hθ j N N' hN hN',
+     Analysis.czetaIm_cauchy_full s hσ hτn hτd hθ j N N' hN hN'⟩, rfl⟩
+
 end UOR.Bridge.F1Square
