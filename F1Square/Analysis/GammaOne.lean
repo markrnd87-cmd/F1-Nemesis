@@ -633,4 +633,33 @@ theorem Wsum_tail_le (A : Nat) : ∀ e,
         (Qadd_le_add (Wsum_tail_le A e) (Qeq_le hinc))
         (Qeq_le (Qadd_Qsub_fwd _ _ _))
 
+-- ===========================================================================
+-- The reindex `M(j) = 2j+8` and its domination `2^{M(j)} ≥ (j+1)(2·M(j)+6)`.
+-- ===========================================================================
+
+/-- `m < 2^m`. -/
+theorem lt_two_pow (m : Nat) : m < 2 ^ m := by
+  induction m with
+  | zero => decide
+  | succ k ih => rw [Nat.pow_succ]; omega
+
+/-- `4j + 22 ≤ 2^{j+8}` (linear ≤ exponential, the block-log factor at the reindex). -/
+theorem lin_le_two_pow (j : Nat) : 4 * j + 22 ≤ 2 ^ (j + 8) := by
+  induction j with
+  | zero => decide
+  | succ k ih =>
+      have hp : (2 : Nat) ^ (k + 1 + 8) = 2 ^ (k + 8) * 2 := by
+        rw [show k + 1 + 8 = (k + 8) + 1 from by omega, Nat.pow_succ]
+      omega
+
+/-- **Reindex domination** `(j+1)·(4j+22) ≤ 2^{2j+8}` — i.e. `2^{M(j)} ≥ (j+1)(2·M(j)+6)` for
+    `M(j) = 2j+8`, so the lower tail `(2M(j)+6)/2^{M(j)} ≤ 1/(j+1)`. -/
+theorem gamma_domination (j : Nat) : (j + 1) * (4 * j + 22) ≤ 2 ^ (2 * j + 8) := by
+  have h1 : j + 1 ≤ 2 ^ j := lt_two_pow j
+  have h2 : 4 * j + 22 ≤ 2 ^ (j + 8) := lin_le_two_pow j
+  have h3 : (j + 1) * (4 * j + 22) ≤ 2 ^ j * 2 ^ (j + 8) := Nat.mul_le_mul h1 h2
+  have h4 : (2 : Nat) ^ j * 2 ^ (j + 8) = 2 ^ (2 * j + 8) := by
+    rw [← Nat.pow_add]; congr 1; omega
+  omega
+
 end UOR.Bridge.F1Square.Analysis
