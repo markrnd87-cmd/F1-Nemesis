@@ -1318,3 +1318,18 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.czetaIm_full_tendsTo
 #print axioms Analysis.Czeta_re_canonical
 #print axioms Analysis.Czeta_im_canonical
+
+-- Mangoldt (the von Mangoldt function Λ and the explicit-formula prime side; v0.15.3).
+#print axioms Analysis.spfFrom_ge_one
+#print axioms Analysis.one_le_spf
+#print axioms Analysis.two_le_of_isPrimePow
+#print axioms Analysis.vonMangoldt_one
+#print axioms Analysis.vonMangoldt_two
+#print axioms Analysis.vonMangoldt_three
+#print axioms Analysis.vonMangoldt_four
+#print axioms Analysis.vonMangoldt_six
+#print axioms Analysis.vonMangoldt_eight
+#print axioms Analysis.vonMangoldt_nine
+#print axioms Analysis.vonMangoldt_nonneg
+#print axioms Analysis.primeSide_stable
+#print axioms Analysis.primeTerm_zero_of_h
