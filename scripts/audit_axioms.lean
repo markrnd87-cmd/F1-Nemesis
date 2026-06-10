@@ -1338,6 +1338,16 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.primeSide_stable
 #print axioms Analysis.primeTerm_zero_of_h
 
+-- GammaUpper (the γ ≤ 0.66 upper bracket, companion to Rgamma_h_lower; v0.16.0, for Pos λ₂).
+#print axioms Analysis.Qabs_upper
+#print axioms Analysis.Qadd_sub_cancel
+#print axioms Analysis.chigh_den_pos
+#print axioms Analysis.cApprox_le_chigh
+#print axioms Analysis.gammaHseq_le_one
+#print axioms Analysis.gammaHseq_le_chigh
+#print axioms Analysis.chigh_sum_bound
+#print axioms Analysis.Rgamma_h_upper
+
 -- Bernoulli (exact rational Bernoulli numbers; v0.16.0 foundation for Euler–Maclaurin).
 #print axioms Analysis.bernTable_den_pos
 #print axioms Analysis.bernoulli_den_pos
