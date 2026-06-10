@@ -1504,7 +1504,19 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.czEtaTerm_even
 #print axioms Analysis.czEtaTerm_odd
 
--- CosSinAddFormula (the cos/sin angle-addition foundation: the antidiagonal binomial identity).
+-- CosSinAddFormula (the cos/sin angle-addition foundation: antidiagonal identity → diagonal relation).
 #print axioms Analysis.pairTerm_den_pos
 #print axioms Analysis.binTerm_scaled_eq
 #print axioms Analysis.addPow_div_antidiag
+#print axioms Analysis.qpow_sq_eq
+#print axioms Analysis.qpow_negsq
+#print axioms Analysis.negsq_pair
+#print axioms Analysis.altPair_eq
+#print axioms Analysis.cosPair_eq
+#print axioms Analysis.sinTerm_den_pos
+#print axioms Analysis.sinPair_eq
+#print axioms Analysis.cosConv_den_pos
+#print axioms Analysis.sinConv_den_pos
+#print axioms Analysis.cosConv_eq
+#print axioms Analysis.sinConv_eq
+#print axioms Analysis.altTerm_add_eq
