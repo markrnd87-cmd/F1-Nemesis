@@ -605,4 +605,32 @@ theorem gSeq_diff_ge_outer (A : Nat) : ∀ e,
         (Rle_trans (Radd_le_add (gSeq_block_ge (A + e)) ih)
           (Rle_of_Req (Rsub_split (gSeq (2 ^ (A + e + 1))) (gSeq (2 ^ (A + e))) (gSeq (2 ^ A)))))
 
+/-- Forward telescoping sum on ℚ: `(p − q) + (q − r) ≈ p − r`. -/
+theorem Qadd_Qsub_fwd (p q r : Q) : Qeq (add (Qsub p q) (Qsub q r)) (Qsub p r) := by
+  simp only [Qsub, add, neg, Qeq]; push_cast; ring_uor
+
+/-- **Geometric tail bound** `Wsum A e ≤ (2A+6)/2^A − (2(A+e)+6)/2^{A+e} ≤ (2A+6)/2^A`. The block sum
+    telescopes (`T(m) := (2m+6)/2^m` is the discrete antiderivative of `Σ(m+2)/2^m`); bounded by `T(A)`. -/
+theorem Wsum_tail_le (A : Nat) : ∀ e,
+    Qle (Wsum A e) (Qsub (⟨(2 * A + 6 : Int), 2 ^ A⟩ : Q) ⟨(2 * (A + e) + 6 : Int), 2 ^ (A + e)⟩)
+  | 0 => by
+      simp only [Nat.add_zero]
+      apply Qeq_le
+      simp only [Wsum, Qsub, add, neg, Qeq]; push_cast; ring_uor
+  | (e + 1) => by
+      have hT : 0 < (Qsub (⟨(2 * A + 6 : Int), 2 ^ A⟩ : Q) ⟨(2 * (A + e) + 6 : Int), 2 ^ (A + e)⟩).den :=
+        Qsub_den_pos (Nat.pos_pow_of_pos A (by decide)) (Nat.pos_pow_of_pos (A + e) (by decide))
+      have hS : 0 < (Qsub (⟨(2 * (A + e) + 6 : Int), 2 ^ (A + e)⟩ : Q)
+          ⟨(2 * (A + e + 1) + 6 : Int), 2 ^ (A + e + 1)⟩).den :=
+        Qsub_den_pos (Nat.pos_pow_of_pos (A + e) (by decide)) (Nat.pos_pow_of_pos (A + e + 1) (by decide))
+      -- inc = T(A+e) − T(A+e+1)  (the increment, in the literal form `Wsum` uses)
+      have h2 : (2 : Nat) ^ (A + e + 1) = 2 * 2 ^ (A + e) := by rw [Nat.pow_succ]; omega
+      have hinc : Qeq (⟨(A + e + 2 : Int), 2 ^ (A + e)⟩ : Q)
+          (Qsub (⟨(2 * (A + e) + 6 : Int), 2 ^ (A + e)⟩ : Q) ⟨(2 * (A + e + 1) + 6 : Int), 2 ^ (A + e + 1)⟩) := by
+        simp only [h2, Qsub, add, neg, Qeq]; push_cast; ring_uor
+      -- Wsum A (e+1) = Wsum A e + inc ≤ (T(A) − T(A+e)) + (T(A+e) − T(A+e+1)) = T(A) − T(A+e+1)
+      exact Qle_trans (add_den_pos hT hS)
+        (Qadd_le_add (Wsum_tail_le A e) (Qeq_le hinc))
+        (Qeq_le (Qadd_Qsub_fwd _ _ _))
+
 end UOR.Bridge.F1Square.Analysis
