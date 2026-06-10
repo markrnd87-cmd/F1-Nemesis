@@ -712,6 +712,47 @@ theorem cosAdd_decay_le {a b : Q} {M : Nat} (had : 0 < a.den) (hbd : 0 < b.den)
   exact Qadd_le_add (sinConv_abs_le had hbd ha hb (2 * K + 1))
     (Qadd_le_add (cornerSin_le had hbd ha hb K hK) (cornerMertens2 had hbd ha hb 0 K hK))
 
+/-- Bridges `cosAdd_decay_le`'s `BOUND` (`↑M·↑M` scalar, order `sinB,cornerSin,cornerCos`) to
+    `altErr_bound_decay`'s LHS (`↑(M·M)` scalar, order `sinB,cornerCos,cornerSin`) — a cast + commute. -/
+private theorem decay_bridge (M : Nat) (E MERT : Q) :
+    Qeq (add (mul (⟨(M * M : Int), 1⟩ : Q) E) (add (mul (⟨(M * M : Int), 1⟩ : Q) MERT) MERT))
+        (add (mul (⟨((M * M : Nat) : Int), 1⟩ : Q) E)
+          (add MERT (mul (⟨((M * M : Nat) : Int), 1⟩ : Q) MERT))) := by
+  simp only [Qeq, add, mul]; push_cast
+  generalize E.num = en; generalize (E.den : Int) = ed
+  generalize MERT.num = mn; generalize (MERT.den : Int) = md
+  generalize (M : Int) = mm
+  ring_uor
+
+/-- **The clean decay bound** `|altSum(a+b,0,2K+1) − (cos·cos − sin·sin partial)| ≤ 5/(n+1)` at the deep
+    depth `K` satisfying the `altErr_bound_decay` threshold (linear in `n`): `cosAdd_decay_le` gives the
+    explicit `BOUND`, and `altErr_bound_decay` collapses that `BOUND` to `5/(n+1)`. The convergence
+    modulus the Real reconciliation consumes. -/
+theorem cosAdd_decay_5 {a b : Q} {M : Nat} (had : 0 < a.den) (hbd : 0 < b.den)
+    (ha : Qle (Qabs a) ⟨(M : Int), 1⟩) (hb : Qle (Qabs b) ⟨(M : Int), 1⟩) (n K : Nat) (hm : 0 < M * M)
+    (hK : (expM_U (M * M) (2 * (M * M))).num.toNat * 4 * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        + (expM_U (M * M) (2 * (M * M))).num.toNat * 2 * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        + (expM_U (M * M) (2 * (M * M))).num.toNat * (4 * (M * M)) * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        + (expM_U (M * M) (2 * (M * M))).num.toNat * (2 * (M * M)) * (n + 1) * npow (M * M) (2 * (M * M) + 1)
+        + (M * M) * (n + 1) * npow (2 * (M * M)) (2 * (2 * (M * M)) + 1)
+        + 2 * (M * M) ≤ K) :
+    Qle (Qabs (Qsub (altSum (add a b) 0 (2 * K + 1))
+          (Qsub (mul (altSum a 0 (2 * K + 1)) (altSum b 0 (2 * K + 1)))
+                (mul (Fsum (sinTerm a) (2 * K + 1)) (Fsum (sinTerm b) (2 * K + 1))))))
+      ⟨5, n + 1⟩ := by
+  have h2K : 2 * (M * M) ≤ K + 2 := by omega
+  have hMERTd : 0 < (add (mul (expM_U (M * M) (2 * (M * M))) ⟨(4 * npow (M * M) (K + 2) : Int), fct (K + 2)⟩)
+      (mul ⟨(2 * npow (M * M) (K + 1) : Int), fct (K + 1)⟩ (expM_U (M * M) (2 * (M * M))))).den :=
+    add_den_pos (Qmul_den_pos (expM_U_den_pos _ _) (fct_pos _)) (Qmul_den_pos (fct_pos _) (expM_U_den_pos _ _))
+  refine Qle_trans
+    (add_den_pos (Qmul_den_pos Nat.one_pos (expTerm_den_pos (add_den_pos Nat.one_pos Nat.one_pos) _))
+      (add_den_pos (Qmul_den_pos Nat.one_pos hMERTd) hMERTd))
+    (cosAdd_decay_le had hbd ha hb K h2K) ?_
+  refine Qle_trans
+    (add_den_pos (Qmul_den_pos Nat.one_pos (expTerm_den_pos (add_den_pos Nat.one_pos Nat.one_pos) _))
+      (add_den_pos hMERTd (Qmul_den_pos Nat.one_pos hMERTd)))
+    (Qeq_le (decay_bridge M _ _)) (altErr_bound_decay M K n hm hK)
+
 -- ===========================================================================
 -- The **Real reconciliation** → `Rcos_add`. De-reindex the `Rmul` diagonals to the natural product
 -- form (mirroring `Rcos_sq_diag_le`), then reconcile to a common deep depth and apply `cosAdd_decay_le`.

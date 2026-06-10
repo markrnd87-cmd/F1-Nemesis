@@ -1534,6 +1534,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Qabs_mul_le_MM
 #print axioms Analysis.cornerSin_le
 #print axioms Analysis.cosAdd_decay_le
+#print axioms Analysis.cosAdd_decay_5
 #print axioms Analysis.cosMul_diag_le
 #print axioms Analysis.xprod_drift
 #print axioms Analysis.altProd_drift
