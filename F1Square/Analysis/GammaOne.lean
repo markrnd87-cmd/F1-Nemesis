@@ -75,4 +75,33 @@ theorem logN_four_ge_one : Rle (ofQ (⟨1, 1⟩ : Q) (by decide)) (logN 4 (by om
 theorem logN_ge_one {k : Nat} (hk : 4 ≤ k) : Rle (ofQ (⟨1, 1⟩ : Q) (by decide)) (logN k (by omega)) :=
   Rle_trans logN_four_ge_one (logN_mono (by omega) hk)
 
+-- ===========================================================================
+-- The consecutive-log difference `δ = log(p+1) − log p` and its UPPER bound `δ ≤ 1/p`.
+-- ===========================================================================
+
+/-- **`log(p+1) − log p ≤ 1/p`** (`p ≥ 1`): since `exp(δ) = (p+1)/p ≤ 1 + 1/p ≤ exp(1/p)` and `exp`
+    reflects `≤`. This is the `(m−1)·δ_m ≤ 1` fact in the `d_m ≤ 0` proof. -/
+theorem deltaLog_upper (p : Nat) (hp : 1 ≤ p) :
+    Rle (Rsub (logN (p + 1) (by omega)) (logN p hp)) (ofQ (⟨1, p⟩ : Q) hp) := by
+  have hpp : 0 < p := hp
+  -- exp(−log p) ≈ 1/p
+  have hexpNeg : Req (RexpReal (Rneg (logN p hp))) (ofQ (⟨1, p⟩ : Q) hpp) :=
+    RexpReal_neg_eq_recip p hpp (Rexp_logN p hp)
+  -- exp(δ) = exp(log(p+1)) · exp(−log p) ≈ (p+1) · (1/p) ≈ (p+1)/p
+  have hexpDelta : Req (RexpReal (Rsub (logN (p + 1) (by omega)) (logN p hp)))
+      (ofQ (⟨((p : Int) + 1), p⟩ : Q) hpp) := by
+    refine Req_trans (RexpReal_add (logN (p + 1) (by omega)) (Rneg (logN p hp))) ?_
+    refine Req_trans (Rmul_congr (Rexp_logN (p + 1) (by omega)) hexpNeg) ?_
+    refine Req_trans (Rmul_ofQ_ofQ Nat.one_pos hpp) ?_
+    exact ofQ_respects (Qmul_den_pos Nat.one_pos hpp) hpp (by simp only [Qeq, mul]; push_cast; ring_uor)
+  -- (p+1)/p ≈ 1 + 1/p ≤ exp(1/p)
+  have h1add : Req (Radd one (ofQ (⟨1, p⟩ : Q) hpp)) (ofQ (⟨((p : Int) + 1), p⟩ : Q) hpp) := by
+    apply Req_of_seq_Qeq; intro n; simp only [Qeq, Radd, one, ofQ, add]; push_cast; ring_uor
+  have hge : Rle (ofQ (⟨((p : Int) + 1), p⟩ : Q) hpp) (RexpReal (ofQ (⟨1, p⟩ : Q) hpp)) :=
+    Rle_trans (Rle_of_Req (Req_symm h1add))
+      (RexpReal_ge_one_add_nonneg (Rnonneg_ofQ hpp (by show (0:Int) ≤ 1; decide)))
+  -- exp(δ) ≤ exp(1/p), then reflect
+  exact RexpReal_reflects_le (Rnonneg_ofQ hpp (by show (0:Int) ≤ 1; decide))
+    (Rle_trans (Rle_of_Req hexpDelta) hge)
+
 end UOR.Bridge.F1Square.Analysis
