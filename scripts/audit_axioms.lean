@@ -1487,3 +1487,11 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.emCorrSum_succ
 #print axioms Analysis.czFinSum_zero
 #print axioms Analysis.czFinSum_succ
+
+-- BernoulliPoly (Bernoulli polynomials Bₙ(x); prereq for the periodic-Bernoulli EM remainder).
+#print axioms Analysis.bernPoly_den_pos
+#print axioms Analysis.bernPoly_zero
+#print axioms Analysis.bernPoly_one_at_zero
+#print axioms Analysis.bernPoly_two_at_zero
+#print axioms Analysis.bernPoly_one_at_one
+#print axioms Analysis.bernPoly_two_at_one

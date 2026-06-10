@@ -57,6 +57,7 @@ import F1Square.Analysis.GammaUpper
 import F1Square.Analysis.LambdaOne
 import F1Square.Analysis.Binomial
 import F1Square.Analysis.Bernoulli
+import F1Square.Analysis.BernoulliPoly
 import F1Square.Analysis.ExpAdd
 import F1Square.Analysis.CosSinAdd
 import F1Square.Analysis.CosSinBound
