@@ -556,6 +556,18 @@ def Czeta (s : Complex) (hσ : Rnonneg s.re) {τ : Q} (hτn : 0 < τ.num) (hτd 
   ⟨Rlim (fun j => czetaReSum s (2 ^ czetaMidx τ j)) (czetaRe_RReg s hσ hτn hτd hθ),
    Rlim (fun j => czetaImSum s (2 ^ czetaMidx τ j)) (czetaIm_RReg s hσ hτn hτd hθ)⟩
 
+/-- **`Re s > 1` is satisfiable** (non-vacuity witness): for `s = 2` (real), `τ = 1/2 ≤ (2−1)·log 2 = log 2`.
+    `Rsub (ofQ 2) one ≈ one` (`2 − 1 = 1`) and `Rmul one (log 2) ≈ log 2`, so the bound reduces to
+    `1/2 ≤ log 2` (`logN_2_ge_half`). -/
+theorem czeta_two_theta :
+    Rle (ofQ (⟨1, 2⟩ : Q) (by decide))
+        (Rmul (Rsub (ofQ (⟨2, 1⟩ : Q) (by decide)) one) (logN 2 (by omega))) := by
+  have hsub : Req (Rsub (ofQ (⟨2, 1⟩ : Q) (by decide)) one) one :=
+    Req_of_seq_Qeq (fun n => by
+      show Qeq (add (⟨2, 1⟩ : Q) (neg ⟨1, 1⟩)) (⟨1, 1⟩ : Q); decide)
+  exact Rle_trans logN_2_ge_half
+    (Rle_of_Req (Req_symm (Req_trans (Rmul_congr hsub (Req_refl _)) (Rone_mul _))))
+
 /-- **Convergence of `ζ(s)` (real part)**: the reindexed real partial sums `Σ_{n<2^{M(k)}} Re(n⁻ˢ)`
     converge to `Re ζ(s)` with the canonical rate `2/(k+1)`. -/
 theorem Czeta_re_tendsTo (s : Complex) (hσ : Rnonneg s.re) {τ : Q} (hτn : 0 < τ.num) (hτd : 0 < τ.den)

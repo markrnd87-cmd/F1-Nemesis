@@ -565,4 +565,19 @@ example :
   ⟨fun s hσ τ hτn hτd hθ =>
     ⟨Analysis.Czeta_re_tendsTo s hσ hτn hτd hθ, Analysis.Czeta_im_tendsTo s hσ hτn hτd hθ⟩, rfl⟩
 
+/-- A concrete, fully-closed instance proving the v0.15.2 keystone is **non-vacuous**: at `s = 2` (real),
+    `ζ(2) = Σ 1/n²` is built as `Czeta` and its real partial sums converge to `Re ζ(2)` with rate `2/(k+1)`.
+    The `Re s > 1` witness is `τ = 1/2 ≤ (2−1)·log 2 = log 2` (`czeta_two_theta`, all `decide`/`omega`-checked);
+    the imaginary part vanishes (`Im s = 0`). So the universally-quantified convergence above has a witness. -/
+example :
+    Analysis.RTendsTo
+        (fun j => Analysis.czetaReSum ⟨Analysis.ofQ (⟨2, 1⟩ : Analysis.Q) (by decide), Analysis.zero⟩
+          (2 ^ Analysis.czetaMidx (⟨1, 2⟩ : Analysis.Q) j))
+        (Analysis.Czeta ⟨Analysis.ofQ (⟨2, 1⟩ : Analysis.Q) (by decide), Analysis.zero⟩
+          (Analysis.Rnonneg_ofQ (by decide) (by decide)) (by decide) (by decide)
+          Analysis.czeta_two_theta).re
+      ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Analysis.Czeta_re_tendsTo ⟨Analysis.ofQ (⟨2, 1⟩ : Analysis.Q) (by decide), Analysis.zero⟩
+      (Analysis.Rnonneg_ofQ (by decide) (by decide)) (by decide) (by decide) Analysis.czeta_two_theta, rfl⟩
+
 end UOR.Bridge.F1Square

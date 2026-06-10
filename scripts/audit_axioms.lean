@@ -1302,3 +1302,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Czeta_im_tendsTo
 #print axioms Analysis.czetaRe_RReg
 #print axioms Analysis.czetaIm_RReg
+#print axioms Analysis.czeta_two_theta
