@@ -4,6 +4,42 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), starting at `v0.0.1`.
 
+## [0.15.3] - 2026-06-10
+
+### Added — the explicit formula's arithmetic ingredient: von Mangoldt `Λ`, the prime side, and the Bombieri–Lagarias `n = 1` decomposition (pure Lean 4, no Mathlib, no `sorry`)
+- **The von Mangoldt function `Λ`** (`F1Square/Analysis/Mangoldt.lean`) — `vonMangoldt n`: `log p` when
+  `n = pᵏ` is a prime power, else `0`. Built with no primality predicate beyond the **smallest factor**
+  `spf n` (least `d ≥ 2` dividing `n`) and a prime-power test (strip `spf` to `1`). Everything is
+  computable, so the defining values hold by reduction: `Λ(1) = 0`, `Λ(2) = Λ(4) = Λ(8) = log 2`,
+  `Λ(3) = Λ(9) = log 3`, `Λ(6) = 0`; and `Λ ≥ 0` everywhere (`vonMangoldt_nonneg`).
+- **The explicit-formula prime side** — `primeSide h N = Σ_{n=2}^N Λ(n)·h(log n)`, the prime side
+  `Σ_p Σ_k log p · h(k·log p)` reindexed through `k·log p = log(pᵏ) = log n`. A finite sum, hence a
+  genuine constructive real with **no convergence hypothesis**; `primeSide_stable` proves it is constant
+  past the support cutoff, so a **compactly supported** `h` gives a single well-defined real
+  (`primeTerm_zero_of_h` derives term-support from `h`-support).
+- **The Bombieri–Lagarias decomposition of `λ₁`** (`F1Square/Analysis/LiOne.lean`) —
+  `Rlambda1_decomposition : λ₁ ≈ λ₁^{arith} + λ₁^{∞}`, the two-place split of the explicit formula:
+  - `Rlambda1_arith = γ` — the **finite/arithmetic place** `S_f(1) = −η₀` (`η₀ = −γ`; the regularized
+    von Mangoldt / prime-power contribution).
+  - `Rlambda1_arch = 1 − γ/2 − ½·log(4π)` — the **archimedean Gamma-factor place** `S_∞(1)` (incl. the
+    trivial-pole "1").
+  - proved by reducing both `λ₁ = ½·(2 + γ − log 4π)` and `arith + arch` to the canonical form
+    `(1 + γ/2) − ½·log(4π)` via the pointwise `Rhalf` distribution (`Rhalf_Radd`, `Rhalf_Rneg`,
+    `Rhalf_two`) and `γ − γ/2 ≈ γ/2` (`Rhalf_double`).
+- **`Li.LiDecomposition` is now realized non-trivially** — `li_decomposition_realized`:
+  `LiDecomposition liLamSeq liArithSeq liArchSeq`, a proven instance whose `n = 1` slice is the genuine
+  arithmetic/archimedean split (`Rlambda1_decomposition`), promoting the interface from the trivial
+  inhabitant `λ = λ + 0` (`Li.liDecomposition_genuine`).
+
+### Honest scope (unchanged)
+- Deriving the value `S_f(1) = γ` *from* the prime sum needs `ζ'/ζ` and its analytic continuation
+  (v0.16.0+), so the Bombieri–Lagarias value is stated faithfully and **not** identified with the
+  built `primeSide` — nothing is fabricated. None of this bears on positivity: the crux
+  `liPositivityHolds` stays `none` and **RH stays open**. Critical strip, zeros, and the genuine `λₙ`
+  for `n ≥ 2` remain deferred.
+- All new theorems are choice-free (`{propext, Quot.sound}`), audited in `scripts/audit_axioms.lean`;
+  the build is green and the honesty gate passes (coverage: 1211 proof-layer theorems).
+
 ## [0.15.2] - 2026-06-10
 
 ### Added — ζ(s) = Σ n⁻ˢ for **complex** s with Re s > 1, as a genuine constructive ℂ (pure Lean 4, no Mathlib, no `sorry`)

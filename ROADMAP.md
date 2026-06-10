@@ -80,10 +80,16 @@ core is not held hostage to it.
   im_tendsTo` certify convergence with rate `2/(k+1)`. **De-hedged:** "ζ only at integer `s ≥ 2`" →
   "ζ(s), complex `s`, `Re(s) > 1`". (The log-multiplicativity `log(2ᵏ) = k·log 2` came via exp injectivity
   `RexpReal_inj`, re-routing the artanh addition boundary wall — `exp∘log = id` of v0.15.1 was the gate.)
-- **v0.15.3 — `Analysis/Mangoldt.lean` + the `n = 1` decomposition.** von Mangoldt `Λ` and the
-  explicit-formula **prime side** `Σ_p Σ_k log p · h(k log p)` as a real (finite for compactly-supported `h`),
-  and the **Bombieri–Lagarias `λₙ = λₙ^{arith} + λₙ^{∞}` for `n = 1`** as a theorem (uses the `γ`/`log 4π`/`λ₁`
-  of v0.14.0), promoting `Li.LiDecomposition` from inhabited-interface to a proven instance.
+- **v0.15.3 — `Analysis/Mangoldt.lean` + the `n = 1` decomposition [shipped].** von Mangoldt `Λ`
+  (`vonMangoldt`, via the smallest factor `spf`; `Λ(4) = log 2`, `Λ(6) = 0`, `Λ ≥ 0`) and the
+  explicit-formula **prime side** `Σ_p Σ_k log p · h(k log p) = Σ_{n≥2} Λ(n)·h(log n)` (`primeSide`) as a real
+  (finite for compactly-supported `h` — `primeSide_stable` makes it constant past the support cutoff), and the
+  **Bombieri–Lagarias `λₙ = λₙ^{arith} + λₙ^{∞}` for `n = 1`** as a theorem (`Rlambda1_decomposition`,
+  `Analysis/LiOne.lean`): `λ₁ = γ + (1 − γ/2 − ½·log 4π)`, the finite-place `S_f(1) = −η₀ = γ` plus the
+  archimedean `S_∞(1)`, summing to the `λ₁` of v0.14.0. This **promotes `Li.LiDecomposition` from the trivial
+  inhabitant `λ = λ + 0` to a proven non-trivial instance** (`li_decomposition_realized`) whose `n = 1` slice is
+  the genuine two-place split. (Deriving `S_f(1) = γ` from the prime sum needs `ζ'/ζ` continuation, deferred —
+  the BL value is stated faithfully, not fabricated; nothing bears on positivity, `liPositivityHolds = none`.)
 - **Stays open across v0.15.x:** critical strip, zeros, crux.
 
 ## v0.16.0 — (B) Analytic continuation & higher Li coefficients
