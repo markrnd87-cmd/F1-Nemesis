@@ -211,6 +211,42 @@ theorem sinPair_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) {j m' : Nat} (h
   ring_uor
 
 -- ===========================================================================
+-- The **Cauchy-product partial-sum identity** `(Σf)(Σg) = Σ-diagonal + corner` (exact).
+-- ===========================================================================
+
+/-- **Product of finite sums as a double sum**: `(Σ_{i≤M} fᵢ)(Σ_{j≤N} gⱼ) ≈ Σ_{i≤M} Σ_{j≤N} fᵢ·gⱼ`. -/
+theorem Fsum_mul_Fsum {f g : Nat → Q} (hf : ∀ i, 0 < (f i).den) (hg : ∀ j, 0 < (g j).den) (N : Nat) :
+    ∀ M, Qeq (mul (Fsum f M) (Fsum g N))
+      (Fsum (fun i => Fsum (fun j => mul (f i) (g j)) N) M)
+  | 0 => Qeq_symm (Fsum_mul_left (hf 0) hg N)
+  | (M + 1) => by
+      have hrowd : ∀ i, 0 < (Fsum (fun j => mul (f i) (g j)) N).den :=
+        fun i => Fsum_den_pos (fun j => Qmul_den_pos (hf i) (hg j)) N
+      refine Qeq_trans (add_den_pos (Qmul_den_pos (Fsum_den_pos hf M) (Fsum_den_pos hg N))
+          (Qmul_den_pos (hf (M + 1)) (Fsum_den_pos hg N)))
+        (Qmul_add_right (Fsum f M) (f (M + 1)) (Fsum g N)) ?_
+      exact Qadd_congr (Fsum_mul_Fsum hf hg N M) (Qeq_symm (Fsum_mul_left (hf (M + 1)) hg N))
+
+/-- **The Cauchy-product partial-sum identity** (exact): `(Σ_{i≤N} fᵢ)(Σ_{j≤N} gⱼ)` equals the diagonal
+    sum `Σ_{m≤N} Σ_{i≤m} fᵢ·g_{m−i}` plus the high corner `Σ_{i≤N}(Σ_{j≤N} − Σ_{j≤N−i}) fᵢ·gⱼ`. -/
+theorem fsum_cauchy {f g : Nat → Q} (hf : ∀ i, 0 < (f i).den) (hg : ∀ j, 0 < (g j).den) (N : Nat) :
+    Qeq (mul (Fsum f N) (Fsum g N))
+      (add (Fsum (fun m => Fsum (fun i => mul (f i) (g (m - i))) m) N)
+        (Fsum (fun i => Qsub (Fsum (fun j => mul (f i) (g j)) N)
+          (Fsum (fun j => mul (f i) (g j)) (N - i))) N)) := by
+  have hg' : ∀ i j, 0 < (mul (f i) (g j)).den := fun i j => Qmul_den_pos (hf i) (hg j)
+  have htri : 0 < (Fsum (fun i => Fsum (fun j => mul (f i) (g j)) (N - i)) N).den :=
+    Fsum_den_pos (fun i => Fsum_den_pos (fun j => hg' i j) (N - i)) N
+  have hcor : 0 < (Fsum (fun i => Qsub (Fsum (fun j => mul (f i) (g j)) N)
+      (Fsum (fun j => mul (f i) (g j)) (N - i))) N).den :=
+    Fsum_den_pos (fun i => Qsub_den_pos (Fsum_den_pos (fun j => hg' i j) N)
+      (Fsum_den_pos (fun j => hg' i j) (N - i))) N
+  refine Qeq_trans (Fsum_den_pos (fun i => Fsum_den_pos (fun j => hg' i j) N) N)
+    (Fsum_mul_Fsum hf hg N N) ?_
+  refine Qeq_trans (add_den_pos htri hcor) (Fsum_square_decomp hg' N) ?_
+  exact Qadd_congr (Fsum_triangle_reindex hg' N) (Qeq_refl _)
+
+-- ===========================================================================
 -- The diagonal convolutions and the **diagonal addition identity**.
 -- ===========================================================================
 
@@ -251,6 +287,23 @@ theorem sinConv_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (m' : Nat) :
 /-- `(−1)·x ≈ −x`. -/
 private theorem neg_one_mul_eq (x : Q) : Qeq (mul (⟨-1, 1⟩ : Q) x) (neg x) := by
   simp only [Qeq, mul, neg]; push_cast; ring_uor
+
+/-- **Cauchy product for `cos·cos`** (partial sums): `(Σcos a)(Σcos b) = Σ_{m≤N} cosConv(m) + corner`. -/
+theorem cosCauchy_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (N : Nat) :
+    Qeq (mul (altSum a 0 N) (altSum b 0 N))
+      (add (Fsum (cosConv a b) N)
+        (Fsum (fun i => Qsub (Fsum (fun j => mul (altTerm a 0 i) (altTerm b 0 j)) N)
+          (Fsum (fun j => mul (altTerm a 0 i) (altTerm b 0 j)) (N - i))) N)) := by
+  rw [altSum_eq_Fsum, altSum_eq_Fsum]
+  exact fsum_cauchy (altTerm_den_pos had 0) (altTerm_den_pos hbd 0) N
+
+/-- **Cauchy product for `sin·sin`** (partial sums): `(Σsin a)(Σsin b) = Σ_{m≤N} sinConv(m) + corner`. -/
+theorem sinCauchy_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (N : Nat) :
+    Qeq (mul (Fsum (sinTerm a) N) (Fsum (sinTerm b) N))
+      (add (Fsum (sinConv a b) N)
+        (Fsum (fun i => Qsub (Fsum (fun j => mul (sinTerm a i) (sinTerm b j)) N)
+          (Fsum (fun j => mul (sinTerm a i) (sinTerm b j)) (N - i))) N)) :=
+  fsum_cauchy (sinTerm_den_pos had) (sinTerm_den_pos hbd) N
 
 /-- **The diagonal addition identity** (`m = m'+1`): the degree-`m` term of `cos(a+b)` equals the
     `cos·cos` diagonal minus the `sin·sin` diagonal — i.e. the per-degree `cos(a+b) = cos·cos − sin·sin`.
