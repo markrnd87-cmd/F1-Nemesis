@@ -1338,6 +1338,11 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.primeSide_stable
 #print axioms Analysis.primeTerm_zero_of_h
 
+-- ZetaTwo (the ζ(2) ≥ 1.63 lower bracket; v0.16.0, for Pos λ₂).
+#print axioms Analysis.zeta_ge_partial
+#print axioms Analysis.zetaSum_two_70_ge
+#print axioms Analysis.zeta2_lower
+
 -- GammaUpper (the γ ≤ 0.66 upper bracket, companion to Rgamma_h_lower; v0.16.0, for Pos λ₂).
 #print axioms Analysis.Qabs_upper
 #print axioms Analysis.Qadd_sub_cancel
