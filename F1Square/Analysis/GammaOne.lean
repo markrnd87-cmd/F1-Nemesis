@@ -411,6 +411,20 @@ theorem Usum_tail_le (N : Nat) (hN : 1 ≤ N) (d : Nat) :
         (Qeq_le (Qeq_symm (Qadd_Qsub_comm _ (Usum (N + d)) (Usum N))))
         (Qle_trans (add_den_pos hA hC) (Qadd_le_add (Qle_refl _) ih) hstep)
 
+-- ===========================================================================
+-- The LOWER gap bound (dyadic blocks): prerequisite `log 2 ≤ 1`.
+-- ===========================================================================
+
+/-- **`log 2 ≤ 1`** — `exp(1) ≥ 1 + 1 = 2 = exp(log 2)`, and `exp` reflects `≤`. (The convergence of
+    the γ₁ dyadic tail only needs a constant bound on `log 2`, not the tight `0.6931`.) -/
+theorem logN_2_le_one : Rle (logN 2 (by omega)) (ofQ (⟨1, 1⟩ : Q) (by decide)) := by
+  apply RexpReal_reflects_le (Rnonneg_ofQ (by decide) (by decide))
+  refine Rle_trans (Rle_of_Req (Rexp_logN 2 (by omega))) ?_
+  refine Rle_trans (Rle_of_Req ?_) (RexpReal_ge_one_add_nonneg
+    (Rnonneg_ofQ (by decide) (by decide) : Rnonneg (ofQ (⟨1, 1⟩ : Q) (by decide))))
+  apply Req_of_seq_Qeq; intro n
+  simp only [ofQ, one, Radd, add, Qeq]; push_cast
+
 /-- **The UPPER gap bound** `gSeq(N+d) − gSeq N ≤ 1/(2N) − 1/(2(N+d)) ≤ 1/(2N)` (for `N ≥ 1`). -/
 theorem gSeq_diff_le (N : Nat) (hN : 1 ≤ N) (d : Nat) :
     Rle (Rsub (gSeq (N + d)) (gSeq N))
