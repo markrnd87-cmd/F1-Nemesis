@@ -1485,3 +1485,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Cmul_Cinv
 #print axioms Analysis.emCorrSum_zero
 #print axioms Analysis.emCorrSum_succ
+#print axioms Analysis.czFinSum_zero
+#print axioms Analysis.czFinSum_succ

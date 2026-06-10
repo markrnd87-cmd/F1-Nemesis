@@ -84,4 +84,38 @@ theorem emCorrSum_zero (s : Complex) (N : Nat) (hN : 2 ≤ N) : emCorrSum s N hN
 theorem emCorrSum_succ (s : Complex) (N : Nat) (hN : 2 ≤ N) (K : Nat) :
     emCorrSum s N hN (K + 1) = Cadd (emCorrSum s N hN K) (emTerm s N hN (K + 1)) := rfl
 
+-- ===========================================================================
+-- The full Euler–Maclaurin approximant `EM_K(s, N)`.
+-- ===========================================================================
+
+/-- `n⁻ˢ` as a complex value (`= n^{−s}`; `1⁻ˢ = 1`, `n⁻ˢ = exp(−s·log n)` for `n ≥ 2`). -/
+def cpowNeg (s : Complex) (n : Nat) : Complex :=
+  if h : 2 ≤ n then ncpow n h (Cneg s) else Cone
+
+/-- The head `Σ_{n=1}^{M} n⁻ˢ` of the Dirichlet series. -/
+def czFinSum (s : Complex) : Nat → Complex
+  | 0 => Czero
+  | (m + 1) => Cadd (czFinSum s m) (cpowNeg s (m + 1))
+
+theorem czFinSum_zero (s : Complex) : czFinSum s 0 = Czero := rfl
+
+theorem czFinSum_succ (s : Complex) (m : Nat) :
+    czFinSum s (m + 1) = Cadd (czFinSum s m) (cpowNeg s (m + 1)) := rfl
+
+/-- **The Euler–Maclaurin approximant** `EM_K(s, N)`:
+
+    `EM_K(s,N) = Σ_{n=1}^{N−1} n⁻ˢ + N^{1−s}/(s−1) + ½·N⁻ˢ + Σ_{k=1}^{K} (B_{2k}/(2k)!)(s)_{2k−1}N^{−s−2k+1}`.
+
+    For fixed `K` this approximates `ζ(s)` on `Re s > 1 − 2K`; the error `ζ(s) − EM_K(s,N)` is the
+    periodic-Bernoulli remainder `R_K(s,N) = O(N^{−Re s−2K+1}) → 0` as `N → ∞` (the analytic step still
+    to bound, which then yields `ζ` on the critical strip as a constructive real). The reciprocal
+    `1/(s−1)` uses `Cinv` with the positivity witness `k`, `hk` for `|s−1|²`. -/
+def emApprox (s : Complex) (N : Nat) (hN : 2 ≤ N) (K : Nat)
+    (k : Nat) (hk : Qlt (Qbound k) ((CnormSq (Csub s Cone)).seq k)) : Complex :=
+  Cadd (Cadd (Cadd
+    (czFinSum s (N - 1))
+    (Cmul (ncpow N hN (Csub Cone s)) (Cinv (Csub s Cone) k hk)))
+    (Cmul (ofReal (ofQ (⟨1, 2⟩ : Q) (by decide))) (ncpow N hN (Cneg s))))
+    (emCorrSum s N hN K)
+
 end UOR.Bridge.F1Square.Analysis
