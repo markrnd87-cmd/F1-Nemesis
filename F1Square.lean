@@ -266,7 +266,13 @@ def f1SquareStatus : F1SquareStatus := {
 --                                finite N / `decide` reaches the universal — the first ~10⁵ λₙ are
 --                                numerically positive yet that is NOT a proof)
 --   ζ-layer substrate (interfaces, never asserted for the genuine λ) ← Li.{LiDecomposition (BL),
---                                ExplicitFormulaTrace (Weil 1952/Connes 1999), LiAgreesWith}
+--                                ExplicitFormulaTrace (Weil 1952/Connes 1999), LiAgreesWith};
+--                                LiDecomposition is now realized NON-TRIVIALLY (v0.15.3) ←
+--                                Analysis.li_decomposition_realized, n=1 slice the real split
+--   the explicit-formula prime side (v0.15.3) ← Analysis.{vonMangoldt (Λ; Λ(4)=log 2, Λ(6)=0),
+--                                primeSide (Σ Λ(n)·h(log n), finite for compact support;
+--                                primeSide_stable), and the Bombieri–Lagarias n=1 decomposition
+--                                Rlambda1_decomposition (λ₁ = γ + (1 − γ/2 − ½log 4π))}
 --   ζ(s) as a constructive object ← Analysis.{Czeta (Σ n⁻ˢ, complex s, Re s>1; Bishop Rlim of the dyadic
 --                                partial sums), Czeta_re/im_tendsTo (convergence with rate 2/(k+1)); and the
 --                                integer-s exact-bounded ζ (zeta, zeta_pos, zetadiff_bound)}; λₙ typed as
@@ -626,5 +632,23 @@ example :
   ⟨fun s hσ τ₁ τ₂ hτn₁ hτd₁ hθ₁ hτn₂ hτd₂ hθ₂ =>
     ⟨Analysis.Czeta_re_canonical s hσ hτn₁ hτd₁ hθ₁ hτn₂ hτd₂ hθ₂,
      Analysis.Czeta_im_canonical s hσ hτn₁ hτd₁ hθ₁ hτn₂ hτd₂ hθ₂⟩, rfl⟩
+
+/-- Elaboration-checked witness binding the v0.15.3 layer — the **von Mangoldt `Λ` / prime side** and
+    the **Bombieri–Lagarias `n = 1` decomposition**. `Λ(4) = log 2` and `Λ(6) = 0` exhibit a genuine
+    arithmetic object (prime power vs. composite); the decomposition `λ₁ = λ₁^{arith} + λ₁^{∞}`
+    (`γ` plus the archimedean `1 − γ/2 − ½·log 4π`) is a real theorem on constructive reals; and the
+    `Li.LiDecomposition` interface is now realized **non-trivially** (`li_decomposition_realized`) — its
+    `n = 1` slice is the genuine two-place split, not the trivial `λ = λ + 0`. This is the explicit
+    formula's arithmetic ingredient and its `λ₁` bridge; it bears nothing on positivity — the crux
+    `liPositivityHolds` stays `none`, RH open. -/
+example :
+    Analysis.Req (Analysis.vonMangoldt 4) (Analysis.logN 2 (by omega))
+    ∧ Analysis.Req (Analysis.vonMangoldt 6) Analysis.zero
+    ∧ Analysis.Req Analysis.Rlambda1
+        (Analysis.Radd Analysis.Rlambda1_arith Analysis.Rlambda1_arch)
+    ∧ Li.LiDecomposition Analysis.liLamSeq Analysis.liArithSeq Analysis.liArchSeq
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Analysis.vonMangoldt_four, Analysis.vonMangoldt_six, Analysis.Rlambda1_decomposition,
+   Analysis.li_decomposition_realized, rfl⟩
 
 end UOR.Bridge.F1Square
