@@ -1475,3 +1475,8 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.emCoeff_one
 #print axioms Analysis.emCoeff_two
 #print axioms Analysis.emCoeff_three
+
+-- RealDiv (the real inverse law x·(1/x)=1; the Inv.lean gap, prereq for Cinv / goals A,B).
+#print axioms Analysis.Qmul_Qinv_sub_one
+#print axioms Analysis.Rmul_Rinv_perpoint
+#print axioms Analysis.Rmul_Rinv_self
