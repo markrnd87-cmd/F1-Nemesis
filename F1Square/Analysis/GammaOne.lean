@@ -289,17 +289,87 @@ theorem deltaLog_eq_twoArtanh (p : Nat) (hp : 1 ≤ p) :
       (Rnonneg_RartanhConst _ _ _ _ _ _ _ (by show (0 : Int) ≤ 1; decide))) ?_
   exact Req_trans (expDelta_eq p hp) (Req_symm (Rexp_twoArtanhRecip p hp))
 
-/-- **Tight upper bound on the consecutive-log difference**: `log(p+1) − log p ≤ 2·(artSum(1/(2p+1), T) + tail)`
-    (`p ≥ 1`), `tail = 1/((2p+1)^{2T+1}·4p(p+1))` — the `deltaLog_eq_twoArtanh` identity composed with
-    `twoArtanhRecip_le`. The summably-tight (`Θ(1/p⁵)` overshoot) replacement for `deltaLog_upper`. -/
+/-- The depth-`T` rational `δ`-ceiling at step `p` (`= 2·(artSum(1/(2p+1),T) + tail)`), the RHS value
+    of `deltaLog_upper_tight p T`. -/
+def dPlusQ (T p : Nat) : Q :=
+  mul (⟨2, 1⟩ : Q) (add (artSum (⟨1, 2 * p + 1⟩ : Q) T)
+    ⟨1, npow (2 * p + 1) (2 * T + 1) * (4 * p * (p + 1))⟩)
+
+theorem dPlusQ_den_pos (T p : Nat) (hp : 1 ≤ p) : 0 < (dPlusQ T p).den :=
+  Qmul_den_pos (by decide) (add_den_pos (artSum_den_pos (Nat.succ_pos _) T)
+    (Nat.mul_pos (npow_pos (Nat.succ_pos _) _)
+      (Nat.mul_pos (Nat.mul_pos (by decide) hp) (Nat.succ_pos _))))
+
+/-- **Tight upper bound on the consecutive-log difference**: `log(p+1) − log p ≤ dPlusQ T p`
+    (`= 2·(artSum(1/(2p+1), T) + tail)`, `tail = 1/((2p+1)^{2T+1}·4p(p+1))`) — the `deltaLog_eq_twoArtanh`
+    identity composed with `twoArtanhRecip_le`. Summably-tight (`Θ(1/p⁵)` overshoot) vs `deltaLog_upper`. -/
 theorem deltaLog_upper_tight (p T : Nat) (hp : 1 ≤ p) :
     Rle (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
-        (ofQ (mul (⟨2, 1⟩ : Q) (add (artSum (⟨1, 2 * p + 1⟩ : Q) T)
-              ⟨1, npow (2 * p + 1) (2 * T + 1) * (4 * p * (p + 1))⟩))
-          (Qmul_den_pos (by decide) (add_den_pos (artSum_den_pos (Nat.succ_pos _) T)
-            (Nat.mul_pos (npow_pos (Nat.succ_pos _) _)
-              (Nat.mul_pos (Nat.mul_pos (by decide) hp) (Nat.succ_pos _)))))) :=
+        (ofQ (dPlusQ T p) (dPlusQ_den_pos T p hp)) :=
   Rle_trans (Rle_of_Req (deltaLog_eq_twoArtanh p hp)) (twoArtanhRecip_le p T hp)
+
+-- ===========================================================================
+-- **Fixed-denominator round-up** — the key to a *feasible* final `decide`. Accumulating the per-step
+-- `δ` bounds with honest `Qadd` multiplies denominators (`∏(2p+1)^{2T+1}`, astronomical). Rounding each
+-- partial sum *up* to a fixed denominator `D` keeps every accumulator a single `⟨·, D⟩`, so the final
+-- numeric check is one big-integer comparison. The round-up overshoot is `< 1/D` per step (negligible).
+-- ===========================================================================
+
+/-- Round `q` *up* to denominator `D`: `⌈q·D⌉/D` via `(q.num·D) ediv q.den + 1` (a safe ceiling — the
+    `+1` covers the floor, overshooting by `< 1/D`). -/
+def qRoundUp (q : Q) (D : Nat) : Q := ⟨q.num * (D : Int) / (q.den : Int) + 1, D⟩
+
+/-- **`q ≤ qRoundUp q D`** — the round-up dominates (`q.den > 0`). The `+1` ceiling clears the floored
+    division: `(⌊a/b⌋+1)·b = a − a%b + b ≥ a + 1 > a` (`Int.ediv_add_emod` + `0 ≤ a%b < b`). -/
+theorem qRoundUp_ge (q : Q) (hqd : 0 < q.den) (D : Nat) : Qle q (qRoundUp q D) := by
+  show q.num * (D : Int) ≤ (q.num * (D : Int) / (q.den : Int) + 1) * (q.den : Int)
+  have hb : (0 : Int) < (q.den : Int) := by exact_mod_cast hqd
+  have hdm := Int.ediv_add_emod (q.num * (D : Int)) (q.den : Int)
+  have hmlt := Int.emod_lt_of_pos (q.num * (D : Int)) hb
+  have hmnn := Int.emod_nonneg (q.num * (D : Int)) (by omega : (q.den : Int) ≠ 0)
+  have key : (q.num * (D : Int) / (q.den : Int) + 1) * (q.den : Int)
+      = (q.den : Int) * (q.num * (D : Int) / (q.den : Int)) + (q.den : Int) := by
+    rw [Int.add_mul, Int.one_mul, Int.mul_comm (q.num * (D : Int) / (q.den : Int)) (q.den : Int)]
+  rw [key]; omega
+
+theorem qRoundUp_den_pos (q : Q) (D : Nat) (hD : 0 < D) : 0 < (qRoundUp q D).den := hD
+
+-- ===========================================================================
+-- **Per-term tight log upper bound, accumulated at fixed denominator `D`.** `logBound T D k` is a
+-- rational `≥ log(k+1)`, built by adding the depth-`T` artanh `δ`-ceiling at each step and rounding up
+-- to `D`. `logN_le_logBound` proves `log(k+1) ≤ ofQ(logBound T D k)` — the `.seq`-blowup-free input to
+-- the `lnSum` bound (each step is `Radd_le_add` + `Radd_ofQ_ofQ`, never `.seq`).
+-- ===========================================================================
+
+/-- `logBound T D k` is a rational upper bound for `log(k+1)`, at fixed denominator `D`. -/
+def logBound (T D : Nat) : Nat → Q
+  | 0 => ⟨0, D⟩
+  | (k + 1) => qRoundUp (add (logBound T D k) (dPlusQ T (k + 1))) D
+
+theorem logBound_den_pos (T D : Nat) (hD : 0 < D) : ∀ k, 0 < (logBound T D k).den
+  | 0 => hD
+  | (_ + 1) => hD
+
+/-- **`log(k+1) ≤ ofQ(logBound T D k)`** — the accumulated per-term log bound, via `deltaLog_upper_tight`
+    at each step (`Radd_le_add` + round-up), never touching `.seq`. -/
+theorem logN_le_logBound (T D : Nat) (hD : 0 < D) :
+    ∀ k, Rle (logN (k + 1) (Nat.succ_pos k)) (ofQ (logBound T D k) (logBound_den_pos T D hD k)) := by
+  intro k
+  induction k with
+  | zero =>
+    have h0 : Req (ofQ (logBound T D 0) (logBound_den_pos T D hD 0)) zero :=
+      Req_of_seq_Qeq (fun n => by show Qeq (⟨0, D⟩ : Q) ⟨0, 1⟩; simp only [Qeq]; push_cast; ring_uor)
+    exact Rle_of_Req (Req_trans logN_one (Req_symm h0))
+  | succ k ih =>
+    have hb1 := logBound_den_pos T D hD k
+    have hb2 := dPlusQ_den_pos T (k + 1) (Nat.succ_pos k)
+    have hadd := add_den_pos hb1 hb2
+    refine Rle_trans (Rle_of_Req (Req_symm (Radd_Rsub_self (logN (k + 1) (Nat.succ_pos k))
+      (logN (k + 2) (Nat.succ_pos (k + 1)))))) ?_
+    refine Rle_trans (Radd_le_add ih (deltaLog_upper_tight (k + 1) T (Nat.succ_pos k))) ?_
+    refine Rle_trans (Rle_of_Req (Radd_ofQ_ofQ hb1 hb2)) ?_
+    exact Rle_ofQ_ofQ hadd (logBound_den_pos T D hD (k + 1))
+      (qRoundUp_ge (add (logBound T D k) (dPlusQ T (k + 1))) hadd D)
 
 -- ===========================================================================
 -- Real-algebra helpers for the per-step bound on `d = (ln m)/m − ½((ln m)² − (ln(m−1))²)`.
