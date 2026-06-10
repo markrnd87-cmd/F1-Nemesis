@@ -768,4 +768,21 @@ theorem gSeqDyadic_RReg : RReg gSeqDyadic := by
     reindexed defining sequence `gSeq(2^{2j+8})`. `γ₁ ≈ −0.07282`. -/
 def Rgamma1 : Real := Rlim gSeqDyadic gSeqDyadic_RReg
 
+-- ===========================================================================
+-- One-sided Archimedean: `a − b ≤ C/(k+1)` for every `k` ⟹ `a ≤ b`. (The numeric γ₁ bound input.)
+-- ===========================================================================
+
+/-- **One-sided Archimedean**: if `a − b ≤ C/(k+1)` (as reals) for *every* `k`, then `a ≤ b`. The
+    half of `Req_of_Rle_ofQ_all` that gives the inequality (vanishing real bound forces `≤`). -/
+theorem Rle_of_Rsub_le_all {a b : Real} {C : Nat}
+    (hab : ∀ k, Rle (Rsub a b) (ofQ ⟨(C : Int), k + 1⟩ (Nat.succ_pos k))) : Rle a b := by
+  intro n
+  have hub : Qle (Qsub (a.seq n) (b.seq n)) ⟨2, n + 1⟩ := by
+    apply Qarch_gen (C := C) (Qsub_den_pos (a.den_pos n) (b.den_pos n)) (Nat.succ_pos n)
+    intro k
+    exact Qle_trans (add_den_pos (Nat.succ_pos _) (Nat.succ_pos _))
+      (seq_diff_le a b ⟨(C : Int), k + 1⟩ (Nat.succ_pos k) (hab k) n)
+      (Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor))
+  exact Qle_add_of_Qsub_le (a.den_pos n) (b.den_pos n) (Nat.succ_pos n) hub
+
 end UOR.Bridge.F1Square.Analysis
