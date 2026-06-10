@@ -570,4 +570,39 @@ theorem gSeq_block_ge (a : Nat) :
     (Rle_ofQ_ofQ hmid (Nat.pos_pow_of_pos a (by decide))
       (Qsub_block_le ((a : Int) + 2) (by have := Int.ofNat_nonneg a; omega) (2 ^ a)))
 
+/-- Rational sum of per-block lower bounds `Σ_{i<e} (A+i+2)/2^{A+i}`. -/
+def Wsum (A : Nat) : Nat → Q
+  | 0 => ⟨0, 1⟩
+  | (e + 1) => add (Wsum A e) ⟨(A + e + 2 : Int), 2 ^ (A + e)⟩
+
+theorem Wsum_den_pos (A : Nat) : ∀ e, 0 < (Wsum A e).den
+  | 0 => Nat.one_pos
+  | (e + 1) => add_den_pos (Wsum_den_pos A e) (Nat.pos_pow_of_pos (A + e) (by decide))
+
+/-- **Outer block lower bound** (`e`-induction over blocks): `gSeq(2^{A+e}) − gSeq(2^A) ≥ −Wsum A e`.
+    Chains `gSeq_block_ge` over consecutive dyadic blocks (same lower-side telescoping pattern as
+    `gSeq_diff_ge_block`). -/
+theorem gSeq_diff_ge_outer (A : Nat) : ∀ e,
+    Rle (Rneg (ofQ (Wsum A e) (Wsum_den_pos A e))) (Rsub (gSeq (2 ^ (A + e))) (gSeq (2 ^ A))) := by
+  intro e
+  induction e with
+  | zero =>
+      apply Rle_of_Req
+      refine Req_trans ?_ (Req_symm (Radd_neg (gSeq (2 ^ A))))
+      apply Req_of_seq_Qeq; intro n
+      simp only [Rneg, Wsum, ofQ, zero, neg, Qeq]; push_cast
+  | succ e ih =>
+      have hstepd : 0 < (⟨(A + e + 2 : Int), 2 ^ (A + e)⟩ : Q).den :=
+        Nat.pos_pow_of_pos (A + e) (by decide)
+      have hgapd : 0 < (Wsum A e).den := Wsum_den_pos A e
+      have heq : Req (Rneg (ofQ (Wsum A (e + 1)) (Wsum_den_pos A (e + 1))))
+          (Radd (Rneg (ofQ (⟨(A + e + 2 : Int), 2 ^ (A + e)⟩ : Q) hstepd))
+                (Rneg (ofQ (Wsum A e) hgapd))) :=
+        Req_trans (Rneg_congr (Req_trans
+          (ofQ_congr _ _ (by simp only [Wsum, Qeq, add]; push_cast; ring_uor))
+          (Req_symm (Radd_ofQ_ofQ hstepd hgapd)))) (Rneg_Radd _ _)
+      exact Rle_trans (Rle_of_Req heq)
+        (Rle_trans (Radd_le_add (gSeq_block_ge (A + e)) ih)
+          (Rle_of_Req (Rsub_split (gSeq (2 ^ (A + e + 1))) (gSeq (2 ^ (A + e))) (gSeq (2 ^ A)))))
+
 end UOR.Bridge.F1Square.Analysis
