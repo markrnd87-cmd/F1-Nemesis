@@ -536,4 +536,38 @@ theorem Vsum_tail_le (a N : Nat) (d : Nat) :
         (Qeq_le (Qeq_symm (Qadd_Qsub_comm _ (Vsum a (N + d)) (Vsum a N))))
         (Qle_trans (add_den_pos hA hC) (Qadd_le_add (Qle_refl _) ih) hstep)
 
+/-- `(c/(P+1) − c/(2P+1)) ≤ c/P` for `c ≥ 0` (difference `= c(P²+3P+1) ≥ 0`). The per-block fraction
+    cleanup, with abstract `c, P` so `ring_uor`/`omega` see only small atoms. -/
+theorem Qsub_block_le (c : Int) (hc : 0 ≤ c) (P : Nat) :
+    Qle (Qsub (⟨c, P + 1⟩ : Q) ⟨c, P + P + 1⟩) ⟨c, P⟩ := by
+  simp only [Qle, Qsub, add, neg]
+  push_cast
+  have hP : (0 : Int) ≤ (P : Int) := Int.ofNat_nonneg P
+  have h1 : (0 : Int) ≤ c * (P : Int) * (P : Int) := Int.mul_nonneg (Int.mul_nonneg hc hP) hP
+  have h2 : (0 : Int) ≤ c * (P : Int) := Int.mul_nonneg hc hP
+  have key : c * (((P : Int) + 1) * ((P : Int) + (P : Int) + 1))
+        - (c * ((P : Int) + (P : Int) + 1) + -c * ((P : Int) + 1)) * (P : Int)
+      = c * (P : Int) * (P : Int) + 3 * (c * (P : Int)) + c := by ring_uor
+  omega
+
+/-- **Per-block lower bound** `gSeq(2^{a+1}) − gSeq(2^a) ≥ −(a+2)/2^a`. The full block `[2^a, 2^{a+1})`
+    via `gSeq_diff_ge_block` (N=d=2^a) and the telescoped `Vsum_tail_le`, the bound `(a+2)/(2^a+1) ≤
+    (a+2)/2^a`. -/
+theorem gSeq_block_ge (a : Nat) :
+    Rle (Rneg (ofQ (⟨(a + 2 : Int), 2 ^ a⟩ : Q) (Nat.pos_pow_of_pos a (by decide))))
+        (Rsub (gSeq (2 ^ (a + 1))) (gSeq (2 ^ a))) := by
+  have e1 : (2 : Nat) ^ (a + 1) = 2 ^ a + 2 ^ a := by rw [Nat.pow_succ]; omega
+  have e2 : (2 : Nat) ^ (a + 2) = 2 ^ (a + 1) + 2 ^ (a + 1) := by rw [Nat.pow_succ]; omega
+  have hp1 : 1 ≤ (2 : Nat) ^ (a + 1) := Nat.one_le_two_pow
+  have hcon : 2 ^ a + 2 ^ a + 1 ≤ 2 ^ (a + 2) := by omega
+  rw [e1]
+  refine Rle_trans (Rle_Rneg ?_) (gSeq_diff_ge_block a (2 ^ a) (2 ^ a) hcon)
+  have hmid : 0 < (Qsub (⟨(a + 2 : Int), 2 ^ a + 1⟩ : Q) ⟨(a + 2 : Int), 2 ^ a + 2 ^ a + 1⟩).den :=
+    Qsub_den_pos (Nat.succ_pos (2 ^ a)) (Nat.succ_pos (2 ^ a + 2 ^ a))
+  exact Rle_trans
+    (Rle_ofQ_ofQ (Qsub_den_pos (Vsum_den_pos a (2 ^ a + 2 ^ a)) (Vsum_den_pos a (2 ^ a))) hmid
+      (Vsum_tail_le a (2 ^ a) (2 ^ a)))
+    (Rle_ofQ_ofQ hmid (Nat.pos_pow_of_pos a (by decide))
+      (Qsub_block_le ((a : Int) + 2) (by have := Int.ofNat_nonneg a; omega) (2 ^ a)))
+
 end UOR.Bridge.F1Square.Analysis
