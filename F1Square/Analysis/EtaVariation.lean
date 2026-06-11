@@ -2386,4 +2386,35 @@ theorem etaB_le_geo (s : Complex) (hs : Pos s.re) :
   refine Rle_trans (Rpow_mono (RexpReal_nonneg _) hrnn hu k) ?_
   exact Rle_of_Req (Rpow_ofQ hrd k)
 
+-- ===========================================================================
+-- Step 7b-ii(β-3/ii) — the FULL variation modulus partial sum EtaVSum (mirror czetaExpSum): the term for
+-- index n is Vterm (for n ≥ 2, else 0). Its contiguous difference is RsumRange of the terms — the bridge
+-- between the dyadic block bound (Vterm_geo_block_le, in RsumRange form) and the tail telescoping.
+-- ===========================================================================
+
+/-- The `n`-th variation modulus term: `Vterm s n (T·δ_n)` for `n ≥ 2`, else `0`. -/
+def etaVtermTerm (s : Complex) (T : Q) (hTd : 0 < T.den) (n : Nat) : Real :=
+  if h : 2 ≤ n then Vterm s n h (Rmul (ofQ T hTd) (deltaLogNat n h)) else zero
+
+/-- **The full variation modulus partial sum** `Σ_{n<M} etaVtermTerm n`. -/
+def EtaVSum (s : Complex) (T : Q) (hTd : 0 < T.den) : Nat → Real
+  | 0 => zero
+  | (m + 1) => Radd (EtaVSum s T hTd m) (etaVtermTerm s T hTd m)
+
+/-- **`RsumRange` respects pointwise `≈`** of the term function. -/
+theorem RsumRange_congr {V W : Nat → Real} (h : ∀ i, Req (V i) (W i)) :
+    ∀ d, Req (RsumRange V d) (RsumRange W d)
+  | 0 => Req_refl _
+  | (d + 1) => Radd_congr (RsumRange_congr h d) (h d)
+
+/-- **The contiguous difference is a range sum**: `EtaVSum(N+d) − EtaVSum N ≈ Σ_{i<d} etaVtermTerm (N+i)`. -/
+theorem EtaVSum_diff_eq_RsumRange (s : Complex) (T : Q) (hTd : 0 < T.den) (N : Nat) :
+    ∀ d, Req (Rsub (EtaVSum s T hTd (N + d)) (EtaVSum s T hTd N))
+        (RsumRange (fun i => etaVtermTerm s T hTd (N + i)) d)
+  | 0 => Radd_neg _
+  | (d + 1) =>
+      Req_trans (Rsub_Radd_left (EtaVSum s T hTd (N + d)) (etaVtermTerm s T hTd (N + d))
+          (EtaVSum s T hTd N))
+        (Radd_congr (EtaVSum_diff_eq_RsumRange s T hTd N d) (Req_refl _))
+
 end UOR.Bridge.F1Square.Analysis
