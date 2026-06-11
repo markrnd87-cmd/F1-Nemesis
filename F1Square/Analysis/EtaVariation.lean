@@ -1867,4 +1867,149 @@ theorem czEtaPaired_im_diff_ge (s : Complex) (K : Nat) (V : Nat → Real)
           (Rle_of_Req (Req_symm (Rsub_Radd_left (czEtaPaired s (K + d)).im
             (cpowNegDiff s (2 * (K + d) + 1)).im (czEtaPaired s K).im))))
 
+
+-- ===========================================================================
+-- Step 7b-ii(α) — the SMALLNESS SETUP: packages the per-term bound for n ≥ N₀(s), deriving the
+-- cpowNeg_diff smallness hypotheses (d_n ≤ 1/2, b_n ∈ [−1,1], −Bb ≤ b_n ≤ Bb) from rational bounds
+-- s.re ≤ sb, |s.im| ≤ T plus the largeness conditions (sb/n ≤ 1/2, T/n ≤ 1), via deltaLogNat_le_recip
+-- (δ_n ≤ 1/n) + Rmul-monotonicity. Bb := T·δ_n. Feeds the V-function of the paired-tail telescoping.
+-- ===========================================================================
+
+-- Packaged per-term variation bound for n ≥ N₀(s): derives the cpowNeg_diff_re/im_bound smallness hypotheses
+-- from rational bounds on s (s.re ≤ sb, |s.im| ≤ T) plus the largeness conditions (sb/n ≤ 1/2, T/n ≤ 1),
+-- using deltaLogNat_le_recip (δ_n ≤ 1/n) + Rnonneg_deltaLogNat + Rmul-monotonicity.  Bb := T·δ_n.
+-- Smallness derived internally:
+--   d_n = s.re·δ_n ≤ sb·δ_n ≤ sb·(1/n) = sb/n ≤ 1/2                          (hd1)
+--   b_n = (−s.im)·δ_n ∈ [−(T·δ_n), T·δ_n] = [−Bb, Bb]                       (hBb1, hBb2)
+--   b_n ≤ Bb ≤ T·(1/n) = T/n ≤ 1  and  −1 ≤ −Bb ≤ b_n                       (hb1, hb2)
+--   Bb = T·δ_n ≥ 0                                                          (hBb)
+-- Then cpowNeg_diff_re_bound / im_bound apply.
+
+theorem cpowNeg_diff_re_tail (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hTd : 0 < T.den)
+    (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd))
+    (n : Nat) (hn : 2 ≤ n)
+    (hdn : Qle (mul sb (⟨1, n⟩ : Q)) (⟨1, 2⟩ : Q))
+    (hbn : Qle (mul T (⟨1, n⟩ : Q)) (⟨1, 1⟩ : Q)) :
+    Rle (Rsub (cpowNeg s n).re (cpowNeg s (n + 1)).re)
+        (Vterm s n hn (Rmul (ofQ T hTd) (deltaLogNat n hn)))
+  ∧ Rle (Rneg (Vterm s n hn (Rmul (ofQ T hTd) (deltaLogNat n hn))))
+        (Rsub (cpowNeg s n).re (cpowNeg s (n + 1)).re) := by
+  let δ := deltaLogNat n hn
+  have hδnn : Rnonneg δ := Rnonneg_deltaLogNat n hn
+  have hδle : Rle δ (ofQ (⟨1, n⟩ : Q) (show 0 < n by omega)) := deltaLogNat_le_recip n hn
+  -- den positivity facts
+  have hnpos : 0 < n := by omega
+  have hrecd : 0 < (⟨1, n⟩ : Q).den := by show 0 < n; omega
+  have h12d : 0 < (⟨1, 2⟩ : Q).den := by decide
+  have h11d : 0 < (⟨1, 1⟩ : Q).den := by decide
+  -- Rnonneg (ofQ sb) via 0 ≤ s.re ≤ ofQ sb
+  have hsbnn : Rnonneg (ofQ sb hsbd) :=
+    Rnonneg_of_Rle_zero (Rle_trans (Rle_zero_of_Rnonneg hσ) hsb)
+  have hTnn : Rnonneg (ofQ T hTd) := Rnonneg_ofQ hTd hT0
+  -- ===== hd1 : Rmul s.re δ ≤ ofQ ⟨1,2⟩ =====
+  have hd1 : Rle (Rmul s.re δ) (ofQ (⟨1, 2⟩ : Q) (by decide)) := by
+    have step1 : Rle (Rmul s.re δ) (Rmul (ofQ sb hsbd) δ) :=
+      Rmul_le_Rmul_right hδnn hsb
+    have step2 : Rle (Rmul (ofQ sb hsbd) δ)
+        (Rmul (ofQ sb hsbd) (ofQ (⟨1, n⟩ : Q) hrecd)) :=
+      Rmul_le_Rmul_left hsbnn hδle
+    have step3 : Req (Rmul (ofQ sb hsbd) (ofQ (⟨1, n⟩ : Q) hrecd))
+        (ofQ (mul sb (⟨1, n⟩ : Q)) (Qmul_den_pos hsbd hrecd)) :=
+      Rmul_ofQ_ofQ hsbd hrecd
+    have step4 : Rle (ofQ (mul sb (⟨1, n⟩ : Q)) (Qmul_den_pos hsbd hrecd))
+        (ofQ (⟨1, 2⟩ : Q) (by decide)) :=
+      Rle_ofQ_ofQ (Qmul_den_pos hsbd hrecd) (by decide) hdn
+    exact Rle_trans step1 (Rle_trans step2 (Rle_trans (Rle_of_Req step3) step4))
+  -- Bb := Rmul (ofQ T) δ
+  have hBb : Rnonneg (Rmul (ofQ T hTd) δ) := Rnonneg_Rmul hTnn hδnn
+  -- ===== hBb2 : Rmul (Rneg s.im) δ ≤ Bb =====
+  have hnegim : Rle (Rneg s.im) (ofQ T hTd) := by
+    have h := Rle_Rneg hT1
+    exact Rle_trans h (Rle_of_Req (Rneg_neg (ofQ T hTd)))
+  have hBb2 : Rle (Rmul (Rneg s.im) δ) (Rmul (ofQ T hTd) δ) :=
+    Rmul_le_Rmul_right hδnn hnegim
+  -- ===== hBb1 : Rneg Bb ≤ Rmul (Rneg s.im) δ =====
+  have hnegim2 : Rle (Rneg (ofQ T hTd)) (Rneg s.im) := Rle_Rneg hT2
+  have hBb1 : Rle (Rneg (Rmul (ofQ T hTd) δ)) (Rmul (Rneg s.im) δ) := by
+    have step : Rle (Rmul (Rneg (ofQ T hTd)) δ) (Rmul (Rneg s.im) δ) :=
+      Rmul_le_Rmul_right hδnn hnegim2
+    exact Rle_trans (Rle_of_Req (Req_symm (Rmul_neg_left (ofQ T hTd) δ))) step
+  -- Bb ≤ one  (used by hb1, hb2)
+  have hBble1 : Rle (Rmul (ofQ T hTd) δ) one := by
+    have s1 : Rle (Rmul (ofQ T hTd) δ) (Rmul (ofQ T hTd) (ofQ (⟨1, n⟩ : Q) hrecd)) :=
+      Rmul_le_Rmul_left hTnn hδle
+    have s2 : Req (Rmul (ofQ T hTd) (ofQ (⟨1, n⟩ : Q) hrecd))
+        (ofQ (mul T (⟨1, n⟩ : Q)) (Qmul_den_pos hTd hrecd)) :=
+      Rmul_ofQ_ofQ hTd hrecd
+    have s3 : Rle (ofQ (mul T (⟨1, n⟩ : Q)) (Qmul_den_pos hTd hrecd))
+        (ofQ (⟨1, 1⟩ : Q) (by decide)) :=
+      Rle_ofQ_ofQ (Qmul_den_pos hTd hrecd) (by decide) hbn
+    exact Rle_trans s1 (Rle_trans (Rle_of_Req s2) s3)
+  -- ===== hb2 : Rmul (Rneg s.im) δ ≤ one =====
+  have hb2 : Rle (Rmul (Rneg s.im) δ) one := Rle_trans hBb2 hBble1
+  -- ===== hb1 : Rneg one ≤ Rmul (Rneg s.im) δ =====
+  have hb1 : Rle (Rneg one) (Rmul (Rneg s.im) δ) :=
+    Rle_trans (Rle_Rneg hBble1) hBb1
+  exact cpowNeg_diff_re_bound s n hn hσ hd1 hb1 hb2 hBb1 hBb2 hBb
+
+theorem cpowNeg_diff_im_tail (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hTd : 0 < T.den)
+    (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd))
+    (n : Nat) (hn : 2 ≤ n)
+    (hdn : Qle (mul sb (⟨1, n⟩ : Q)) (⟨1, 2⟩ : Q))
+    (hbn : Qle (mul T (⟨1, n⟩ : Q)) (⟨1, 1⟩ : Q)) :
+    Rle (Rsub (cpowNeg s n).im (cpowNeg s (n + 1)).im)
+        (Vterm s n hn (Rmul (ofQ T hTd) (deltaLogNat n hn)))
+  ∧ Rle (Rneg (Vterm s n hn (Rmul (ofQ T hTd) (deltaLogNat n hn))))
+        (Rsub (cpowNeg s n).im (cpowNeg s (n + 1)).im) := by
+  let δ := deltaLogNat n hn
+  have hδnn : Rnonneg δ := Rnonneg_deltaLogNat n hn
+  have hδle : Rle δ (ofQ (⟨1, n⟩ : Q) (show 0 < n by omega)) := deltaLogNat_le_recip n hn
+  have hnpos : 0 < n := by omega
+  have hrecd : 0 < (⟨1, n⟩ : Q).den := by show 0 < n; omega
+  have h12d : 0 < (⟨1, 2⟩ : Q).den := by decide
+  have h11d : 0 < (⟨1, 1⟩ : Q).den := by decide
+  have hsbnn : Rnonneg (ofQ sb hsbd) :=
+    Rnonneg_of_Rle_zero (Rle_trans (Rle_zero_of_Rnonneg hσ) hsb)
+  have hTnn : Rnonneg (ofQ T hTd) := Rnonneg_ofQ hTd hT0
+  have hd1 : Rle (Rmul s.re δ) (ofQ (⟨1, 2⟩ : Q) (by decide)) := by
+    have step1 : Rle (Rmul s.re δ) (Rmul (ofQ sb hsbd) δ) :=
+      Rmul_le_Rmul_right hδnn hsb
+    have step2 : Rle (Rmul (ofQ sb hsbd) δ)
+        (Rmul (ofQ sb hsbd) (ofQ (⟨1, n⟩ : Q) hrecd)) :=
+      Rmul_le_Rmul_left hsbnn hδle
+    have step3 : Req (Rmul (ofQ sb hsbd) (ofQ (⟨1, n⟩ : Q) hrecd))
+        (ofQ (mul sb (⟨1, n⟩ : Q)) (Qmul_den_pos hsbd hrecd)) :=
+      Rmul_ofQ_ofQ hsbd hrecd
+    have step4 : Rle (ofQ (mul sb (⟨1, n⟩ : Q)) (Qmul_den_pos hsbd hrecd))
+        (ofQ (⟨1, 2⟩ : Q) (by decide)) :=
+      Rle_ofQ_ofQ (Qmul_den_pos hsbd hrecd) (by decide) hdn
+    exact Rle_trans step1 (Rle_trans step2 (Rle_trans (Rle_of_Req step3) step4))
+  have hBb : Rnonneg (Rmul (ofQ T hTd) δ) := Rnonneg_Rmul hTnn hδnn
+  have hnegim : Rle (Rneg s.im) (ofQ T hTd) := by
+    have h := Rle_Rneg hT1
+    exact Rle_trans h (Rle_of_Req (Rneg_neg (ofQ T hTd)))
+  have hBb2 : Rle (Rmul (Rneg s.im) δ) (Rmul (ofQ T hTd) δ) :=
+    Rmul_le_Rmul_right hδnn hnegim
+  have hnegim2 : Rle (Rneg (ofQ T hTd)) (Rneg s.im) := Rle_Rneg hT2
+  have hBb1 : Rle (Rneg (Rmul (ofQ T hTd) δ)) (Rmul (Rneg s.im) δ) := by
+    have step : Rle (Rmul (Rneg (ofQ T hTd)) δ) (Rmul (Rneg s.im) δ) :=
+      Rmul_le_Rmul_right hδnn hnegim2
+    exact Rle_trans (Rle_of_Req (Req_symm (Rmul_neg_left (ofQ T hTd) δ))) step
+  have hBble1 : Rle (Rmul (ofQ T hTd) δ) one := by
+    have s1 : Rle (Rmul (ofQ T hTd) δ) (Rmul (ofQ T hTd) (ofQ (⟨1, n⟩ : Q) hrecd)) :=
+      Rmul_le_Rmul_left hTnn hδle
+    have s2 : Req (Rmul (ofQ T hTd) (ofQ (⟨1, n⟩ : Q) hrecd))
+        (ofQ (mul T (⟨1, n⟩ : Q)) (Qmul_den_pos hTd hrecd)) :=
+      Rmul_ofQ_ofQ hTd hrecd
+    have s3 : Rle (ofQ (mul T (⟨1, n⟩ : Q)) (Qmul_den_pos hTd hrecd))
+        (ofQ (⟨1, 1⟩ : Q) (by decide)) :=
+      Rle_ofQ_ofQ (Qmul_den_pos hTd hrecd) (by decide) hbn
+    exact Rle_trans s1 (Rle_trans (Rle_of_Req s2) s3)
+  have hb2 : Rle (Rmul (Rneg s.im) δ) one := Rle_trans hBb2 hBble1
+  have hb1 : Rle (Rneg one) (Rmul (Rneg s.im) δ) :=
+    Rle_trans (Rle_Rneg hBble1) hBb1
+  exact cpowNeg_diff_im_bound s n hn hσ hd1 hb1 hb2 hBb1 hBb2 hBb
+
 end UOR.Bridge.F1Square.Analysis
