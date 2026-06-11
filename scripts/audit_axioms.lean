@@ -1652,3 +1652,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.EtaVSum_mono
 #print axioms Analysis.EtaVSum_tail_full
 #print axioms Analysis.RsumRange_odd_le
+#print axioms Analysis.etaPaired_sum_le_tail
+#print axioms Analysis.czEtaPaired_re_tail
+#print axioms Analysis.czEtaPaired_im_tail

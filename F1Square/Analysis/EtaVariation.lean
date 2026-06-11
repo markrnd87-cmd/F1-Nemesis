@@ -2635,4 +2635,99 @@ theorem RsumRange_odd_le {f : Nat → Real} (hf : ∀ n, Rnonneg (f n)) :
       exact Radd_le_add
         (Rle_trans (RsumRange_odd_le hf d) (Rle_self_Radd_right (hf (2 * d)))) (Rle_refl _)
 
+-- ===========================================================================
+-- Step 7b-ii(β-3/viii) — the V-to-tail bridge and the paired re/im tail bounds.
+-- The odd-offset paired tail (over n = 2(K+i)+1) is bounded by the contiguous EtaVSum block
+-- difference, and then the paired czEta re/im difference is controlled by that block, two-sided.
+-- ===========================================================================
+
+/-- **The V-to-tail bridge**: the odd-offset paired sum `Σ_{i<d} etaVtermTerm(2(K+i)+1)` is
+    bounded by the contiguous `EtaVSum` block `EtaVSum(2(K+d)) − EtaVSum(2K)`. -/
+theorem etaPaired_sum_le_tail (s : Complex) (T : Q) (hTd : 0 < T.den) (hT0 : 0 ≤ T.num)
+    (hσ : Rnonneg s.re) (K : Nat) (d : Nat) :
+    Rle (RsumRange (fun i => etaVtermTerm s T hTd (2 * (K + i) + 1)) d)
+        (Rsub (EtaVSum s T hTd (2 * (K + d))) (EtaVSum s T hTd (2 * K))) := by
+  let g := fun n => etaVtermTerm s T hTd (2 * K + n)
+  -- (1) reindex: the odd-offset paired sum equals Σ g(2i+1)
+  have hcongr : Req (RsumRange (fun i => etaVtermTerm s T hTd (2 * (K + i) + 1)) d)
+      (RsumRange (fun i => g (2 * i + 1)) d) :=
+    RsumRange_congr (fun i =>
+      (congrArg (etaVtermTerm s T hTd) (show 2 * (K + i) + 1 = 2 * K + (2 * i + 1) by omega))
+        ▸ Req_refl _) d
+  -- (2) odd subsum ≤ full sum over 2d terms
+  have hodd : Rle (RsumRange (fun i => g (2 * i + 1)) d) (RsumRange g (2 * d)) :=
+    RsumRange_odd_le (fun n => Rnonneg_etaVtermTerm s T hTd hT0 hσ (2 * K + n)) d
+  -- (3) the full range sum equals the EtaVSum block difference
+  have hdiff : Req (RsumRange g (2 * d))
+      (Rsub (EtaVSum s T hTd (2 * K + 2 * d)) (EtaVSum s T hTd (2 * K))) :=
+    Req_symm (EtaVSum_diff_eq_RsumRange s T hTd (2 * K) (2 * d))
+  -- (4) fix the index 2*K+2*d = 2*(K+d)
+  have hidx : Rsub (EtaVSum s T hTd (2 * K + 2 * d)) (EtaVSum s T hTd (2 * K))
+      = Rsub (EtaVSum s T hTd (2 * (K + d))) (EtaVSum s T hTd (2 * K)) :=
+    congrArg (fun m => Rsub (EtaVSum s T hTd m) (EtaVSum s T hTd (2 * K)))
+      (show 2 * K + 2 * d = 2 * (K + d) by omega)
+  exact Rle_trans (Rle_of_Req hcongr)
+    (Rle_trans hodd (Rle_of_Req (Req_trans hdiff (hidx ▸ Req_refl _))))
+
+/-- **Paired real-part tail, two-sided**: the change in `czEtaPaired.re` over a block of `d` pairs
+    starting at `K` is controlled (both ways) by the contiguous `EtaVSum` block difference. -/
+theorem czEtaPaired_re_tail (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hTd : 0 < T.den)
+    (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd)) (K : Nat) (hK : 1 ≤ K)
+    (hsm : ∀ i, Qle (mul sb (⟨1, 2*(K+i)+1⟩ : Q)) (⟨1,2⟩ : Q) ∧ Qle (mul T (⟨1, 2*(K+i)+1⟩ : Q)) (⟨1,1⟩ : Q))
+    (d : Nat) :
+    Rle (Rsub (czEtaPaired s (K+d)).re (czEtaPaired s K).re)
+        (Rsub (EtaVSum s T hTd (2*(K+d))) (EtaVSum s T hTd (2*K)))
+  ∧ Rle (Rneg (Rsub (EtaVSum s T hTd (2*(K+d))) (EtaVSum s T hTd (2*K))))
+        (Rsub (czEtaPaired s (K+d)).re (czEtaPaired s K).re) := by
+  let V := fun i => etaVtermTerm s T hTd (2 * (K + i) + 1)
+  have hbU : ∀ i, Rle (Rsub (cpowNeg s (2 * (K + i) + 1)).re (cpowNeg s (2 * (K + i) + 1 + 1)).re) (V i) := by
+    intro i
+    show Rle _ (etaVtermTerm s T hTd (2 * (K + i) + 1))
+    unfold etaVtermTerm
+    rw [dif_pos (show 2 ≤ 2 * (K + i) + 1 by omega)]
+    exact (cpowNeg_diff_re_tail s hsbd hTd hT0 hσ hsb hT1 hT2 (2 * (K + i) + 1) (by omega)
+      (hsm i).1 (hsm i).2).1
+  have hbL : ∀ i, Rle (Rneg (V i)) (Rsub (cpowNeg s (2 * (K + i) + 1)).re (cpowNeg s (2 * (K + i) + 1 + 1)).re) := by
+    intro i
+    show Rle (Rneg (etaVtermTerm s T hTd (2 * (K + i) + 1))) _
+    unfold etaVtermTerm
+    rw [dif_pos (show 2 ≤ 2 * (K + i) + 1 by omega)]
+    exact (cpowNeg_diff_re_tail s hsbd hTd hT0 hσ hsb hT1 hT2 (2 * (K + i) + 1) (by omega)
+      (hsm i).1 (hsm i).2).2
+  have htail := etaPaired_sum_le_tail s T hTd hT0 hσ K d
+  refine ⟨?_, ?_⟩
+  · exact Rle_trans (czEtaPaired_re_diff_le s K V hbU d) htail
+  · exact Rle_trans (Rle_Rneg htail) (czEtaPaired_re_diff_ge s K V hbL d)
+
+/-- **Paired imaginary-part tail, two-sided** (mirror of `czEtaPaired_re_tail`). -/
+theorem czEtaPaired_im_tail (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hTd : 0 < T.den)
+    (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd)) (K : Nat) (hK : 1 ≤ K)
+    (hsm : ∀ i, Qle (mul sb (⟨1, 2*(K+i)+1⟩ : Q)) (⟨1,2⟩ : Q) ∧ Qle (mul T (⟨1, 2*(K+i)+1⟩ : Q)) (⟨1,1⟩ : Q))
+    (d : Nat) :
+    Rle (Rsub (czEtaPaired s (K+d)).im (czEtaPaired s K).im)
+        (Rsub (EtaVSum s T hTd (2*(K+d))) (EtaVSum s T hTd (2*K)))
+  ∧ Rle (Rneg (Rsub (EtaVSum s T hTd (2*(K+d))) (EtaVSum s T hTd (2*K))))
+        (Rsub (czEtaPaired s (K+d)).im (czEtaPaired s K).im) := by
+  let V := fun i => etaVtermTerm s T hTd (2 * (K + i) + 1)
+  have hbU : ∀ i, Rle (Rsub (cpowNeg s (2 * (K + i) + 1)).im (cpowNeg s (2 * (K + i) + 1 + 1)).im) (V i) := by
+    intro i
+    show Rle _ (etaVtermTerm s T hTd (2 * (K + i) + 1))
+    unfold etaVtermTerm
+    rw [dif_pos (show 2 ≤ 2 * (K + i) + 1 by omega)]
+    exact (cpowNeg_diff_im_tail s hsbd hTd hT0 hσ hsb hT1 hT2 (2 * (K + i) + 1) (by omega)
+      (hsm i).1 (hsm i).2).1
+  have hbL : ∀ i, Rle (Rneg (V i)) (Rsub (cpowNeg s (2 * (K + i) + 1)).im (cpowNeg s (2 * (K + i) + 1 + 1)).im) := by
+    intro i
+    show Rle (Rneg (etaVtermTerm s T hTd (2 * (K + i) + 1))) _
+    unfold etaVtermTerm
+    rw [dif_pos (show 2 ≤ 2 * (K + i) + 1 by omega)]
+    exact (cpowNeg_diff_im_tail s hsbd hTd hT0 hσ hsb hT1 hT2 (2 * (K + i) + 1) (by omega)
+      (hsm i).1 (hsm i).2).2
+  have htail := etaPaired_sum_le_tail s T hTd hT0 hσ K d
+  refine ⟨?_, ?_⟩
+  · exact Rle_trans (czEtaPaired_im_diff_le s K V hbU d) htail
+  · exact Rle_trans (Rle_Rneg htail) (czEtaPaired_im_diff_ge s K V hbL d)
+
 end UOR.Bridge.F1Square.Analysis
