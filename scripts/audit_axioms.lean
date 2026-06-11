@@ -1611,3 +1611,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.RlogNat_eq_logN
 #print axioms Analysis.Rnonneg_deltaLogNat
 #print axioms Analysis.deltaLogNat_le_recip
+#print axioms Analysis.Rmul_le_mul_of_abs
+#print axioms Analysis.Rneg_mul_le_of_abs
