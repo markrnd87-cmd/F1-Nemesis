@@ -11,6 +11,7 @@ Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 import F1Square.Analysis.EulerMaclaurin
 import F1Square.Analysis.ComplexExpAdd
 import F1Square.Analysis.ComplexZeta
+import F1Square.Analysis.GammaOne
 
 namespace UOR.Bridge.F1Square.Analysis
 
@@ -1202,5 +1203,26 @@ theorem RlogNat_eq_logN (n : Nat) (hn : 2 ≤ n) :
     Req (RlogNat n hn) (logN n (by omega)) :=
   RexpReal_inj (Rnonneg_RlogNat n hn) (Rnonneg_logN n (by omega))
     (Req_trans (Rexp_RlogNat n hn) (Req_symm (Rexp_logN n (by omega))))
+
+-- ===========================================================================
+-- The consecutive-log gap bounds 0 ≤ δ_n ≤ 1/n (δ_n = deltaLogNat n = log(n+1) − log n), transferring
+-- the logN facts (deltaLog_upper, logN_mono) through the RlogNat ↔ logN bridge. These give the δ_n → 0
+-- decay that makes the per-term η variation summable (n^{−σ}·δ_n ~ n^{−σ−1}).
+-- ===========================================================================
+
+/-- **`δ_n ≥ 0`**: `log(n+1) − log n ≥ 0` (log is monotone), via the bridge + `logN_mono`. -/
+theorem Rnonneg_deltaLogNat (n : Nat) (hn : 2 ≤ n) : Rnonneg (deltaLogNat n hn) := by
+  have hle : Rle (RlogNat n hn) (RlogNat (n + 1) (by omega)) :=
+    Rle_trans (Rle_of_Req (RlogNat_eq_logN n hn))
+      (Rle_trans (logN_mono (by omega : 1 ≤ n) (Nat.le_succ n))
+        (Rle_of_Req (Req_symm (RlogNat_eq_logN (n + 1) (by omega)))))
+  exact Rnonneg_Rsub_of_Rle hle
+
+/-- **`δ_n ≤ 1/n`**: transfers `deltaLog_upper` (`logN(p+1) − logN p ≤ 1/p`) via the bridge. -/
+theorem deltaLogNat_le_recip (n : Nat) (hn : 2 ≤ n) :
+    Rle (deltaLogNat n hn) (ofQ (⟨1, n⟩ : Q) (show 0 < n by omega)) := by
+  have hRw : Req (deltaLogNat n hn) (Rsub (logN (n + 1) (by omega)) (logN n (by omega))) :=
+    Rsub_congr (RlogNat_eq_logN (n + 1) (by omega)) (RlogNat_eq_logN n hn)
+  exact Rle_trans (Rle_of_Req hRw) (deltaLog_upper n (by omega))
 
 end UOR.Bridge.F1Square.Analysis
