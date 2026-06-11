@@ -1633,3 +1633,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.A_eq_czetaExp
 #print axioms Analysis.A_dyadic_le
 #print axioms Analysis.Vterm_dyadic_le
+#print axioms Analysis.deltaLogNat_sum_telescope

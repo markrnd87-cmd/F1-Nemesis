@@ -2260,5 +2260,24 @@ theorem Vterm_dyadic_le (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hsb0 : 0 �
     (Rnonneg_Rmul (Rnonneg_ofQ hCd hCn) (Rnonneg_deltaLogNat n hn))
     (A_dyadic_le s hσ k n hn hkn)
 
+-- ===========================================================================
+-- Step 7b-ii(β-2b/iv) — the δ-telescoping: Σ_{i<d} δ_{N+i} = RlogNat(N+d) − RlogNat N. On a dyadic block
+-- [2ᵏ, 2ᵏ⁺¹) this is RlogNat(2ᵏ⁺¹) − RlogNat(2ᵏ) = log 2, the constant that makes the block bound geometric.
+-- ===========================================================================
+
+/-- **The δ-sum telescopes**: `Σ_{i=0}^{d−1} δ_{N+i} ≈ RlogNat(N+d) − RlogNat N` (`δ_n = log(n+1) − log n`). -/
+theorem deltaLogNat_sum_telescope (N : Nat) (hN : 2 ≤ N) (d : Nat) :
+    Req (RsumRange (fun i => deltaLogNat (N + i) (by omega)) d)
+        (Rsub (RlogNat (N + d) (by omega)) (RlogNat N hN)) := by
+  induction d with
+  | zero => exact Req_symm (Radd_neg _)
+  | succ d ih =>
+      show Req (Radd (RsumRange (fun i => deltaLogNat (N + i) (by omega)) d)
+            (deltaLogNat (N + d) (by omega)))
+          (Rsub (RlogNat (N + (d + 1)) (by omega)) (RlogNat N hN))
+      refine Req_trans (Radd_congr ih (Req_refl _)) ?_
+      refine Req_trans (Radd_comm _ _) ?_
+      exact Rsub_telescope (RlogNat (N + d + 1) (by omega)) (RlogNat (N + d) (by omega)) (RlogNat N hN)
+
 end UOR.Bridge.F1Square.Analysis
 
