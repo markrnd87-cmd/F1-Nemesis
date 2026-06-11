@@ -2467,4 +2467,108 @@ theorem Rsin_add (a b : Real) :
         (add_den_pos (Nat.succ_pos N) (Nat.succ_pos N)))))
     htotal (Qeq_le (by simp only [Qeq, add]; push_cast; ring_uor))
 
+set_option maxHeartbeats 1000000 in
+/-- **The alternating diagonal respects `≈`**: `x ≈ y ⟹ RaltReal x off ≈ RaltReal y off` (so `cos`/`sin`
+    are well-defined on constructive reals). Mirror of `RexpReal_congr`: route both diagonals through a
+    common deep depth `R_x + R_y` (`altSum_trunc_bound` + `RaltReal_trunc_le`), bridge the argument change
+    `x₍R_x₎ → y₍R_y₎` with the Lipschitz bound (`altSum_Lip_le`, `LipS ≤ U`, the squared gap `qsq_diff_le`
+    over the regularity/`≈` gap). -/
+theorem RaltReal_congr {x y : Real} (off : Nat) (h : Req x y) :
+    Req (RaltReal x off) (RaltReal y off) := by
+  refine Req_of_lin_bound
+    (C := 1 + 8 * (xBound x + xBound y)
+      * (expM_U ((xBound x + xBound y) * (xBound x + xBound y))
+          (2 * ((xBound x + xBound y) * (xBound x + xBound y)))).num.toNat) ?_
+  intro n
+  show Qle (Qabs (Qsub (altSum (x.seq (RaltReal_R x n)) off (RaltReal_R x n))
+      (altSum (y.seq (RaltReal_R y n)) off (RaltReal_R y n)))) _
+  have hRxn : n ≤ RaltReal_R x n := n_le_RaltReal_R x n
+  have hRyn : n ≤ RaltReal_R y n := n_le_RaltReal_R y n
+  have hxLe : Qle (Qabs (x.seq (RaltReal_R x n))) ⟨((xBound x + xBound y : Nat) : Int), 1⟩ :=
+    canon_bound_le (Nat.le_add_right _ _) _
+  have hyLe : Qle (Qabs (y.seq (RaltReal_R y n))) ⟨((xBound x + xBound y : Nat) : Int), 1⟩ :=
+    canon_bound_le (Nat.le_add_left _ _) _
+  -- piece 1: |altSum(xₐ, R_x) − altSum(xₐ, D)| ≤ 1/(2(n+1))
+  have hP1 : Qle (Qabs (Qsub (altSum (x.seq (RaltReal_R x n)) off (RaltReal_R x n))
+      (altSum (x.seq (RaltReal_R x n)) off (RaltReal_R x n + RaltReal_R y n)))) ⟨1, 2 * (n + 1)⟩ := by
+    rw [Qabs_Qsub_comm]
+    exact Qle_trans (fct_pos _)
+      (altSum_trunc_bound (M := xBound x) (x.den_pos _) (canon_bound x _) off
+        (a := RaltReal_R x n) (b := RaltReal_R x n + RaltReal_R y n) (by unfold RaltReal_R; omega) (by omega))
+      (RaltReal_trunc_le x n)
+  -- piece 3: |altSum(yᵦ, D) − altSum(yᵦ, R_y)| ≤ 1/(2(n+1))
+  have hP3 : Qle (Qabs (Qsub (altSum (y.seq (RaltReal_R y n)) off (RaltReal_R x n + RaltReal_R y n))
+      (altSum (y.seq (RaltReal_R y n)) off (RaltReal_R y n)))) ⟨1, 2 * (n + 1)⟩ :=
+    Qle_trans (fct_pos _)
+      (altSum_trunc_bound (M := xBound y) (y.den_pos _) (canon_bound y _) off
+        (a := RaltReal_R y n) (b := RaltReal_R x n + RaltReal_R y n) (by unfold RaltReal_R; omega) (by omega))
+      (RaltReal_trunc_le y n)
+  -- argument gap: |xₐ − yᵦ| ≤ 4/(n+1)
+  have hh : Qle (Qabs (Qsub (x.seq (RaltReal_R y n)) (y.seq (RaltReal_R y n)))) ⟨2, n + 1⟩ :=
+    Qle_trans (b := (⟨2, RaltReal_R y n + 1⟩ : Q)) (by omega : (0:Nat) < RaltReal_R y n + 1)
+      (h (RaltReal_R y n)) (by simp only [Qle]; push_cast; omega)
+  have hargs : Qle (Qabs (Qsub (x.seq (RaltReal_R x n)) (y.seq (RaltReal_R y n)))) ⟨4, n + 1⟩ := by
+    refine Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (x.den_pos _) (x.den_pos _)))
+        (Qabs_den_pos (Qsub_den_pos (x.den_pos _) (y.den_pos _))))
+      (Qabs_sub_triangle (a := x.seq (RaltReal_R x n)) (b := x.seq (RaltReal_R y n))
+        (c := y.seq (RaltReal_R y n)) (x.den_pos _) (x.den_pos _) (y.den_pos _)) ?_
+    refine Qle_trans (add_den_pos (Nat.succ_pos n) (Nat.succ_pos n))
+      (Qadd_le_add (xreg_n_le x hRxn hRyn) hh) (Qeq_le ?_)
+    simp only [Qeq, add]; push_cast; ring_uor
+  -- squared gap: |−xₐ² − (−yᵦ²)| ≤ 8M/(n+1)
+  have hsq : Qle (Qabs (Qsub (neg (mul (x.seq (RaltReal_R x n)) (x.seq (RaltReal_R x n))))
+        (neg (mul (y.seq (RaltReal_R y n)) (y.seq (RaltReal_R y n))))))
+      ⟨(8 * (xBound x + xBound y) : Int), n + 1⟩ := by
+    refine Qle_trans (Qmul_den_pos Nat.one_pos (Qabs_den_pos (Qsub_den_pos (x.den_pos _) (y.den_pos _))))
+      (qsq_diff_le (x.den_pos _) (y.den_pos _) hxLe hyLe) ?_
+    refine Qle_trans (Qmul_den_pos Nat.one_pos (Nat.succ_pos n))
+      (Qmul_le_mul_left (Int.ofNat_nonneg _) hargs) (Qeq_le ?_)
+    simp only [Qeq, mul]; push_cast; ring_uor
+  -- piece 2: Lipschitz middle ≤ U·8M/(n+1)
+  have hLipU : Qle (LipS ((xBound x + xBound y) * (xBound x + xBound y)) (RaltReal_R x n + RaltReal_R y n))
+      ⟨((expM_U ((xBound x + xBound y) * (xBound x + xBound y))
+          (2 * ((xBound x + xBound y) * (xBound x + xBound y)))).num.toNat : Int), 1⟩ :=
+    Qle_trans (expM_U_den_pos _ _) (LipS_le_U _ _) (Qle_toNat (expM_U_num_nonneg _ _) (expM_U_den_pos _ _))
+  have hP2 : Qle (Qabs (Qsub (altSum (x.seq (RaltReal_R x n)) off (RaltReal_R x n + RaltReal_R y n))
+      (altSum (y.seq (RaltReal_R y n)) off (RaltReal_R x n + RaltReal_R y n))))
+      (mul ⟨((expM_U ((xBound x + xBound y) * (xBound x + xBound y))
+          (2 * ((xBound x + xBound y) * (xBound x + xBound y)))).num.toNat : Int), 1⟩
+        ⟨(8 * (xBound x + xBound y) : Int), n + 1⟩) := by
+    refine Qle_trans (Qmul_den_pos (LipS_den_pos _ _) (Qabs_den_pos (Qsub_den_pos
+        (Nat.mul_pos (x.den_pos _) (x.den_pos _)) (Nat.mul_pos (y.den_pos _) (y.den_pos _)))))
+      (altSum_Lip_le (x.den_pos _) (y.den_pos _) hxLe hyLe off (RaltReal_R x n + RaltReal_R y n)) ?_
+    exact Qle_trans (Qmul_den_pos Nat.one_pos (Qabs_den_pos (Qsub_den_pos
+        (Nat.mul_pos (x.den_pos _) (x.den_pos _)) (Nat.mul_pos (y.den_pos _) (y.den_pos _)))))
+      (Qmul_le_mul_right (Qabs_num_nonneg _) hLipU) (Qmul_le_mul_left (Int.ofNat_nonneg _) hsq)
+  -- assemble: piece1 + (piece2 + piece3)
+  have hRest := Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (altSum_den_pos (x.den_pos _) off _)
+        (altSum_den_pos (y.den_pos _) off _))) (Qabs_den_pos (Qsub_den_pos (altSum_den_pos (y.den_pos _) off _)
+        (altSum_den_pos (y.den_pos _) off _))))
+    (Qabs_sub_triangle
+      (a := altSum (x.seq (RaltReal_R x n)) off (RaltReal_R x n + RaltReal_R y n))
+      (b := altSum (y.seq (RaltReal_R y n)) off (RaltReal_R x n + RaltReal_R y n))
+      (c := altSum (y.seq (RaltReal_R y n)) off (RaltReal_R y n))
+      (altSum_den_pos (x.den_pos _) off _) (altSum_den_pos (y.den_pos _) off _)
+      (altSum_den_pos (y.den_pos _) off _)) (Qadd_le_add hP2 hP3)
+  refine Qle_trans (add_den_pos (Qabs_den_pos (Qsub_den_pos (altSum_den_pos (x.den_pos _) off _)
+      (altSum_den_pos (x.den_pos _) off _))) (Qabs_den_pos (Qsub_den_pos (altSum_den_pos (x.den_pos _) off _)
+      (altSum_den_pos (y.den_pos _) off _))))
+    (Qabs_sub_triangle
+      (a := altSum (x.seq (RaltReal_R x n)) off (RaltReal_R x n))
+      (b := altSum (x.seq (RaltReal_R x n)) off (RaltReal_R x n + RaltReal_R y n))
+      (c := altSum (y.seq (RaltReal_R y n)) off (RaltReal_R y n))
+      (altSum_den_pos (x.den_pos _) off _) (altSum_den_pos (x.den_pos _) off _)
+      (altSum_den_pos (y.den_pos _) off _)) ?_
+  refine Qle_trans (add_den_pos (Nat.succ_pos _)
+      (add_den_pos (Qmul_den_pos Nat.one_pos (Nat.succ_pos n)) (Nat.succ_pos _)))
+    (Qadd_le_add hP1 hRest) (Qeq_le ?_)
+  simp only [Qeq, add, mul]; push_cast; ring_uor
+
+/-- **`cos` respects `≈`.** -/
+theorem Rcos_congr {x y : Real} (h : Req x y) : Req (Rcos x) (Rcos y) := RaltReal_congr 0 h
+
+/-- **`sin` respects `≈`.** (`Rsin x = Rmul x (RsinAux x)`, `RsinAux = RaltReal · 1`.) -/
+theorem Rsin_congr {x y : Real} (h : Req x y) : Req (Rsin x) (Rsin y) :=
+  Rmul_congr h (RaltReal_congr 1 h)
+
 end UOR.Bridge.F1Square.Analysis

@@ -1580,3 +1580,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.sinAddLHS_le
 #print axioms Analysis.Rsin_add
 #print axioms Analysis.Cexp_add
+#print axioms Analysis.RaltReal_congr
+#print axioms Analysis.Rcos_congr
+#print axioms Analysis.Rsin_congr
