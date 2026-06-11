@@ -2344,4 +2344,24 @@ theorem logBlock_eq (k : Nat) (hk1 : 2 ≤ 2 ^ (k + 1)) (hkk : 2 ≤ 2 ^ k) :
   exact Req_trans (Radd_assoc (logN 2 (by omega)) (logN (2 ^ k) hm) (Rneg (logN (2 ^ k) hm)))
     (Req_trans (Radd_congr (Req_refl _) (Radd_neg (logN (2 ^ k) hm))) (Radd_zero (logN 2 (by omega))))
 
+/-- **The full dyadic block bound** `block_k ≤ uᵏ·Vconst·logN2` (`k ≥ 1`): the variation sum over the whole
+    block `[2ᵏ, 2ᵏ⁺¹)` is bounded by the geometric term `exp(−σ·k·log2)·Vconst·logN2`. Combines
+    `Vterm_block_le` (at `N = d = 2ᵏ`) with `logBlock_eq` (the block collapses to `logN 2`). -/
+theorem Vterm_geo_block_le (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hsb0 : 0 ≤ sb.num)
+    (hTd : 0 < T.den) (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd))
+    (k : Nat) (hk1 : 2 ≤ 2 ^ (k + 1)) (hkk : 2 ≤ 2 ^ k) :
+    Rle (RsumRange (fun i => Vterm s (2 ^ k + i) (by omega)
+            (Rmul (ofQ T hTd) (deltaLogNat (2 ^ k + i) (by omega)))) (2 ^ k))
+        (Rmul (Rmul (RexpReal (Rneg (Rmul s.re (Rnsmul k (logN 2 (by omega))))))
+              (ofQ (Vconst sb T) (Vconst_den_pos hsbd hTd))) (logN 2 (by omega))) := by
+  have hblk := Vterm_block_le s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 k (2 ^ k) hkk (Nat.le_refl _) (2 ^ k)
+  refine Rle_trans hblk (Rle_of_Req (Rmul_congr (Req_refl _) ?_))
+  -- the block factor RlogNat(2ᵏ+2ᵏ) − RlogNat(2ᵏ) ≈ logN 2  (2ᵏ+2ᵏ = 2ᵏ⁺¹)
+  have h2 : 2 ^ k + 2 ^ k = 2 ^ (k + 1) := by rw [Nat.pow_succ]; omega
+  have hidx : Req (RlogNat (2 ^ k + 2 ^ k) (by omega)) (RlogNat (2 ^ (k + 1)) hk1) :=
+    Req_trans (RlogNat_eq_logN (2 ^ k + 2 ^ k) (by omega))
+      (Req_trans (logN_eq_of_eq h2 (by omega) (by omega)) (Req_symm (RlogNat_eq_logN (2 ^ (k + 1)) hk1)))
+  exact Req_trans (Rsub_congr hidx (Req_refl _)) (logBlock_eq k hk1 hkk)
+
 end UOR.Bridge.F1Square.Analysis
