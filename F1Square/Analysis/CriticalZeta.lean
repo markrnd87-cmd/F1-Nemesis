@@ -292,4 +292,55 @@ theorem etaDenom_Pos_normSq (s : Complex) {σ₁ : Q} (hσ₁d : 0 < σ₁.den)
   have hle : Rle (Rmul A A) (CnormSq (etaDenom s)) := Rle_of_Rnonneg_Rsub hnonneg
   exact Pos_mono hle hPosA2
 
+-- ===========================================================================
+-- ζ on the critical strip via the η quotient.  `etaDenom_Pos_normSq` GUARANTEES a witness `k` with
+-- `Qlt (Qbound k) ((CnormSq (etaDenom s)).seq k)` exists (non-vacuity); the constructive inverse takes that
+-- witness explicitly — exactly as `Cinv` is designed and as `EulerMaclaurin` builds `1/(s−1)`.
+-- ζ(s) := η(s) · (1 − 2^{1−s})⁻¹, certified by the functional relation `(1 − 2^{1−s}) · ζ = η`.
+-- ===========================================================================
+
+/-- **The complex inverse `(1 − 2^{1−s})⁻¹`** on the critical strip, given a non-vanishing witness `k`
+    (whose existence is `etaDenom_Pos_normSq`). -/
+def etaDenomInv (s : Complex) (k : Nat) (hk : Qlt (Qbound k) ((CnormSq (etaDenom s)).seq k)) : Complex :=
+  Cinv (etaDenom s) k hk
+
+/-- **The Riemann ζ on the critical strip** `0 < Re s < 1`: `ζ(s) = η(s) / (1 − 2^{1−s})`, a genuine
+    constructive complex number (η via `Ceta`; the inverse via a non-vanishing witness `k`, which
+    `etaDenom_Pos_normSq` proves exists for `Re s ≤ σ₁ < 1`). -/
+def CzetaStrip (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hsb0 : 0 ≤ sb.num) (hTd : 0 < T.den)
+    (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd)) {τ : Q} (hτn : 0 < τ.num)
+    (hτd : 0 < τ.den)
+    (hblk : ∀ k, 1 ≤ k → Rle (Rsub (EtaVSum s T hTd (2 ^ (k + 1))) (EtaVSum s T hTd (2 ^ k)))
+        (ofQ (mul (Vconst sb T) (qpow (Qinv (add ⟨1, 1⟩ τ)) k))
+          (Qmul_den_pos (Vconst_den_pos hsbd hTd)
+            (qpow_den_pos (Qinv_den_pos (by simp only [add]; push_cast; omega)) k))))
+    (k : Nat) (hk : Qlt (Qbound k) ((CnormSq (etaDenom s)).seq k)) : Complex :=
+  Cmul (Ceta s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 hτn hτd hblk) (etaDenomInv s k hk)
+
+/-- **The functional relation** `(1 − 2^{1−s}) · ζ_strip(s) = η(s)` — the certificate that `CzetaStrip`
+    is the genuine analytic continuation, with no spurious denominator zero in the open strip. -/
+theorem CzetaStrip_functional (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hsb0 : 0 ≤ sb.num)
+    (hTd : 0 < T.den) (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd)) {τ : Q} (hτn : 0 < τ.num)
+    (hτd : 0 < τ.den)
+    (hblk : ∀ k, 1 ≤ k → Rle (Rsub (EtaVSum s T hTd (2 ^ (k + 1))) (EtaVSum s T hTd (2 ^ k)))
+        (ofQ (mul (Vconst sb T) (qpow (Qinv (add ⟨1, 1⟩ τ)) k))
+          (Qmul_den_pos (Vconst_den_pos hsbd hTd)
+            (qpow_den_pos (Qinv_den_pos (by simp only [add]; push_cast; omega)) k))))
+    (k : Nat) (hk : Qlt (Qbound k) ((CnormSq (etaDenom s)).seq k)) :
+    Ceq (Cmul (etaDenom s)
+          (CzetaStrip s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 hτn hτd hblk k hk))
+        (Ceta s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 hτn hτd hblk) := by
+  let D := etaDenom s
+  let η := Ceta s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 hτn hτd hblk
+  let Dinv := etaDenomInv s k hk
+  -- `D · (η · Dinv) ≈ (η · D) · Dinv ≈ η · (D · Dinv) ≈ η · 1 ≈ η`.
+  show Ceq (Cmul D (Cmul η Dinv)) η
+  refine Ceq_trans (Ceq_symm (Cmul_assoc D η Dinv)) ?_
+  refine Ceq_trans (Cmul_congr (Cmul_comm D η) (Ceq_refl Dinv)) ?_
+  refine Ceq_trans (Cmul_assoc η D Dinv) ?_
+  refine Ceq_trans (Cmul_congr (Ceq_refl η) (Cmul_Cinv (etaDenom s) k hk)) ?_
+  exact Cmul_one η
+
 end UOR.Bridge.F1Square.Analysis

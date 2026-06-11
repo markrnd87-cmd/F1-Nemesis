@@ -1672,3 +1672,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Pos_RlogNat_two
 #print axioms Analysis.etaTwoPow_re
 #print axioms Analysis.etaDenom_Pos_normSq
+#print axioms Analysis.CzetaStrip
+#print axioms Analysis.CzetaStrip_functional
