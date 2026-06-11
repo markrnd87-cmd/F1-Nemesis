@@ -1606,3 +1606,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rcos_one_sub_le_sq
 #print axioms Analysis.RsinAux_upper_le
 #print axioms Analysis.RsinAux_lower_ge
+#print axioms Analysis.Rexp_RlogNat
+#print axioms Analysis.Rnonneg_RlogNat
+#print axioms Analysis.RlogNat_eq_logN

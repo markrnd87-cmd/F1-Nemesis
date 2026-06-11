@@ -1028,4 +1028,179 @@ theorem RsinAux_lower_ge {x : Real} (hx1 : Rle x one) (hx2 : Rle (Rneg one) x) :
   unfold RsinAux
   exact RaltReal_lower_ge (by decide) hx1 hx2
 
+
+-- ===========================================================================
+-- The RlogNat ↔ logN bridge: RlogNat n (used by deltaLogNat/cpowNeg) equals logN n (used by
+-- deltaLog_upper/ComplexZeta). Via exp(RlogNat n) ≈ n (RlogNat's TwoArtanhConst form is rfl,
+-- then Rexp_two_artanh_ofQ) + RexpReal_inj with Rexp_logN. Converts the cpowNeg component bounds
+-- e^{−σ·RlogNat n} into the genuine n^{−σ} decay and transfers deltaLog_upper for the δ_n bound.
+-- ===========================================================================
+
+-- BRIDGE: RlogNat n (= RlogPos (RofNat n) 0, used by deltaLogNat / cpowNeg) equals logN n
+-- (= Rlog (ofQ⟨n,1⟩) ⟨n,1⟩ …, used by deltaLog_upper / ComplexZeta).  Both are "log n".
+-- Route: prove exp(RlogNat n) ≈ n (GOAL 1), then RexpReal_inj with Rexp_logN gives the bridge (GOAL 2).
+--
+-- Facts found in the codebase (verify against source):
+--  · RlogNat n hn := RlogPos (RofNat n) 0 (proof)   [ComplexPow.lean:19],  RofNat n = ofQ⟨n,1⟩ [ComplexPow:16]
+--  · RlogPos x k hk := Rlog ⟨reindexed x, …⟩ (M = |x₀|+2 + 1/L) …   [Log.lean:1069] — value-seq is
+--    Rmul(ofQ⟨2,1⟩)(Rartanh ⟨Rlog_seq (reindexed x), …⟩ ρ' …),  Rlog_seq y j = tmap(y.seq (2(j+1))) [Log:883].
+--    For y = reindexed (RofNat n): y.seq k = ⟨n,1⟩ (constant), so Rlog_seq y j = tmap⟨n,1⟩ (constant).
+--  · TwoArtanhConst τ ρ … := Rmul (ofQ⟨2,1⟩) (RartanhConst τ ρ …)   [ExpLog:4979];  RartanhConst τ ρ is the
+--    constant-argument Rartanh (seq = artSum τ …).  So RlogNat n ≈ TwoArtanhConst (tmap⟨n,1⟩) ρ' … (identical
+--    Rartanh seqs: both artSum (tmap⟨n,1⟩) …, since (ofQ τ).seq = ⟨reindexed RofNat n⟩.seq = const τ).
+--  · Rexp_two_artanh_ofQ (τ ρ g K …) : exp(TwoArtanhConst τ ρ …) ≈ ofQ g  [ExpLog:4989] — ρ-GENERAL.
+--    g satisfies g·(1−τ)=(1+τ); for τ = tmap⟨n,1⟩ = (n−1)/(n+1) this gives g = n.  Rexp_log_nat_Rlog
+--    [ExpLog:5070] already supplies concrete (g,K,M',L,C,hBC) for exactly this τ — MIRROR its argument values.
+--  · Rexp_logN n : exp(logN n) ≈ ofQ⟨n,1⟩  [RealPow:2723].  RexpReal_inj (hX:Rnonneg X)(hY)(exp X≈exp Y):X≈Y
+--    [RealPow:2678].  Rnonneg_logN [RealPow:2726].  Rnonneg_RartanhConst [GammaOne:270] → Rnonneg (RlogNat n).
+--  · tmap_nat_num/tmap_nat_den give tmap⟨n,1⟩ = ⟨n−1, n+1⟩.
+
+theorem Rexp_RlogNat (n : Nat) (hn : 2 ≤ n) :
+    Req (RexpReal (RlogNat n hn)) (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) := by
+  have hτd : 0 < (tmap (⟨(n : Int), 1⟩ : Q)).den := by rw [tmap_nat_den n]; omega
+  have hτ0 : 0 ≤ (tmap (⟨(n : Int), 1⟩ : Q)).num := by rw [tmap_nat_num n]; omega
+  have hτlt : (tmap (⟨(n : Int), 1⟩ : Q)).num.toNat < (tmap (⟨(n : Int), 1⟩ : Q)).den := by
+    rw [tmap_nat_num n, tmap_nat_den n]; omega
+  have h2 : (2 : Int) ≤ (n : Int) := by exact_mod_cast hn
+  have hsq : (n : Int) * 2 ≤ (n : Int) * (n : Int) := Int.mul_le_mul_of_nonneg_left h2 (by omega)
+  have htn : (((n : Int) * 1 + -1).toNat : Int) = (n : Int) - 1 := by
+    rw [Int.toNat_of_nonneg (by omega)]; omega
+  -- the RlogPos-derived modulus M' and its derived artanh radius ρ'
+  let M' : Q := add (add (Qabs ((ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos).seq 0)) ⟨2, 1⟩)
+    (Qinv (RL (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) 0))
+  -- closed forms for the modulus M' = (n²+n)/(n−1)
+  have hM'n : M'.num = (n : Int) * (n : Int) + (n : Int) := by
+    show (((n : Int) * 1 + 2 * 1) * ((Qinv (RL (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) 0)).den : Int)
+       + (Qinv (RL (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) 0)).num * 1) = (n : Int) * (n : Int) + (n : Int)
+    simp only [Qinv, RL, Rdelta, Qsub, add, neg, Qbound, ofQ, Qabs]
+    push_cast [htn]; ring_uor
+  have hM'd : M'.den = n - 1 := by
+    show (1 * (Qinv (RL (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) 0)).den) = n - 1
+    simp only [Qinv, RL, Rdelta, Qsub, add, neg, Qbound, ofQ, Qabs]
+    omega
+  -- the derived radius ρ' = (M'.num − M'.den)/(M'.num.toNat + M'.den)
+  have htoNatNum : (M'.num.toNat : Int) = (n : Int) * (n : Int) + (n : Int) := by
+    rw [hM'n]; rw [Int.toNat_of_nonneg (by omega)]
+  have hρ0 : 0 ≤ (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q).num := by
+    show (0 : Int) ≤ M'.num - (M'.den : Int); rw [hM'n, hM'd]; push_cast; omega
+  have hρd : 0 < (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q).den := by
+    show 0 < M'.num.toNat + M'.den
+    have : 0 < M'.num.toNat := by
+      have := htoNatNum; omega
+    omega
+  have hρlt : (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q).num.toNat
+      < (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q).den := by
+    show (M'.num - (M'.den : Int)).toNat < M'.num.toNat + M'.den
+    have e1 : ((M'.num - (M'.den : Int)).toNat : Int) = M'.num - (M'.den : Int) :=
+      Int.toNat_of_nonneg hρ0
+    have : ((M'.num - (M'.den : Int)).toNat : Int) < ((M'.num.toNat + M'.den : Nat) : Int) := by
+      rw [e1, hM'd]; push_cast [htoNatNum]; omega
+    exact_mod_cast this
+  have hb : Qle (Qabs (tmap (⟨(n : Int), 1⟩ : Q)))
+      (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q) := by
+    have habs : Qeq (Qabs (tmap (⟨(n : Int), 1⟩ : Q))) (tmap (⟨(n : Int), 1⟩ : Q)) :=
+      Qabs_of_nonneg hτ0
+    refine Qle_trans hτd (Qeq_le habs) ?_
+    show (tmap (⟨(n : Int), 1⟩ : Q)).num * ((M'.num.toNat + M'.den : Nat) : Int)
+       ≤ (M'.num - (M'.den : Int)) * ((tmap (⟨(n : Int), 1⟩ : Q)).den : Int)
+    rw [tmap_nat_num n, tmap_nat_den n, hM'n, hM'd]
+    have hcast : (((n : Int) * (n : Int) + (n : Int)).toNat : Int) = (n : Int) * (n : Int) + (n : Int) :=
+      Int.toNat_of_nonneg (by omega)
+    have hd1 : ((n - 1 : Nat) : Int) = (n : Int) - 1 := by omega
+    have hdiff : ((n : Int) * (n : Int) + (n : Int) - ((n : Int) - 1)) * ((n : Int) + 1)
+        - ((n : Int) - 1) * ((((n : Int) * (n : Int) + (n : Int)).toNat : Int) + ((n - 1 : Nat) : Int))
+        = 4 * (n : Int) := by rw [hcast, hd1]; ring_uor
+    push_cast [hcast, hd1] at hdiff ⊢
+    omega
+  have hbridge : RlogNat n hn = TwoArtanhConst (tmap (⟨(n : Int), 1⟩ : Q))
+      (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q)
+      hτd hρ0 hρd hρlt hb := rfl
+  rw [hbridge]
+  refine Rexp_two_artanh_ofQ (tmap (⟨(n : Int), 1⟩ : Q))
+    (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q) ⟨(n : Int), 1⟩ ⟨(n : Int) + 1, 2⟩
+    (n + 1) ((expM_U (n + 1) (2 * (n + 1))).num.toNat)
+    ((n + 1) * (n + 1) * ((expM_U (n + 1) (2 * (n + 1))).num.toNat + 2))
+    hτd hτ0 ?_ hτlt hρ0 hρd hρlt hb Nat.one_pos ?_ (by decide : (0:Nat) < 2) ?_ ?_ rfl ?_ ?_
+  · simp only [Qle]; rw [tmap_nat_num n, tmap_nat_den n]; push_cast; omega
+  · simp only [Qeq, mul, Qsub, add, neg]; rw [tmap_nat_num n, tmap_nat_den n]; push_cast; ring_uor
+  · simp only [Qle]; push_cast; omega
+  · refine Qeq_le ?_
+    simp only [Qeq, mul, Qsub, add, neg]; rw [tmap_nat_num n, tmap_nat_den n]; push_cast; ring_uor
+  · simp only [Qle, mul]; push_cast; omega
+  · intro j; refine Qeq_le ?_
+    simp only [Qeq, add, mul]; rw [tmap_nat_den n]; push_cast; ring_uor
+
+theorem Rnonneg_RlogNat (n : Nat) (hn : 2 ≤ n) : Rnonneg (RlogNat n hn) := by
+  have hτd : 0 < (tmap (⟨(n : Int), 1⟩ : Q)).den := by rw [tmap_nat_den n]; omega
+  have hτ0 : 0 ≤ (tmap (⟨(n : Int), 1⟩ : Q)).num := by rw [tmap_nat_num n]; omega
+  have h2 : (2 : Int) ≤ (n : Int) := by exact_mod_cast hn
+  have hsq : (n : Int) * 2 ≤ (n : Int) * (n : Int) := Int.mul_le_mul_of_nonneg_left h2 (by omega)
+  have htn : (((n : Int) * 1 + -1).toNat : Int) = (n : Int) - 1 := by
+    rw [Int.toNat_of_nonneg (by omega)]; omega
+  let M' : Q := add (add (Qabs ((ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos).seq 0)) ⟨2, 1⟩)
+    (Qinv (RL (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) 0))
+  have hM'n : M'.num = (n : Int) * (n : Int) + (n : Int) := by
+    show (((n : Int) * 1 + 2 * 1) * ((Qinv (RL (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) 0)).den : Int)
+       + (Qinv (RL (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) 0)).num * 1) = (n : Int) * (n : Int) + (n : Int)
+    simp only [Qinv, RL, Rdelta, Qsub, add, neg, Qbound, ofQ, Qabs]
+    push_cast [htn]; ring_uor
+  have hM'd : M'.den = n - 1 := by
+    show (1 * (Qinv (RL (ofQ (⟨(n : Int), 1⟩ : Q) Nat.one_pos) 0)).den) = n - 1
+    simp only [Qinv, RL, Rdelta, Qsub, add, neg, Qbound, ofQ, Qabs]
+    omega
+  have htoNatNum : (M'.num.toNat : Int) = (n : Int) * (n : Int) + (n : Int) := by
+    rw [hM'n]; rw [Int.toNat_of_nonneg (by omega)]
+  have hρ0 : 0 ≤ (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q).num := by
+    show (0 : Int) ≤ M'.num - (M'.den : Int); rw [hM'n, hM'd]; push_cast; omega
+  have hρd : 0 < (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q).den := by
+    show 0 < M'.num.toNat + M'.den
+    have : 0 < M'.num.toNat := by have := htoNatNum; omega
+    omega
+  have hρlt : (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q).num.toNat
+      < (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q).den := by
+    show (M'.num - (M'.den : Int)).toNat < M'.num.toNat + M'.den
+    have e1 : ((M'.num - (M'.den : Int)).toNat : Int) = M'.num - (M'.den : Int) :=
+      Int.toNat_of_nonneg hρ0
+    have : ((M'.num - (M'.den : Int)).toNat : Int) < ((M'.num.toNat + M'.den : Nat) : Int) := by
+      rw [e1, hM'd]; push_cast [htoNatNum]; omega
+    exact_mod_cast this
+  have hb : Qle (Qabs (tmap (⟨(n : Int), 1⟩ : Q)))
+      (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q) := by
+    have habs : Qeq (Qabs (tmap (⟨(n : Int), 1⟩ : Q))) (tmap (⟨(n : Int), 1⟩ : Q)) :=
+      Qabs_of_nonneg hτ0
+    refine Qle_trans hτd (Qeq_le habs) ?_
+    show (tmap (⟨(n : Int), 1⟩ : Q)).num * ((M'.num.toNat + M'.den : Nat) : Int)
+       ≤ (M'.num - (M'.den : Int)) * ((tmap (⟨(n : Int), 1⟩ : Q)).den : Int)
+    rw [tmap_nat_num n, tmap_nat_den n, hM'n, hM'd]
+    have hcast : (((n : Int) * (n : Int) + (n : Int)).toNat : Int) = (n : Int) * (n : Int) + (n : Int) :=
+      Int.toNat_of_nonneg (by omega)
+    have hd1 : ((n - 1 : Nat) : Int) = (n : Int) - 1 := by omega
+    have hdiff : ((n : Int) * (n : Int) + (n : Int) - ((n : Int) - 1)) * ((n : Int) + 1)
+        - ((n : Int) - 1) * ((((n : Int) * (n : Int) + (n : Int)).toNat : Int) + ((n - 1 : Nat) : Int))
+        = 4 * (n : Int) := by rw [hcast, hd1]; ring_uor
+    push_cast [hcast, hd1] at hdiff ⊢
+    omega
+  have hbridge : RlogNat n hn = TwoArtanhConst (tmap (⟨(n : Int), 1⟩ : Q))
+      (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q)
+      hτd hρ0 hρd hρlt hb := rfl
+  rw [hbridge]
+  have hartnn : Rnonneg (RartanhConst (tmap (⟨(n : Int), 1⟩ : Q))
+      (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q) hτd hρ0 hρd hρlt hb) := by
+    intro k
+    show Qle (neg (Qbound k)) (artSum (tmap (⟨(n : Int), 1⟩ : Q))
+      (Rartanh_R (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q) k))
+    have hnum : 0 ≤ (artSum (tmap (⟨(n : Int), 1⟩ : Q))
+        (Rartanh_R (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q) k)).num :=
+      artSum_nonneg hτ0 hτd _
+    have hpp : (0 : Int) ≤ (artSum (tmap (⟨(n : Int), 1⟩ : Q))
+        (Rartanh_R (⟨M'.num - (M'.den : Int), M'.num.toNat + M'.den⟩ : Q) k)).num * ((k : Int) + 1) :=
+      Int.mul_nonneg hnum (by omega)
+    simp only [Qle, neg, Qbound]; push_cast; omega
+  exact Rnonneg_Rmul (Rnonneg_ofQ (by decide) (by show (0 : Int) ≤ 2; decide)) hartnn
+
+theorem RlogNat_eq_logN (n : Nat) (hn : 2 ≤ n) :
+    Req (RlogNat n hn) (logN n (by omega)) :=
+  RexpReal_inj (Rnonneg_RlogNat n hn) (Rnonneg_logN n (by omega))
+    (Req_trans (Rexp_RlogNat n hn) (Req_symm (Rexp_logN n (by omega))))
+
 end UOR.Bridge.F1Square.Analysis
