@@ -1600,3 +1600,9 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.expSum_ge_one_add_four
 #print axioms Analysis.RexpReal_ge_one_add_four
 #print axioms Analysis.RexpReal_one_sub_neg_le
+#print axioms Analysis.altSum_quad
+#print axioms Analysis.RaltReal_upper_le
+#print axioms Analysis.RaltReal_lower_ge
+#print axioms Analysis.Rcos_one_sub_le_sq
+#print axioms Analysis.RsinAux_upper_le
+#print axioms Analysis.RsinAux_lower_ge
