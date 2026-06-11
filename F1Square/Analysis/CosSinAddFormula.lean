@@ -1043,4 +1043,23 @@ theorem cosMulDeep_le (a b : Real) (N s K : Nat) (hNs : N ≤ s)
         (Qabs_num_nonneg _) (Int.ofNat_nonneg _) hUa' (altDiag_to_deep b 0 N s K hNs hdb)))
     (Qeq_le (by simp only [Qeq, add, mul]; push_cast; ring_uor))
 
+/-- **The `cos(a+b)` LHS depth reconcile.** `(Rcos (Radd a b)).seq N = altSum ((Radd a b).seq R_z) 0 R_z`
+    (`R_z = RaltReal_R (Radd a b) N`, and `(Radd a b).seq R_z = a₍₂R_z₊₁₎ + b₍₂R_z₊₁₎`) is within `1/(N+1)`
+    of the deep partial sum `altSum (a₍₂R_z₊₁₎ + b₍₂R_z₊₁₎) 0 (2K+1)` — a *same-argument* depth change, so
+    pure `altSum_trunc_bound` (modulus `xBound (Radd a b)`) + `RaltReal_trunc_le`. -/
+theorem cosAddLHS_le (a b : Real) (N K : Nat)
+    (hdeep : RaltReal_R (Radd a b) N ≤ 2 * K + 1) :
+    Qle (Qabs (Qsub (RaltReal_seq (Radd a b) 0 N)
+        (altSum (add (a.seq (2 * RaltReal_R (Radd a b) N + 1)) (b.seq (2 * RaltReal_R (Radd a b) N + 1)))
+          0 (2 * K + 1)))) ⟨1, N + 1⟩ := by
+  have h2M : 2 * (xBound (Radd a b) * xBound (Radd a b)) ≤ RaltReal_R (Radd a b) N := by
+    unfold RaltReal_R; omega
+  show Qle (Qabs (Qsub (altSum ((Radd a b).seq (RaltReal_R (Radd a b) N)) 0 (RaltReal_R (Radd a b) N))
+      (altSum (add (a.seq (2 * RaltReal_R (Radd a b) N + 1)) (b.seq (2 * RaltReal_R (Radd a b) N + 1)))
+        0 (2 * K + 1)))) ⟨1, N + 1⟩
+  rw [Qabs_Qsub_comm]
+  refine Qle_trans (fct_pos _) (altSum_trunc_bound ((Radd a b).den_pos _) (canon_bound (Radd a b) _) 0
+    (a := RaltReal_R (Radd a b) N) (b := 2 * K + 1) (Nat.le_trans h2M (Nat.le_add_right _ 2)) hdeep) ?_
+  exact Qle_trans (Nat.succ_pos _) (RaltReal_trunc_le (Radd a b) N) (Q_den_mono (by decide) (by omega))
+
 end UOR.Bridge.F1Square.Analysis
