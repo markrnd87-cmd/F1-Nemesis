@@ -1589,4 +1589,30 @@ theorem sinTerm_add_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (m : Nat) :
   refine Qeq_trans (add_den_pos (Qmul_den_pos hS1d hEd) (Qmul_den_pos hS1d hOd)) hstep1 ?_
   exact Qadd_congr (Qeq_symm (csConv_eq had hbd m)) (Qeq_symm (scConv_eq had hbd m))
 
+/-- **The `sin(a+b)` partial-sum identity**: `Σ_{m≤N} sinTerm(a+b,m) = Σ cos·sin diag + Σ sin·cos diag`
+    (sum the per-degree `sinTerm_add_eq` and distribute `Fsum` over the addition). -/
+theorem sinAdd_partial_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (N : Nat) :
+    Qeq (Fsum (sinTerm (add a b)) N) (add (Fsum (csConv a b) N) (Fsum (scConv a b) N)) :=
+  Qeq_trans (Fsum_den_pos (fun m => add_den_pos (csConv_den_pos had hbd m) (scConv_den_pos had hbd m)) N)
+    (Fsum_congr_le (fun m _ => sinTerm_add_eq had hbd m))
+    (Fsum_add (csConv_den_pos had hbd) (scConv_den_pos had hbd) N)
+
+/-- **Cauchy product for `cos·sin`** (partial sums): `(Σcos a)(Σsin b) = Σ_{m≤N} csConv(m) + corner`. -/
+theorem csCauchy_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (N : Nat) :
+    Qeq (mul (altSum a 0 N) (Fsum (sinTerm b) N))
+      (add (Fsum (csConv a b) N)
+        (Fsum (fun i => Qsub (Fsum (fun j => mul (altTerm a 0 i) (sinTerm b j)) N)
+          (Fsum (fun j => mul (altTerm a 0 i) (sinTerm b j)) (N - i))) N)) := by
+  rw [altSum_eq_Fsum]
+  exact fsum_cauchy (altTerm_den_pos had 0) (sinTerm_den_pos hbd) N
+
+/-- **Cauchy product for `sin·cos`** (partial sums): `(Σsin a)(Σcos b) = Σ_{m≤N} scConv(m) + corner`. -/
+theorem scCauchy_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (N : Nat) :
+    Qeq (mul (Fsum (sinTerm a) N) (altSum b 0 N))
+      (add (Fsum (scConv a b) N)
+        (Fsum (fun i => Qsub (Fsum (fun j => mul (sinTerm a i) (altTerm b 0 j)) N)
+          (Fsum (fun j => mul (sinTerm a i) (altTerm b 0 j)) (N - i))) N)) := by
+  rw [altSum_eq_Fsum]
+  exact fsum_cauchy (sinTerm_den_pos had) (altTerm_den_pos hbd 0) N
+
 end UOR.Bridge.F1Square.Analysis

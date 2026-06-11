@@ -1557,3 +1557,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.csConv_eq
 #print axioms Analysis.scConv_eq
 #print axioms Analysis.sinTerm_add_eq
+#print axioms Analysis.sinAdd_partial_eq
+#print axioms Analysis.csCauchy_eq
+#print axioms Analysis.scCauchy_eq
