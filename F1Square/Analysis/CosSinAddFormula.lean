@@ -1509,4 +1509,84 @@ theorem Fsum_parity_split_odd (a : Nat → Q) (ha : ∀ i, 0 < (a i).den) :
       generalize Fsum (fun j => a (2 * j + 1)) m = O
       simp only [Qeq, add]; push_cast; ring_uor
 
+/-- The degree-`m` `cos·sin` cross-diagonal `Σ_{i≤m} cosTermᵢ(a)·sinT_{m−i}(b)`. -/
+def csConv (a b : Q) (m : Nat) : Q := Fsum (fun i => mul (altTerm a 0 i) (sinTerm b (m - i))) m
+
+/-- The degree-`m` `sin·cos` cross-diagonal `Σ_{i≤m} sinTermᵢ(a)·cosT_{m−i}(b)`. -/
+def scConv (a b : Q) (m : Nat) : Q := Fsum (fun i => mul (sinTerm a i) (altTerm b 0 (m - i))) m
+
+theorem csConv_den_pos {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (m : Nat) :
+    0 < (csConv a b m).den :=
+  Fsum_den_pos (fun i => Qmul_den_pos (altTerm_den_pos had 0 i) (sinTerm_den_pos hbd (m - i))) m
+
+theorem scConv_den_pos {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (m : Nat) :
+    0 < (scConv a b m).den :=
+  Fsum_den_pos (fun i => Qmul_den_pos (sinTerm_den_pos had i) (altTerm_den_pos hbd 0 (m - i))) m
+
+/-- The `cos·sin` cross-diagonal factors as `(−1)ᵐ · Σ_j pairTermD(2m+1, 2j)`. -/
+theorem csConv_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (m : Nat) :
+    Qeq (csConv a b m)
+        (mul (qpow (⟨-1, 1⟩ : Q) m) (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j)) m)) := by
+  simp only [csConv]
+  refine Qeq_trans (Fsum_den_pos (fun j => Qmul_den_pos (qpow_den_pos (by decide) m)
+      (pairTermD_den_pos had hbd _ _)) m)
+    (Fsum_congr_le (fun j hj => csPair_eq had hbd (by omega : j ≤ m))) ?_
+  exact Fsum_mul_left (qpow_den_pos (by decide) m) (fun j => pairTermD_den_pos had hbd _ _) m
+
+/-- The `sin·cos` cross-diagonal factors as `(−1)ᵐ · Σ_j pairTermD(2m+1, 2j+1)`. -/
+theorem scConv_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (m : Nat) :
+    Qeq (scConv a b m)
+        (mul (qpow (⟨-1, 1⟩ : Q) m) (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j + 1)) m)) := by
+  simp only [scConv]
+  refine Qeq_trans (Fsum_den_pos (fun j => Qmul_den_pos (qpow_den_pos (by decide) m)
+      (pairTermD_den_pos had hbd _ _)) m)
+    (Fsum_congr_le (fun j hj => scPair_eq had hbd (by omega : j ≤ m))) ?_
+  exact Fsum_mul_left (qpow_den_pos (by decide) m) (fun j => pairTermD_den_pos had hbd _ _) m
+
+/-- **The sin diagonal addition identity**: the degree-`m` term of `sin(a+b)` equals the sum of the two
+    cross-diagonals — the per-degree `sin(a+b) = cos a·sin b + sin a·cos b`. From the odd-degree
+    antidiagonal (`addPow_div_diag` at `2m+1`), extracting the sign `(−1)ᵐ` and matching the even/odd
+    `p`-sums to the `cos·sin`/`sin·cos` cross-diagonals (`csConv_eq`/`scConv_eq`). -/
+theorem sinTerm_add_eq {a b : Q} (had : 0 < a.den) (hbd : 0 < b.den) (m : Nat) :
+    Qeq (sinTerm (add a b) m) (add (csConv a b m) (scConv a b m)) := by
+  have habd : 0 < (add a b).den := add_den_pos had hbd
+  have hEd : 0 < (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j)) m).den :=
+    Fsum_den_pos (fun j => pairTermD_den_pos had hbd _ _) _
+  have hOd : 0 < (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j + 1)) m).den :=
+    Fsum_den_pos (fun j => pairTermD_den_pos had hbd _ _) _
+  have hS1d : 0 < (qpow (⟨-1, 1⟩ : Q) m).den := qpow_den_pos (by decide) _
+  -- step 1: `sinTerm(a+b,m) ≈ (−1)ᵐ · ((a+b)^{2m+1}/(2m+1)!) ≈ (−1)ᵐ · (E + O)`.
+  have hsign : Qeq (sinTerm (add a b) m)
+      (mul (qpow (⟨-1, 1⟩ : Q) m) (mul (qpow (add a b) (2 * m + 1)) ⟨1, fct (2 * m + 1)⟩)) := by
+    show Qeq (mul (add a b) (mul (qpow (neg (mul (add a b) (add a b))) m) ⟨1, fct (2 * m + 1)⟩))
+      (mul (qpow (⟨-1, 1⟩ : Q) m) (mul (qpow (add a b) (2 * m + 1)) ⟨1, fct (2 * m + 1)⟩))
+    refine Qeq_trans (Qmul_den_pos habd (Qmul_den_pos (Qmul_den_pos hS1d (qpow_den_pos habd _)) (fct_pos _)))
+      (Qmul_congr (Qeq_refl _) (Qmul_congr (qpow_negsq habd m) (Qeq_refl _))) ?_
+    rw [show qpow (add a b) (2 * m + 1) = mul (add a b) (qpow (add a b) (2 * m)) from qpow_succ _ _]
+    simp only [Qeq, mul]
+    generalize (add a b).num = xn; generalize ((add a b).den : Int) = xd
+    generalize (qpow (add a b) (2 * m)).num = pn; generalize ((qpow (add a b) (2 * m)).den : Int) = pd
+    generalize (qpow (⟨-1, 1⟩ : Q) m).num = sn; generalize ((qpow (⟨-1, 1⟩ : Q) m).den : Int) = sd
+    push_cast
+    generalize ((fct (2 * m + 1) : Nat) : Int) = f1
+    ring_uor
+  have hanti : Qeq (mul (qpow (add a b) (2 * m + 1)) ⟨1, fct (2 * m + 1)⟩)
+      (Fsum (pairTermD a b (2 * m + 1)) (2 * m + 1)) := addPow_div_diag had hbd (2 * m + 1)
+  have hsplit : Qeq (Fsum (pairTermD a b (2 * m + 1)) (2 * m + 1))
+      (add (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j)) m)
+           (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j + 1)) m)) :=
+    Fsum_parity_split_odd (pairTermD a b (2 * m + 1)) (fun i => pairTermD_den_pos had hbd _ _) m
+  have hfull : Qeq (mul (qpow (add a b) (2 * m + 1)) ⟨1, fct (2 * m + 1)⟩)
+      (add (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j)) m)
+           (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j + 1)) m)) :=
+    Qeq_trans (Fsum_den_pos (pairTermD_den_pos had hbd (2 * m + 1)) (2 * m + 1)) hanti hsplit
+  have hstep1 : Qeq (sinTerm (add a b) m)
+      (add (mul (qpow (⟨-1, 1⟩ : Q) m) (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j)) m))
+           (mul (qpow (⟨-1, 1⟩ : Q) m) (Fsum (fun j => pairTermD a b (2 * m + 1) (2 * j + 1)) m))) :=
+    Qeq_trans (Qmul_den_pos hS1d (Qmul_den_pos (qpow_den_pos habd _) (fct_pos _))) hsign
+      (Qeq_trans (Qmul_den_pos hS1d (add_den_pos hEd hOd))
+        (Qmul_congr (Qeq_refl _) hfull) (Qmul_add_left _ _ _))
+  refine Qeq_trans (add_den_pos (Qmul_den_pos hS1d hEd) (Qmul_den_pos hS1d hOd)) hstep1 ?_
+  exact Qadd_congr (Qeq_symm (csConv_eq had hbd m)) (Qeq_symm (scConv_eq had hbd m))
+
 end UOR.Bridge.F1Square.Analysis
