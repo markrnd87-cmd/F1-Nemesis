@@ -1579,3 +1579,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.scMulDeep_le
 #print axioms Analysis.sinAddLHS_le
 #print axioms Analysis.Rsin_add
+#print axioms Analysis.Cexp_add
