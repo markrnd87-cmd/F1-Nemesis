@@ -72,6 +72,33 @@ open UOR.Bridge.F1Square
 -- Crux (the property; proved on the Template, OPEN on the square).
 #print axioms Crux.template_hodgeIndex
 
+-- v0.17.0 stage C — the 𝔽₁ curve at the monoid level (Square/Monoid.lean).
+#print axioms Square.mMul_assoc
+#print axioms Square.mMul_comm
+#print axioms Square.mOne_mul
+#print axioms Square.mMul_one
+#print axioms Square.cmon_mul_one
+#print axioms Square.cmon_mul_mul_comm
+#print axioms Square.f1_initial
+#print axioms Square.f1_initial_unique
+#print axioms Square.mScale_not_hom
+#print axioms Square.mScale_comp
+
+-- v0.17.0 stage C — the canonical square 𝕊 = F ⊗_𝔽₁ F with its universal property
+-- (Square/Tensor.lean): coproduct laws, canonicality, non-collapse, strict 2-dimensionality.
+#print axioms Square.copair_inl
+#print axioms Square.copair_inr
+#print axioms Square.sq_factor
+#print axioms Square.copair_unique
+#print axioms Square.square_base_cocone
+#print axioms Square.inl_ne_inr
+#print axioms Square.gen2_injective
+#print axioms Square.gen2_codiag_collapse
+#print axioms Square.codiag_not_injective
+#print axioms Square.proj1_inl
+#print axioms Square.proj2_inr
+#print axioms Square.proj_faithful
+
 -- v0.2.0 — Tropical closure / κ / spectrum (R2, R3, R4, R9, R10, R11).
 #print axioms Tropical.star_matches
 #print axioms Tropical.R2_kleene_idempotent
