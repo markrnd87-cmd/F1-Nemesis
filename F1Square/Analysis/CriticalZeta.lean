@@ -349,4 +349,67 @@ theorem CzetaStrip_functional (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hsb0
   refine Ceq_trans (Cmul_congr (Ceq_refl η) (Cmul_Cinv (etaDenom s) k hk)) ?_
   exact Cmul_one η
 
+-- ===========================================================================
+-- The CONCRETELY-CONSTRUCTIBLE critical-strip ζ (no `∃`/choice in the η factor), via `CetaW`; plus its
+-- non-vacuity at `s = ½` and the uniqueness of the quotient (the denominator being non-vanishing).
+-- ===========================================================================
+
+/-- **`ζ(s)` on the critical strip, concretely constructible**: `CzetaStripW = CetaW(s) / (1 − 2^{1−s})`,
+    taking an explicit `Re s`-positivity witness `(kσ,hkσ)` for the η factor (`CetaW`, no `∃`/choice) and
+    the non-vanishing witness `(k,hk)` for the inverse. The strip membership `Re s < 1` is what makes the
+    `(k,hk)` bundle inhabitable — `etaDenom_Pos_normSq` derives it from `Re s ≤ σ₁ < 1`. -/
+def CzetaStripW (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hsb0 : 0 ≤ sb.num) (hTd : 0 < T.den)
+    (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd))
+    (kσ : Nat) (hkσ : Qlt (Qbound kσ) (s.re.seq kσ))
+    (k : Nat) (hk : Qlt (Qbound k) ((CnormSq (etaDenom s)).seq k)) : Complex :=
+  Cmul (CetaW s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 kσ hkσ) (etaDenomInv s k hk)
+
+/-- **The functional relation for `CzetaStripW`**: `(1 − 2^{1−s}) · ζ_strip(s) ≈ η(s)` (with `η = CetaW`). -/
+theorem CzetaStripW_functional (s : Complex) {sb T : Q} (hsbd : 0 < sb.den) (hsb0 : 0 ≤ sb.num)
+    (hTd : 0 < T.den) (hT0 : 0 ≤ T.num) (hσ : Rnonneg s.re) (hsb : Rle s.re (ofQ sb hsbd))
+    (hT1 : Rle (Rneg (ofQ T hTd)) s.im) (hT2 : Rle s.im (ofQ T hTd))
+    (kσ : Nat) (hkσ : Qlt (Qbound kσ) (s.re.seq kσ))
+    (k : Nat) (hk : Qlt (Qbound k) ((CnormSq (etaDenom s)).seq k)) :
+    Ceq (Cmul (etaDenom s) (CzetaStripW s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 kσ hkσ k hk))
+        (CetaW s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 kσ hkσ) := by
+  let D := etaDenom s
+  let η := CetaW s hsbd hsb0 hTd hT0 hσ hsb hT1 hT2 kσ hkσ
+  let Dinv := etaDenomInv s k hk
+  show Ceq (Cmul D (Cmul η Dinv)) η
+  refine Ceq_trans (Ceq_symm (Cmul_assoc D η Dinv)) ?_
+  refine Ceq_trans (Cmul_congr (Cmul_comm D η) (Ceq_refl Dinv)) ?_
+  refine Ceq_trans (Cmul_assoc η D Dinv) ?_
+  refine Ceq_trans (Cmul_congr (Ceq_refl η) (Cmul_Cinv (etaDenom s) k hk)) ?_
+  exact Cmul_one η
+
+/-- **Uniqueness of the quotient**: with the denominator non-vanishing (witness `k,hk`), any two solutions
+    of `(1 − 2^{1−s})·z ≈ w` are `≈`-equal. So `CzetaStripW` is *the* value pinned by the functional
+    relation, not merely *a* solution — `x ≈ (1−2^{1−s})⁻¹·D·x ≈ (1−2^{1−s})⁻¹·w ≈ y`. -/
+theorem etaDenom_cancel (s : Complex) (k : Nat) (hk : Qlt (Qbound k) ((CnormSq (etaDenom s)).seq k))
+    (x y w : Complex) (hx : Ceq (Cmul (etaDenom s) x) w) (hy : Ceq (Cmul (etaDenom s) y) w) :
+    Ceq x y := by
+  -- left inverse: `Cinv D · D ≈ 1` (from `D · Cinv D ≈ 1` by commutativity)
+  have hLinv : Ceq (Cmul (Cinv (etaDenom s) k hk) (etaDenom s)) Cone :=
+    Ceq_trans (Cmul_comm (Cinv (etaDenom s) k hk) (etaDenom s)) (Cmul_Cinv (etaDenom s) k hk)
+  have hrecover : ∀ z, Ceq (Cmul (Cinv (etaDenom s) k hk) (Cmul (etaDenom s) z)) z := by
+    intro z
+    refine Ceq_trans (Ceq_symm (Cmul_assoc (Cinv (etaDenom s) k hk) (etaDenom s) z)) ?_
+    exact Ceq_trans (Cmul_congr hLinv (Ceq_refl z)) (Ceq_trans (Cmul_comm Cone z) (Cmul_one z))
+  exact Ceq_trans (Ceq_symm (hrecover x))
+    (Ceq_trans (Cmul_congr (Ceq_refl _) hx)
+      (Ceq_trans (Cmul_congr (Ceq_refl _) (Ceq_symm hy)) (hrecover y)))
+
+/-- **Non-vacuity of the critical-strip ζ at `s = ½`**: the non-vanishing witness `(k,hk)` for the
+    denominator `1 − 2^{1−s}` provably EXISTS at `s = ½` (derived from `Re s = ½ ≤ ¾ < 1` via
+    `etaDenom_Pos_normSq`), and the η factor `CetaW sHalf … 2 …` is already a concrete value
+    (`CetaW_half_wellTyped`). So `CzetaStripW sHalf … 2 … k hk` is a genuine constructive `ζ(½)` — the
+    critical-strip ζ is not vacuous. (`sHalf` is on the critical line, where RH lives.) -/
+theorem CzetaStrip_half_nonvacuous :
+    ∃ k : Nat, Qlt (Qbound k) ((CnormSq (etaDenom sHalf)).seq k) := by
+  have hσs : Rle sHalf.re (ofQ (⟨3, 4⟩ : Q) (by decide)) := by
+    show Rle (ofQ (⟨1, 2⟩ : Q) (by decide)) (ofQ (⟨3, 4⟩ : Q) (by decide))
+    exact Rle_ofQ_ofQ (by decide) (by decide) (by decide)
+  exact etaDenom_Pos_normSq sHalf (σ₁ := ⟨3, 4⟩) (by decide) (by decide) hσs
+
 end UOR.Bridge.F1Square.Analysis
