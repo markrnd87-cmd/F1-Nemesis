@@ -163,6 +163,56 @@ theorem weilTrace_dominance (W : WeilTrace) :
   dominated_iff_liPositive W.trace
 
 -- ===========================================================================
+-- The assembly shape: certified head + dominated tail.
+-- ===========================================================================
+
+/-- **The head–tail assembly**: a certified head (`λₙ > 0` for `n ≤ N₀`, slice by slice)
+    plus a tail bound (one `B` dominating from `N₀ + 1` on) delivers the full universal.
+    This is the shape a genuine closure would take in this substrate: the head is the
+    numeric frontier (certified through `n = 2` today, `spectral_strict_upTo_two`); the
+    missing object is the TAIL bound for the genuine parts — a single bound on the
+    arithmetic oscillation strictly below the archimedean trend for all `n ≥ N₀ + 1`,
+    classically governed by the zeros' location (module docstring). The theorem makes the
+    route exact without asserting any of its inputs for the genuine sequences. -/
+theorem dominance_head_tail {lam arith arch : Nat → Real} (N₀ : Nat)
+    (htrace : ∀ n : Nat, 0 < n → Li.ExplicitFormulaTrace (lam n) (arith n) (arch n))
+    (hhead : ∀ n : Nat, 0 < n → n ≤ N₀ → Pos (lam n))
+    (B : Nat → Real)
+    (htail1 : ∀ n : Nat, N₀ < n → Rle (Rneg (B n)) (arith n))
+    (htail2 : ∀ n : Nat, N₀ < n → Pos (Rsub (arch n) (B n))) :
+    LiPositive lam := by
+  intro n hn
+  by_cases hle : n ≤ N₀
+  · exact hhead n hn hle
+  · have hlt : N₀ < n := by omega
+    have hle2 : Rle (Rsub (arch n) (B n)) (Radd (arch n) (arith n)) :=
+      Radd_le_add (Rle_refl (arch n)) (htail1 n hlt)
+    have hpos : Pos (Radd (arith n) (arch n)) :=
+      Pos_congr (Radd_comm (arch n) (arith n)) (Pos_mono hle2 (htail2 n hlt))
+    exact Pos_congr (Req_symm (htrace n hn)) hpos
+
+/-- **The closure route, exact**: for a spectral square satisfying the trace, the
+    certified two-slice head (held today: `liTwo_evidence` through the dictionary) plus a
+    tail bound from `n = 3` on yields the crux. This is `crux_attempt_frontier` in
+    constructive form on the dominance face: everything is in place EXCEPT the tail
+    bound for the genuine parts — which is exactly as open as RH, and is asserted for
+    nothing here. -/
+theorem crux_closure_route (S : SpectralSquare) {arith arch : Nat → Real}
+    (htrace : ∀ n : Nat, 0 < n → Li.ExplicitFormulaTrace (S.lam n) (arith n) (arch n))
+    (hhead : Pos (S.lam 1) ∧ Pos (S.lam 2))
+    (B : Nat → Real)
+    (htail1 : ∀ n : Nat, 2 < n → Rle (Rneg (B n)) (arith n))
+    (htail2 : ∀ n : Nat, 2 < n → Pos (Rsub (arch n) (B n))) :
+    SpectralCrux S := by
+  refine (crux_faces_equivalent S).mpr ?_
+  refine dominance_head_tail 2 htrace ?_ B htail1 htail2
+  intro n hn hle
+  by_cases h1 : n = 1
+  · subst h1; exact hhead.1
+  · have h2 : n = 2 := by omega
+    subst h2; exact hhead.2
+
+-- ===========================================================================
 -- The honesty guards (two-sided, as theorems).
 -- ===========================================================================
 

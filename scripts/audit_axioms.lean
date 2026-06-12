@@ -120,6 +120,8 @@ open UOR.Bridge.F1Square
 #print axioms Square.dominated_iff_liPositive
 #print axioms Square.dominance_crux_equivalent
 #print axioms Square.weilTrace_dominance
+#print axioms Square.dominance_head_tail
+#print axioms Square.crux_closure_route
 #print axioms Square.weilTraceTwo_not_crux
 #print axioms Square.twoSlice_not_dominated
 #print axioms Square.dominance_satisfiable
