@@ -141,6 +141,17 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.etaTwoSlice
 #print axioms Square.crux_genuine_form
 #print axioms Square.crux_genuine_route
+
+-- v0.19.0 the genuine-pairing arc, substrate P1 — |x| and max(0,·) on the constructive
+-- reals: the tent-function calculus for the Weil functional's test class (Analysis/RMax.lean).
+#print axioms Analysis.Qabs_abs_sub
+#print axioms Analysis.Rabs
+#print axioms Analysis.Rabs_congr
+#print axioms Analysis.Rnonneg_Rabs
+#print axioms Analysis.RmaxZero_congr
+#print axioms Analysis.Rnonneg_RmaxZero
+#print axioms Analysis.RmaxZero_of_nonpos
+#print axioms Analysis.RmaxZero_of_nonneg
 #print axioms Square.weilTraceTwo_not_crux
 #print axioms Square.twoSlice_not_dominated
 #print axioms Square.dominance_satisfiable
