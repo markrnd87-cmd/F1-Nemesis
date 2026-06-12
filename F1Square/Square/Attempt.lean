@@ -22,7 +22,11 @@ THE FRONTIER, made exact (`crux_attempt_frontier`): given the two certified slic
 crux is EQUIVALENT to `∀ n ≥ 3, λₙ > 0`. The next certifiable slice (`λ₃`) needs the second
 Stieltjes constant `γ₂` (a fresh `GammaOne`-scale dyadic mechanization); each further slice
 needs the next `γⱼ`. No finite run reaches the crux (`liPositive_iff_all_upTo`,
-`spectral_iff_all_upTo`) — the universal `∀ n` is the open content.
+`spectral_iff_all_upTo`) — the universal `∀ n` is the open content. (v0.19.0 made the
+universal's shape exact on the dominance face: `crux_closure_route` — this certified head
+plus ONE tail bound, a single sequence dominating the arithmetic oscillation strictly below
+the archimedean trend from `n = 3` on, yields the crux; the tail bound for the genuine
+parts is the single remaining object, provably equivalent to this frontier.)
 
 WHY NO GENERAL ROUTE CLOSED (the attempt's honest post-mortem, with the program's own
 controls as evidence):

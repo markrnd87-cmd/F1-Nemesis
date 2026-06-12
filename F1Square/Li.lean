@@ -47,7 +47,11 @@ state both faces.) This module pins that boundary HONESTLY.
     genuine `λ`): `LiDecomposition` (Bombieri–Lagarias `λₙ = λₙ^{arith} + λₙ^{∞}`),
     `ExplicitFormulaTrace` (the Weil explicit formula as a trace; Weil 1952, Connes 1999), and
     `LiAgreesWith` (`computed = classical Li`). Each is shown genuine/inhabited; the real instances
-    need ζ and — crucially — do NOT bear on positivity.
+    need ζ and — crucially — do NOT bear on positivity. REALIZATION LEDGER: `LiDecomposition`
+    realized non-trivially at `n = 1` (v0.15.3) and `n = 1, 2` (v0.18.0,
+    `Analysis.li_decomposition_two_realized`); `ExplicitFormulaTrace` and `LiAgreesWith` realized at
+    the built slices (v0.19.0, `Analysis/LiComplete.lean`) — the interfaces are retired exactly as
+    far as the built `λ` slices reach, and no further.
 
   • The Li coefficients are typed as `λ : Nat → ExactBoundedReal` (a stream of certified-enclosure
     reals, `Analysis.ExactBounded`). ζ at integer `s ≥ 2` is built as a *concrete* such object
@@ -141,7 +145,10 @@ def ExplicitFormulaTrace (zeroSide primeSide archSide : Real) : Prop :=
 
 /-- The explicit-formula-trace predicate is genuine (inhabited). The real instance — with the actual
     prime and archimedean distributions — is the classical Weil explicit formula, statable here and
-    realizable once ζ is built; it does NOT bear on positivity. -/
+    realizable once ζ is built; it does NOT bear on positivity. REALIZED (v0.19.0): the trivial
+    inhabitant below is retired by `Analysis.explicitFormulaTrace_one_realized` /
+    `Analysis.explicitFormulaTrace_two_realized` (the zero side `λ₁`/`λ₂` at the Bombieri–Lagarias
+    slices, all three sides built) and the `Analysis.WeilTrace` ladder (`Analysis/LiComplete.lean`). -/
 theorem explicitFormulaTrace_genuine (z : Real) : ExplicitFormulaTrace z z zero :=
   Req_symm (Radd_zero z)
 
@@ -151,7 +158,9 @@ theorem explicitFormulaTrace_genuine (z : Real) : ExplicitFormulaTrace z z zero 
 def LiAgreesWith (computed classical : Nat → ExactBoundedReal) : Prop :=
   ∀ n : Nat, Req (computed n) (classical n)
 
-/-- The agreement predicate is genuine (reflexive). -/
+/-- The agreement predicate is genuine (reflexive). REALIZED non-reflexively (v0.19.0):
+    `Analysis.liAgreesWith_two_realized` — the direct certified builds agree with the
+    Bombieri–Lagarias closed-form assemblies at the built slices (`Analysis/LiComplete.lean`). -/
 theorem liAgreesWith_genuine (lam : Nat → ExactBoundedReal) : LiAgreesWith lam lam := fun n => Req_refl (lam n)
 
 end UOR.Bridge.F1Square.Li

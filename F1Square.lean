@@ -457,7 +457,11 @@ def f1SquareStatus : F1SquareStatus := {
 --                                dominance_crux_equivalent (the THIRD face: Dominated ⟺
 --                                SpectralCrux ⟺ LiCrux — one proposition, three faces),
 --                                weilTrace_dominance (the dominance reading of the completed
---                                trace), dominance_satisfiable + twoSlice_not_dominated +
+--                                trace), dominance_head_tail + crux_closure_route (the
+--                                assembly shape, exact: certified head + ONE tail bound
+--                                from n = 3 on yields the crux — the missing object is
+--                                the tail bound for the genuine parts, exactly as open
+--                                as RH), dominance_satisfiable + twoSlice_not_dominated +
 --                                weilTraceTwo_not_crux (the two-sided honesty guards)}
 --   CONCLUSION: the F1 square is COMPLETE AS SCOPED (stages A–E shipped); every surrounding
 --   construction is built and audited, and what remains open is exactly the crux — ONE
@@ -847,7 +851,7 @@ example :
     weight (`Analysis/Mangoldt.lean`), reached geometrically on canonical `𝕊`. The pencil's
     POSITIVITY is RH and stays open. -/
 example :
-    (∀ (p : Nat) (hp2 : 2 ≤ p), (∀ d, d ∣ p → d = 1 ∨ d = p) →
+    (∀ (p : Nat) (_hp2 : 2 ≤ p), (∀ d, d ∣ p → d = 1 ∨ d = p) →
       ∀ (z : Square.SqPt) (_ : Square.graph p z),
         Analysis.Req
           (Analysis.Rsub (Analysis.logN z.2.val z.2.property)
@@ -868,7 +872,7 @@ example :
           Analysis.Req (Analysis.vonMangoldt (p ^ k)) (Analysis.logN p (by omega)))
     ∧ f1SquareStatus.hodgeIndexHolds = none :=
   ⟨Square.sq_isCoproduct,
-   fun p hp2 hp {k} hk => Analysis.vonMangoldt_prime_pow hp2 hp hk, rfl⟩
+   fun _p hp2 hp {_k} hk => Analysis.vonMangoldt_prime_pow hp2 hp hk, rfl⟩
 
 /-- Elaboration-checked witness binding the **v0.18.0 stage-D layer** — the bridge and the
     attempt. In order: (1) the Castelnuovo–Severi anchor — on the function-field lattice, Hodge-index
