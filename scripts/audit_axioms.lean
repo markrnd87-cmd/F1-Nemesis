@@ -91,6 +91,20 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.li_decomposition_two_realized
 #print axioms Analysis.liTwo_evidence
 
+-- v0.18.0 stage D — the spectral-square interface and THE BRIDGE: the geometric and
+-- analytic faces of the crux are equivalent (Square/Spectral.lean). Crux stays OPEN.
+#print axioms Square.Pos_Radd_self
+#print axioms Square.Pos_of_Radd_self
+#print axioms Square.Rnonneg_Radd_self
+#print axioms Square.Rnonneg_of_Radd_self
+#print axioms Square.spectral_bridge_nonneg
+#print axioms Square.spectral_bridge_pos
+#print axioms Square.crux_faces_equivalent
+#print axioms Square.spectral_evidence_two
+#print axioms Square.not_Pos_zero_double
+#print axioms Square.spectralTwoSlice_not_crux
+#print axioms Square.spectral_iff_all_upTo
+
 -- v0.17.0 stage C — the 𝔽₁ curve at the monoid level (Square/Monoid.lean).
 #print axioms Square.one_le_mul
 #print axioms Square.mMul_assoc
