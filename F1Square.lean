@@ -29,6 +29,7 @@ import F1Square.Mechanism
 import F1Square.Template
 import F1Square.CharOne
 import F1Square.Bridge
+import F1Square.BridgeFF
 import F1Square.CycleCounts
 import F1Square.Crux
 import F1Square.Square.Monoid

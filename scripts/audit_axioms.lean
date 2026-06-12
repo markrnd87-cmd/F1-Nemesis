@@ -72,6 +72,19 @@ open UOR.Bridge.F1Square
 -- Crux (the property; proved on the Template, OPEN on the square).
 #print axioms Crux.template_hodgeIndex
 
+-- v0.18.0 stage D — the Castelnuovo–Severi bridge at the lattice level (BridgeFF.lean):
+-- Hodge-index negativity on the primitive {Δ,Γ}-span ⟺ the Hasse bound (= RH for the curve).
+#print axioms BridgeFF.ffPair_symm
+#print axioms BridgeFF.ff_gamma_bidegree
+#print axioms BridgeFF.ff_trace_datum
+#print axioms BridgeFF.primDG_perp_h
+#print axioms BridgeFF.primDG_perp_v
+#print axioms BridgeFF.primDG_sq
+#print axioms BridgeFF.ff_hodge_iff_hasse
+#print axioms BridgeFF.ff_hodge_iff_hodgeType
+#print axioms BridgeFF.ff_hasse_q25_a10
+#print axioms BridgeFF.ff_hasse_q25_a12_fails
+
 -- v0.17.0 stage C — the 𝔽₁ curve at the monoid level (Square/Monoid.lean).
 #print axioms Square.one_le_mul
 #print axioms Square.mMul_assoc
