@@ -35,6 +35,13 @@ theorem Pos_RrpowPos_of_nonneg (x : Real) (k : Nat) (hk : Qlt (Qbound k) (x.seq 
     (hy : Rnonneg (Rmul y (RlogPos x k hk))) : Pos (RrpowPos x k hk y) :=
   Pos_RexpReal hy
 
+/-- **`x^y > 0` from a non-negative exponent and a non-negative log** (e.g. base `≥ 1`).
+    The clean API split: the caller supplies `Rnonneg (RlogPos x …)` per-case (positive for `x ≥ 1`),
+    and `y ≥ 0`; then `y·log x ≥ 0` and `exp(y·log x) > 0`. -/
+theorem Pos_RrpowPos_of_nonneg_log (x : Real) (k : Nat) (hk : Qlt (Qbound k) (x.seq k)) (y : Real)
+    (hy : Rnonneg y) (hlog : Rnonneg (RlogPos x k hk)) : Pos (RrpowPos x k hk y) :=
+  Pos_RexpReal (Rnonneg_Rmul hy hlog)
+
 /-- **The exponent law `x^{y+y'} = x^y · x^{y'}`**: powers add under multiplication, by `exp(a+b)=exp a·exp b`. -/
 theorem RrpowPos_add (x : Real) (k : Nat) (hk : Qlt (Qbound k) (x.seq k)) (y y' : Real) :
     Req (RrpowPos x k hk (Radd y y')) (Rmul (RrpowPos x k hk y) (RrpowPos x k hk y')) := by

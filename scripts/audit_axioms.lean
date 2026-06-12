@@ -1734,3 +1734,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Digamma_one_eq_neg_gamma
 #print axioms Analysis.Rnonneg_RofNat
 #print axioms Analysis.spougeGammaWitness
+#print axioms Analysis.Pos_RrpowPos_of_nonneg_log
