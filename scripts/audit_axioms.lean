@@ -152,6 +152,12 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rnonneg_RmaxZero
 #print axioms Analysis.RmaxZero_of_nonpos
 #print axioms Analysis.RmaxZero_of_nonneg
+
+-- v0.19.0 the genuine-pairing arc, substrate P2a — finite sums of constructive reals
+-- (Analysis/RSum.lean): the quadratic-form assembly substrate.
+#print axioms Analysis.RsumN_congr
+#print axioms Analysis.Rnonneg_RsumN
+#print axioms Analysis.RsumN_le
 #print axioms Square.weilTraceTwo_not_crux
 #print axioms Square.twoSlice_not_dominated
 #print axioms Square.dominance_satisfiable

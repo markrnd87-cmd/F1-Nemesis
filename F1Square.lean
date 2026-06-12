@@ -101,6 +101,7 @@ import F1Square.Analysis.LiComplete
 import F1Square.Analysis.ArchTrend
 import F1Square.Analysis.GenuineLi
 import F1Square.Analysis.RMax
+import F1Square.Analysis.RSum
 
 open UOR.Primitives
 
