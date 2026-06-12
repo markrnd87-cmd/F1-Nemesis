@@ -19,6 +19,16 @@ THE THREE SIDES OF THE WEIL EXPLICIT FORMULA in this substrate:
     continuation [CLASSICAL] — the standing LiOne hedge, unchanged. The archimedean parts
     are built (`Rlambda1_arch`, `Rlambda2_arch`).
 
+CONVENTION NOTE (deep-research-verified): Lagarias (*Ann. Inst. Fourier* 57 (2007),
+eq. (1.11)) keeps the pole term separate — `λₙ = S∞(n) − S_f(n) + 1`; the
+Bombieri–Lagarias grouping used here folds the `+1` into the archimedean part:
+`λₙ^{arith} = −S_f(n)`, `λₙ^{∞} = S∞(n) + 1` (numerically confirmed against both built
+slices to 30 digits). The arithmetic closed form is sourced from the η-polynomial form
+(`λₙ^{arith} = −Σ_{j=1}^n C(n,j)·η_{j−1}`, Voros eq. 20 / Lagarias eq. (4.8)); the arXiv
+print of Lagarias eq. (4.13) carries a sign typo and is not used. Unconditionally the
+finite-place part equals the zero sum truncated at height `√n` up to `O(√n·log n)`
+(Lagarias Thm 6.1) — the precise sense in which the prime side IS an incomplete zero side.
+
 THE COMPLETION (roadmap E, first goal). `Li.ExplicitFormulaTrace` — until now inhabited
 only by the trivial split `z = z + 0` (`explicitFormulaTrace_genuine`) — is REALIZED with
 the genuine three-sided reading at both built slices (`explicitFormulaTrace_one_realized`,
