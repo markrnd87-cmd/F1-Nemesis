@@ -3048,4 +3048,150 @@ theorem Rnsmul_eq_Rmul_ofQ (x : Real) : ∀ n,
               (ofQ_congr (add_den_pos Nat.one_pos Nat.one_pos) Nat.one_pos
                 (by simp only [Qeq, add]; push_cast; ring_uor))) (Req_refl x))))
 
+-- ===========================================================================
+-- The two-sided product bound (no real-abs): −A≤x≤A, −B≤y≤B ⟹ −AB ≤ xy ≤ AB. Constructive,
+-- case-split-free, via 2(AB∓xy) = (A−x)(B±y) + (A+x)(B∓y) (sums of nonneg products) + the ½ collapse.
+-- The keystone for bounding the per-term η variation Re/Im(n⁻ˢ·(1−e^{−s·δ_n})) two-sided.
+-- Hoisted here (shared ancestor) so EtaVariation and Gamma — sibling files that cannot import
+-- each other — both reuse the single canonical bundle instead of re-deriving it.
+-- ===========================================================================
+
+-- The two-sided product bound (no real-abs): if |x| ≤ A and |y| ≤ B (A,B ≥ 0), then |xy| ≤ AB.
+-- Constructive identity (NO case split):  2(AB − xy) = (A−x)(B+y) + (A+x)(B−y)  [each factor ≥ 0],
+-- and  2(AB + xy) = (A−x)(B−y) + (A+x)(B+y).  So AB − xy ≥ 0 and AB + xy ≥ 0.
+
+-- An additive-only normal form: ((D + E) + (D − E)) ≈ D + D.
+-- Proven via the structure-preserving middle-four swap, so reindexing matches.
+private theorem Radd_add_sub_self (D E : Real) :
+    Req (Radd (Radd D E) (Rsub D E)) (Radd D D) :=
+  -- Rsub D E ≡ Radd D (Rneg E) (defeq), so Radd_swap applies.
+  Req_trans (Radd_swap D E D (Rneg E))
+    (Req_trans (Radd_congr (Req_refl (Radd D D)) (Radd_neg E)) (Radd_zero (Radd D D)))
+
+private theorem Radd_sub_add_self (D E : Real) :
+    Req (Radd (Rsub D E) (Radd D E)) (Radd D D) :=
+  -- Rsub D E ≡ Radd D (Rneg E), so this is Radd (Radd D (Rneg E)) (Radd D E).
+  Req_trans (Radd_swap D (Rneg E) D E)
+    (Req_trans (Radd_congr (Req_refl (Radd D D))
+        (Req_trans (Radd_comm (Rneg E) E) (Radd_neg E)))
+      (Radd_zero (Radd D D)))
+
+-- (A−x)(B+y) ≈ (AB − xy) + (Ay − xB).
+private theorem expand_minus_plus (A x B y : Real) :
+    Req (Rmul (Rsub A x) (Radd B y))
+        (Radd (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A y) (Rmul x B))) := by
+  -- (A−x)(B+y) = A(B+y) − x(B+y) = (AB + Ay) − (xB + xy)
+  refine Req_trans (Rmul_sub_distrib_right A x (Radd B y)) ?_
+  refine Req_trans (Rsub_congr (Rmul_distrib A B y) (Rmul_distrib x B y)) ?_
+  -- (AB + Ay) − (xB + xy) ≈ (AB − xy) + (Ay − xB)  : additive rearrangement
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
+-- (A+x)(B−y) ≈ (AB − xy) − (Ay − xB).
+private theorem expand_plus_minus (A x B y : Real) :
+    Req (Rmul (Radd A x) (Rsub B y))
+        (Rsub (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A y) (Rmul x B))) := by
+  -- (A+x)(B−y) = A(B−y) + x(B−y) = (AB − Ay) + (xB − xy)
+  refine Req_trans (Rmul_distrib_right A x (Rsub B y)) ?_
+  refine Req_trans (Radd_congr (Rmul_sub_distrib A B y) (Rmul_sub_distrib x B y)) ?_
+  -- (AB − Ay) + (xB − xy) ≈ (AB − xy) − (Ay − xB)  : additive rearrangement
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
+-- (A−x)(B−y) ≈ (AB + xy) − (Ay + xB).
+private theorem expand_minus_minus (A x B y : Real) :
+    Req (Rmul (Rsub A x) (Rsub B y))
+        (Rsub (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A y) (Rmul x B))) := by
+  refine Req_trans (Rmul_sub_distrib_right A x (Rsub B y)) ?_
+  refine Req_trans (Rsub_congr (Rmul_sub_distrib A B y) (Rmul_sub_distrib x B y)) ?_
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
+-- (A+x)(B+y) ≈ (AB + xy) + (Ay + xB).
+private theorem expand_plus_plus (A x B y : Real) :
+    Req (Rmul (Radd A x) (Radd B y))
+        (Radd (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A y) (Rmul x B))) := by
+  refine Req_trans (Rmul_distrib_right A x (Radd B y)) ?_
+  refine Req_trans (Radd_congr (Rmul_distrib A B y) (Rmul_distrib x B y)) ?_
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
+-- y − (−B) ≈ B + y  (additive, pointwise). PUBLIC: reused by EtaVariation and Gamma proofs.
+theorem Rsub_neg_eq_add (B y : Real) :
+    Req (Rsub y (Rneg B)) (Radd B y) := by
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
+theorem Rmul_le_mul_of_abs {x y A B : Real}
+    (hx1 : Rle (Rneg A) x) (hx2 : Rle x A) (hy1 : Rle (Rneg B) y) (hy2 : Rle y B) :
+    Rle (Rmul x y) (Rmul A B) := by
+  -- Four non-negative factors.
+  have hAx : Rnonneg (Rsub A x) := Rnonneg_Rsub_of_Rle hx2
+  have hBy : Rnonneg (Radd B y) :=
+    Rnonneg_congr (Rsub_neg_eq_add B y) (Rnonneg_Rsub_of_Rle hy1)
+  have hAx2 : Rnonneg (Radd A x) :=
+    Rnonneg_congr (Rsub_neg_eq_add A x) (Rnonneg_Rsub_of_Rle hx1)
+  have hBy2 : Rnonneg (Rsub B y) := Rnonneg_Rsub_of_Rle hy2
+  -- P = (A−x)(B+y) ≥ 0,  Q = (A+x)(B−y) ≥ 0.
+  have hP : Rnonneg (Rmul (Rsub A x) (Radd B y)) := Rnonneg_Rmul hAx hBy
+  have hQ : Rnonneg (Rmul (Radd A x) (Rsub B y)) := Rnonneg_Rmul hAx2 hBy2
+  -- D := AB − xy ;  E := Ay − xB.  P ≈ D+E, Q ≈ D−E, so P+Q ≈ (D+E)+(D−E) ≈ D+D.
+  have hPQ : Rnonneg (Radd (Rmul (Rsub A x) (Radd B y)) (Rmul (Radd A x) (Rsub B y))) :=
+    Rnonneg_Radd hP hQ
+  have hsum : Req (Radd (Rmul (Rsub A x) (Radd B y)) (Rmul (Radd A x) (Rsub B y)))
+      (Radd (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A B) (Rmul x y))) :=
+    Req_trans (Radd_congr (expand_minus_plus A x B y) (expand_plus_minus A x B y))
+      (Radd_add_sub_self (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A y) (Rmul x B)))
+  -- D+D ≥ 0  ⟹  half ≥ 0  ⟹  D ≥ 0.
+  have hDD : Rnonneg (Radd (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A B) (Rmul x y))) :=
+    Rnonneg_congr hsum hPQ
+  have hD : Rnonneg (Rsub (Rmul A B) (Rmul x y)) :=
+    Rnonneg_congr
+      (Req_trans (Rhalf_Radd (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A B) (Rmul x y)))
+        (Rhalf_double (Rsub (Rmul A B) (Rmul x y))))
+      (Rhalf_nonneg hDD)
+  exact Rle_of_Rnonneg_Rsub hD
+
+-- xy − (−AB) ≈ AB + xy  (additive, pointwise).
+private theorem Rsub_neg_mul_eq (A B x y : Real) :
+    Req (Rsub (Rmul x y) (Rneg (Rmul A B))) (Radd (Rmul A B) (Rmul x y)) := by
+  apply Req_of_seq_Qeq
+  intro n
+  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
+
+theorem Rneg_mul_le_of_abs {x y A B : Real}
+    (hx1 : Rle (Rneg A) x) (hx2 : Rle x A) (hy1 : Rle (Rneg B) y) (hy2 : Rle y B) :
+    Rle (Rneg (Rmul A B)) (Rmul x y) := by
+  -- Four non-negative factors.
+  have hAx : Rnonneg (Rsub A x) := Rnonneg_Rsub_of_Rle hx2
+  have hBy : Rnonneg (Radd B y) :=
+    Rnonneg_congr (Rsub_neg_eq_add B y) (Rnonneg_Rsub_of_Rle hy1)
+  have hAx2 : Rnonneg (Radd A x) :=
+    Rnonneg_congr (Rsub_neg_eq_add A x) (Rnonneg_Rsub_of_Rle hx1)
+  have hBy2 : Rnonneg (Rsub B y) := Rnonneg_Rsub_of_Rle hy2
+  -- P = (A−x)(B−y) ≥ 0,  Q = (A+x)(B+y) ≥ 0.
+  have hP : Rnonneg (Rmul (Rsub A x) (Rsub B y)) := Rnonneg_Rmul hAx hBy2
+  have hQ : Rnonneg (Rmul (Radd A x) (Radd B y)) := Rnonneg_Rmul hAx2 hBy
+  have hPQ : Rnonneg (Radd (Rmul (Rsub A x) (Rsub B y)) (Rmul (Radd A x) (Radd B y))) :=
+    Rnonneg_Radd hP hQ
+  -- D := AB + xy ;  E := Ay + xB.  P ≈ D−E, Q ≈ D+E, so P+Q ≈ (D−E)+(D+E) ≈ D+D.
+  have hsum : Req (Radd (Rmul (Rsub A x) (Rsub B y)) (Rmul (Radd A x) (Radd B y)))
+      (Radd (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A B) (Rmul x y))) :=
+    Req_trans (Radd_congr (expand_minus_minus A x B y) (expand_plus_plus A x B y))
+      (Radd_sub_add_self (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A y) (Rmul x B)))
+  have hDD : Rnonneg (Radd (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A B) (Rmul x y))) :=
+    Rnonneg_congr hsum hPQ
+  have hD : Rnonneg (Radd (Rmul A B) (Rmul x y)) :=
+    Rnonneg_congr
+      (Req_trans (Rhalf_Radd (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A B) (Rmul x y)))
+        (Rhalf_double (Radd (Rmul A B) (Rmul x y))))
+      (Rhalf_nonneg hDD)
+  -- AB + xy ≥ 0  ⟹  xy − (−AB) ≥ 0  ⟹  −AB ≤ xy.
+  exact Rle_of_Rnonneg_Rsub (Rnonneg_congr (Req_symm (Rsub_neg_mul_eq A B x y)) hD)
+
 end UOR.Bridge.F1Square.Analysis

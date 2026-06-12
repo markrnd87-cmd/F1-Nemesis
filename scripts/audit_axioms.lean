@@ -1611,6 +1611,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.RlogNat_eq_logN
 #print axioms Analysis.Rnonneg_deltaLogNat
 #print axioms Analysis.deltaLogNat_le_recip
+#print axioms Analysis.Rsub_neg_eq_add
 #print axioms Analysis.Rmul_le_mul_of_abs
 #print axioms Analysis.Rneg_mul_le_of_abs
 #print axioms Analysis.oneSubCexp_re_upper
@@ -1679,8 +1680,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.RrpowPos_add
 #print axioms Analysis.Rnonneg_Rinv
 #print axioms Analysis.Rinv_le_ofQ_Qinv
-#print axioms Analysis.digamma_Rmul_le_mul_of_abs
-#print axioms Analysis.digamma_Rneg_mul_le_of_abs
 #print axioms Analysis.ofQ_le_digammaArg
 #print axioms Analysis.digammaArg_witness
 #print axioms Analysis.digamma_const_shift

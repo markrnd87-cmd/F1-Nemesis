@@ -101,119 +101,6 @@ theorem Rinv_le_ofQ_Qinv {w : Real} {kw : Nat} (hkw : Qlt (Qbound kw) (w.seq kw)
     Req_trans (Rmul_comm one (ofQ (Qinv q) (Qinv_den_pos hqn))) (Rmul_one _)
   exact Rle_trans (Rle_of_Req (Req_symm hleft)) (Rle_trans hstep3 (Rle_of_Req hright))
 
--- ---------------------------------------------------------------------------
--- Two-sided product bound `−A·B ≤ x·y ≤ A·B` (local port of EtaVariation's `Rmul_le_mul_of_abs`/
--- `Rneg_mul_le_of_abs`; EtaVariation is downstream of this file, so the lemmas are reproved here).
--- ---------------------------------------------------------------------------
-
-private theorem digamma_Radd_add_sub_self (D E : Real) :
-    Req (Radd (Radd D E) (Rsub D E)) (Radd D D) :=
-  Req_trans (Radd_swap D E D (Rneg E))
-    (Req_trans (Radd_congr (Req_refl (Radd D D)) (Radd_neg E)) (Radd_zero (Radd D D)))
-
-private theorem digamma_Radd_sub_add_self (D E : Real) :
-    Req (Radd (Rsub D E) (Radd D E)) (Radd D D) :=
-  Req_trans (Radd_swap D (Rneg E) D E)
-    (Req_trans (Radd_congr (Req_refl (Radd D D))
-        (Req_trans (Radd_comm (Rneg E) E) (Radd_neg E)))
-      (Radd_zero (Radd D D)))
-
-private theorem digamma_expand_minus_plus (A x B y : Real) :
-    Req (Rmul (Rsub A x) (Radd B y))
-        (Radd (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A y) (Rmul x B))) := by
-  refine Req_trans (Rmul_sub_distrib_right A x (Radd B y)) ?_
-  refine Req_trans (Rsub_congr (Rmul_distrib A B y) (Rmul_distrib x B y)) ?_
-  apply Req_of_seq_Qeq; intro n
-  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
-
-private theorem digamma_expand_plus_minus (A x B y : Real) :
-    Req (Rmul (Radd A x) (Rsub B y))
-        (Rsub (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A y) (Rmul x B))) := by
-  refine Req_trans (Rmul_distrib_right A x (Rsub B y)) ?_
-  refine Req_trans (Radd_congr (Rmul_sub_distrib A B y) (Rmul_sub_distrib x B y)) ?_
-  apply Req_of_seq_Qeq; intro n
-  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
-
-private theorem digamma_expand_minus_minus (A x B y : Real) :
-    Req (Rmul (Rsub A x) (Rsub B y))
-        (Rsub (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A y) (Rmul x B))) := by
-  refine Req_trans (Rmul_sub_distrib_right A x (Rsub B y)) ?_
-  refine Req_trans (Rsub_congr (Rmul_sub_distrib A B y) (Rmul_sub_distrib x B y)) ?_
-  apply Req_of_seq_Qeq; intro n
-  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
-
-private theorem digamma_expand_plus_plus (A x B y : Real) :
-    Req (Rmul (Radd A x) (Radd B y))
-        (Radd (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A y) (Rmul x B))) := by
-  refine Req_trans (Rmul_distrib_right A x (Radd B y)) ?_
-  refine Req_trans (Radd_congr (Rmul_distrib A B y) (Rmul_distrib x B y)) ?_
-  apply Req_of_seq_Qeq; intro n
-  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
-
-private theorem digamma_Rsub_neg_eq_add (B y : Real) :
-    Req (Rsub y (Rneg B)) (Radd B y) := by
-  apply Req_of_seq_Qeq; intro n
-  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
-
-private theorem digamma_Rsub_neg_mul_eq (A B x y : Real) :
-    Req (Rsub (Rmul x y) (Rneg (Rmul A B))) (Radd (Rmul A B) (Rmul x y)) := by
-  apply Req_of_seq_Qeq; intro n
-  simp only [Rsub, Radd, Rneg, Qeq, add, neg]; push_cast; ring_uor
-
-/-- **Two-sided product, upper**: `−A≤x≤A, −B≤y≤B ⟹ x·y ≤ A·B`. -/
-theorem digamma_Rmul_le_mul_of_abs {x y A B : Real}
-    (hx1 : Rle (Rneg A) x) (hx2 : Rle x A) (hy1 : Rle (Rneg B) y) (hy2 : Rle y B) :
-    Rle (Rmul x y) (Rmul A B) := by
-  have hAx : Rnonneg (Rsub A x) := Rnonneg_Rsub_of_Rle hx2
-  have hBy : Rnonneg (Radd B y) :=
-    Rnonneg_congr (digamma_Rsub_neg_eq_add B y) (Rnonneg_Rsub_of_Rle hy1)
-  have hAx2 : Rnonneg (Radd A x) :=
-    Rnonneg_congr (digamma_Rsub_neg_eq_add A x) (Rnonneg_Rsub_of_Rle hx1)
-  have hBy2 : Rnonneg (Rsub B y) := Rnonneg_Rsub_of_Rle hy2
-  have hP : Rnonneg (Rmul (Rsub A x) (Radd B y)) := Rnonneg_Rmul hAx hBy
-  have hQ : Rnonneg (Rmul (Radd A x) (Rsub B y)) := Rnonneg_Rmul hAx2 hBy2
-  have hPQ : Rnonneg (Radd (Rmul (Rsub A x) (Radd B y)) (Rmul (Radd A x) (Rsub B y))) :=
-    Rnonneg_Radd hP hQ
-  have hsum : Req (Radd (Rmul (Rsub A x) (Radd B y)) (Rmul (Radd A x) (Rsub B y)))
-      (Radd (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A B) (Rmul x y))) :=
-    Req_trans (Radd_congr (digamma_expand_minus_plus A x B y) (digamma_expand_plus_minus A x B y))
-      (digamma_Radd_add_sub_self (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A y) (Rmul x B)))
-  have hDD : Rnonneg (Radd (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A B) (Rmul x y))) :=
-    Rnonneg_congr hsum hPQ
-  have hD : Rnonneg (Rsub (Rmul A B) (Rmul x y)) :=
-    Rnonneg_congr
-      (Req_trans (Rhalf_Radd (Rsub (Rmul A B) (Rmul x y)) (Rsub (Rmul A B) (Rmul x y)))
-        (Rhalf_double (Rsub (Rmul A B) (Rmul x y))))
-      (Rhalf_nonneg hDD)
-  exact Rle_of_Rnonneg_Rsub hD
-
-/-- **Two-sided product, lower**: `−A≤x≤A, −B≤y≤B ⟹ −A·B ≤ x·y`. -/
-theorem digamma_Rneg_mul_le_of_abs {x y A B : Real}
-    (hx1 : Rle (Rneg A) x) (hx2 : Rle x A) (hy1 : Rle (Rneg B) y) (hy2 : Rle y B) :
-    Rle (Rneg (Rmul A B)) (Rmul x y) := by
-  have hAx : Rnonneg (Rsub A x) := Rnonneg_Rsub_of_Rle hx2
-  have hBy : Rnonneg (Radd B y) :=
-    Rnonneg_congr (digamma_Rsub_neg_eq_add B y) (Rnonneg_Rsub_of_Rle hy1)
-  have hAx2 : Rnonneg (Radd A x) :=
-    Rnonneg_congr (digamma_Rsub_neg_eq_add A x) (Rnonneg_Rsub_of_Rle hx1)
-  have hBy2 : Rnonneg (Rsub B y) := Rnonneg_Rsub_of_Rle hy2
-  have hP : Rnonneg (Rmul (Rsub A x) (Rsub B y)) := Rnonneg_Rmul hAx hBy2
-  have hQ : Rnonneg (Rmul (Radd A x) (Radd B y)) := Rnonneg_Rmul hAx2 hBy
-  have hPQ : Rnonneg (Radd (Rmul (Rsub A x) (Rsub B y)) (Rmul (Radd A x) (Radd B y))) :=
-    Rnonneg_Radd hP hQ
-  have hsum : Req (Radd (Rmul (Rsub A x) (Rsub B y)) (Rmul (Radd A x) (Radd B y)))
-      (Radd (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A B) (Rmul x y))) :=
-    Req_trans (Radd_congr (digamma_expand_minus_minus A x B y) (digamma_expand_plus_plus A x B y))
-      (digamma_Radd_sub_add_self (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A y) (Rmul x B)))
-  have hDD : Rnonneg (Radd (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A B) (Rmul x y))) :=
-    Rnonneg_congr hsum hPQ
-  have hD : Rnonneg (Radd (Rmul A B) (Rmul x y)) :=
-    Rnonneg_congr
-      (Req_trans (Rhalf_Radd (Radd (Rmul A B) (Rmul x y)) (Radd (Rmul A B) (Rmul x y)))
-        (Rhalf_double (Radd (Rmul A B) (Rmul x y))))
-      (Rhalf_nonneg hDD)
-  exact Rle_of_Rnonneg_Rsub (Rnonneg_congr (Req_symm (digamma_Rsub_neg_mul_eq A B x y)) hD)
-
 /-- The shifted argument `z + n` of the `n`-th digamma term (`RofNat` is `n : ℝ`, from `ComplexPow`,
     already in scope via the `ComplexZeta` import). -/
 def digammaArg (z : Real) (n : Nat) : Real := Radd z (RofNat n)
@@ -383,10 +270,10 @@ theorem digammaTerm_abs_le (z : Real) {c : Q} (hcn : 0 < c.num) (hcd : 0 < c.den
   have hBlo' : Rle (Rneg (ofQ B hBd)) (Rsub z one) := hBlo
   have hupper : Rle (Rmul (Rsub z one) (digammaPfac z hcn hcd hcz n))
       (Rmul (ofQ B hBd) (ofQ (⟨1, (n + 1) * n⟩ : Q) (digamma_succ_mul_pos hn))) :=
-    digamma_Rmul_le_mul_of_abs hBlo' hBhi hPlo hPhi
+    Rmul_le_mul_of_abs hBlo' hBhi hPlo hPhi
   have hlower : Rle (Rneg (Rmul (ofQ B hBd) (ofQ (⟨1, (n + 1) * n⟩ : Q) (digamma_succ_mul_pos hn))))
       (Rmul (Rsub z one) (digammaPfac z hcn hcd hcz n)) :=
-    digamma_Rneg_mul_le_of_abs hBlo' hBhi hPlo hPhi
+    Rneg_mul_le_of_abs hBlo' hBhi hPlo hPhi
   -- ofQ B · ofQ⟨1,(n+1)n⟩ ≈ ofQ (mul B ⟨1,(n+1)n⟩)
   have hprodeq : Req (Rmul (ofQ B hBd) (ofQ (⟨1, (n + 1) * n⟩ : Q) (digamma_succ_mul_pos hn)))
       (ofQ (mul B (⟨1, (n + 1) * n⟩ : Q)) (Qmul_den_pos hBd (digamma_succ_mul_pos hn))) :=
