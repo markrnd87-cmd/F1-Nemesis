@@ -122,6 +122,12 @@ open UOR.Bridge.F1Square
 #print axioms Square.weilTrace_dominance
 #print axioms Square.dominance_head_tail
 #print axioms Square.crux_closure_route
+
+-- v0.19.0 stage E — the genuine archimedean trend, all n (Analysis/ArchTrend.lean), and
+-- the crux against the constructed trend (Square/Dominance.lean). Crux stays OPEN.
+#print axioms Analysis.genuineArch_one
+#print axioms Analysis.genuineArch_two
+#print axioms Square.crux_vs_constructed_trend
 #print axioms Square.weilTraceTwo_not_crux
 #print axioms Square.twoSlice_not_dominated
 #print axioms Square.dominance_satisfiable

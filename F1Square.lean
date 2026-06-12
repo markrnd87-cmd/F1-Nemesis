@@ -98,6 +98,7 @@ import F1Square.Analysis.EtaVariation
 import F1Square.Analysis.CriticalZeta
 import F1Square.Analysis.Gamma
 import F1Square.Analysis.LiComplete
+import F1Square.Analysis.ArchTrend
 
 open UOR.Primitives
 

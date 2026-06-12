@@ -82,6 +82,7 @@ Pure Lean 4 core, no Mathlib, no `sorry`, choice-free; audited by `scripts/hones
 
 import F1Square.Square.Spectral
 import F1Square.Analysis.LiComplete
+import F1Square.Analysis.ArchTrend
 import F1Square.Analysis.Pi
 
 namespace UOR.Bridge.F1Square.Square
@@ -184,6 +185,24 @@ theorem dominance_crux_equivalent (S : SpectralSquare) {arith arch : Nat → Rea
 theorem weilTrace_dominance (W : WeilTrace) :
     Dominated W.primePart W.archPart ↔ LiCrux W.zeroSide :=
   dominated_iff_liPositive W.trace
+
+/-- **THE CRUX AGAINST THE CONSTRUCTED TREND — the sharpest honest statement of RH this
+    substrate provides.** With the genuine archimedean trend now BUILT for every `n`
+    (`Analysis.genuineArchSeq` — the closed form
+    `1 − (n/2)(γ + log 4π) + Σ_{j=2}^n (−1)ʲC(n,j)(1−2^{−j})ζ(j)`, consistency-checked
+    against both independently-built slices), the crux's open content contracts to the
+    ARITHMETIC side alone: for any spectral square whose trace splits against the built
+    trend, the crux is exactly "the arithmetic part admits one bound strictly below
+    `genuineArchSeq`". Every other ingredient — the trend, the trace, the bridge, the
+    equivalences — is a constructed object or a proven theorem. What remains open is
+    this single bound for the genuine arithmetic part: it exists iff RH (verified both
+    directions — Lagarias Thm 6.1 under RH, BL Thm 1(c)/Voros under ¬RH), and no
+    unconditional access is known to mathematics. It is asserted for nothing here. -/
+theorem crux_vs_constructed_trend (S : SpectralSquare) {arith : Nat → Real}
+    (htrace : ∀ n : Nat, 0 < n →
+      Li.ExplicitFormulaTrace (S.lam n) (arith n) (genuineArchSeq n)) :
+    Dominated arith genuineArchSeq ↔ SpectralCrux S :=
+  dominance_crux_equivalent S htrace
 
 -- ===========================================================================
 -- The assembly shape: certified head + dominated tail.
