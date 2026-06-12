@@ -10,9 +10,10 @@ it has certified:
 
   • `n = 1`: `Pos λ₁` (v0.14.0, `Rlambda1_pos`, `λ₁ ≈ 0.0231`) — via the accelerated
     Euler–Mascheroni bracket `γ ∈ [0.54, 0.66]` and the kernel-certified logs.
-  • `n = 2`: `Pos λ₂` (v0.16.0, `Rlambda2_pos`, `λ₂ ≈ 0.0043`, razor-thin) — via the
-    parabola trick for `γ − γ²`, the γ₁ bracket (`Rgamma1_le_neg445`, the program's hardest
-    analytic mechanization), `ζ(2) ≥ 1.63`, `log 4π ≤ 2.5316`.
+  • `n = 2`: `Pos λ₂` (v0.16.0, `Rlambda2_pos`; certified lower bound `λ₂ ≥ 0.0043` —
+    razor-thin as a BOUND; the true value is `λ₂ ≈ 0.0923457`) — via the parabola trick
+    for `γ − γ²`, the γ₁ bracket (`Rgamma1_le_neg445`, the program's hardest analytic
+    mechanization), `ζ(2) ≥ 1.63`, `log 4π ≤ 2.5316`.
   • Both transfer to the geometric face through the bridge (`spectral_evidence_two`:
     `⟨C₁,C₁⟩ < 0`, `⟨C₂,C₂⟩ < 0`), and the up-to-2 strict negativity is packaged below
     (`spectral_strict_upTo_two`).
@@ -39,9 +40,16 @@ controls as evidence):
     positivity reformulations do not make RH easier (Conrey–Li, IMRN 2000; the de Branges
     precedent, companion §2.1).
   • What WOULD close it: the genuine spectral instance — the `H¹` pairing with spectrum =
-    the zeta zeros (T4/§3.4, the Hilbert–Pólya face; Connes–Consani's archimedean/semilocal
-    Weil positivity, Selecta Math. 27 (2021), is the strongest partial result, and global
-    is exactly what is open).
+    the zeta zeros (T4/§3.4, the Hilbert–Pólya face; Connes–Consani's archimedean Weil
+    positivity, Selecta Math. 27 (2021) — unconditional for test support in
+    `[2^{−1/2}, 2^{1/2}]`, exactly the range excluding every prime — is the strongest
+    partial result, and global is exactly what is open).
+  • An open question OF THE LITERATURE (not just of this program): whether positivity of
+    ALL finite-rank truncations of the Weil form alone is equivalent to RH in general —
+    Bombieri (2000) covers the finitely-many-off-line-zeros case (negative eigenvalues of
+    a large truncation count half the off-line zeros); the general density question has
+    no verified published answer. The finite-check guards above are therefore not merely
+    prudence; they reflect the genuine state of the art.
 
 CONCLUSION OF THE ATTEMPT: no genuine, audited, axiom-clean proof of the universal landed.
 Per the bright line, `hodgeIndexHolds` and `liPositivityHolds` STAY `none`; the release

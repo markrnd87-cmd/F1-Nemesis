@@ -10,14 +10,20 @@ the zeta zeros). `SpectralSquare` is that enrichment as an interface: it carries
   • `lam` — the Li/trace data of `H¹` (for the GENUINE instance, the Li coefficients
     `λₙ = Σ_ρ [1 − (1−1/ρ)ⁿ]` of ζ);
   • `cSq` — the self-intersections `⟨Cₙ, Cₙ⟩` of the primitive spectral classes;
-  • `dict` — THE DICTIONARY: `⟨Cₙ, Cₙ⟩ = −2λₙ`. This is the Deninger reading of Li's
-    criterion (Deninger, *Motivic L-functions and regularized determinants*, Proc. Symp.
-    Pure Math. 55 (1994); the Hodge-index formulation of Weil positivity), normalized
-    exactly as the function-field model derives it: `BridgeFF.primDG_sq` gives
-    `D°² = −2·(Hasse form)` — the `−2` is the lattice's, not a choice. For ζ the chain
-    "RH ⟺ Weil positivity ⟺ λₙ ≥ 0 ∀n" is CLASSICAL (Weil 1952; Li, J. Number Theory 65
-    (1997); Bombieri–Lagarias, J. Number Theory 77 (1999); Bombieri, *Remarks on Weil's
-    quadratic functional*, Rend. Mat. Acc. Lincei 11 (2000)).
+  • `dict` — THE DICTIONARY: `⟨Cₙ, Cₙ⟩ = −2λₙ`, the Deninger-type Hodge-index reading of
+    Li's criterion, stated here as INTERFACE DATA because that is its verified status: the
+    number-field dictionary is conjectural, recorded by Connes–Consani (Selecta Math. 27
+    (2021), art. 77 — the scaling kernel "corresponds geometrically to the divisor of the
+    Frobenius correspondence", with the square's intersection theory explicitly "not yet
+    in shape" for the explicit formula's principal values). The normalization is the
+    function-field model's own: `BridgeFF.primDG_sq` gives `D°² = −2·(Hasse form)` — the
+    `−2` is the lattice's, not a choice. For ζ the chain "RH ⟺ Weil positivity ⟺
+    λₙ > 0 ∀n" is CLASSICAL: Weil 1952 (test class `C_c^∞(0,∞)`, the restricted-class
+    equivalence proved directly by Burnol, arXiv math/9810169); Bombieri, *Remarks on
+    Weil's quadratic functional*, Rend. Mat. Acc. Lincei 11 (2000) (the iff, and the
+    finite Hermitian truncations); Li, J. Number Theory 65 (1997) (strict `λₙ > 0 ∀n ⟺
+    RH`); Bombieri–Lagarias, J. Number Theory 77 (1999) (`λₙ` as the Guinand–Weil
+    explicit-formula functional at specific test functions).
 
 THE BRIDGE (theorems, the stage-D release goal): for ANY spectral square,
     `spectral_bridge_nonneg` :  Hodge-index negativity (semidefinite face) ⟺ `Li.LiNonneg lam`
@@ -33,7 +39,9 @@ FAITHFULNESS (the standing cautions, all enforced):
     (`T4`/§3.4: that construction is the program's remaining frontier). The fields
     `hodgeIndexHolds`/`liPositivityHolds` stay `none`.
   • `spectralTwoSlice` below is the INHABITING instance: its `lam` carries the genuine
-    certified `λ₁, λ₂` (v0.14.0/v0.16.0) and its `cSq` is defined THROUGH the dictionary —
+    certified `λ₁, λ₂` (v0.14.0/v0.16.0; certified `λ₁ ≥ 0.0231`, `λ₂ ≥ 0.0043` — the
+    true values are `λ₁ ≈ 0.0230957`, `λ₂ ≈ 0.0923457`, Keiper 1992/Coffey 2005,
+    independently re-verified) and its `cSq` is defined THROUGH the dictionary —
     it demonstrates the interface is real and gives the geometric face its first two
     genuine negativity slices (`spectral_evidence_two`). It is NOT the crux, and that is
     itself a THEOREM (`spectralTwoSlice_not_crux`: its `n ≥ 3` slices vanish, so its
@@ -61,8 +69,10 @@ structure SpectralSquare where
   lam : Nat → Real
   /-- the self-intersection `⟨Cₙ, Cₙ⟩` of the `n`-th primitive spectral class -/
   cSq : Nat → Real
-  /-- the dictionary: `⟨Cₙ, Cₙ⟩ = −2λₙ` (Deninger's Hodge-index reading of Li's
-      criterion, normalized as `BridgeFF.primDG_sq` derives on the function-field model) -/
+  /-- the dictionary: `⟨Cₙ, Cₙ⟩ = −2λₙ` (the Deninger-type Hodge-index reading of Li's
+      criterion — conjectural at number fields, hence interface DATA, per the verified
+      Connes–Consani 2021 account; normalized as `BridgeFF.primDG_sq` derives on the
+      function-field model) -/
   dict : ∀ n : Nat, 0 < n → Req (cSq n) (Rneg (Radd (lam n) (lam n)))
 
 -- ===========================================================================
@@ -193,9 +203,10 @@ def spectralTwoSlice : SpectralSquare where
   dict := fun _ _ => Req_refl _
 
 /-- **The geometric face's first two genuine negativity slices** (the stage-D evidence):
-    the primitive classes attached to the certified `λ₁ ≈ 0.0231` and `λ₂ ≈ 0.0043` have
-    strictly negative self-intersection — `⟨C₁,C₁⟩ < 0` and `⟨C₂,C₂⟩ < 0`, through the
-    bridge from `Rlambda1_pos`/`Rlambda2_pos`. Evidence, not the crux. -/
+    the primitive classes attached to the certified `λ₁` and `λ₂` (certified lower bounds
+    `0.0231` and `0.0043`; true values `≈ 0.0231` and `≈ 0.0923`) have strictly negative
+    self-intersection — `⟨C₁,C₁⟩ < 0` and `⟨C₂,C₂⟩ < 0`, through the bridge from
+    `Rlambda1_pos`/`Rlambda2_pos`. Evidence, not the crux. -/
 theorem spectral_evidence_two :
     Pos (Rneg (spectralTwoSlice.cSq 1)) ∧ Pos (Rneg (spectralTwoSlice.cSq 2)) := by
   constructor

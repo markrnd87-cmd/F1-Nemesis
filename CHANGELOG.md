@@ -176,7 +176,8 @@ and the honesty gate passes. The crux `liPositivityHolds`/`hodgeIndexHolds` stay
     eqns 2.18–2.19) is **documented, not asserted as a Lean theorem** — a rigorous proof presupposes an
     independent `Γ`, so the *exact* archimedean place is carried by the `Digamma` series instead.
 - **(C) `Pos λ₂`** (`F1Square/Analysis/LambdaTwo.lean`) — the second Li/Keiper coefficient is positive
-  (`Rlambda2_pos : Pos Rlambda2`, `λ₂ ≈ 0.0043 > 0`), the higher-Stieltjes-`γₙ` → `λₙ` capstone, a
+  (`Rlambda2_pos : Pos Rlambda2`, certified lower bound `λ₂ ≥ 0.0043`; true value `λ₂ ≈ 0.0923457`),
+  the higher-Stieltjes-`γₙ` → `λₙ` capstone, a
   `λ₁`-style positivity certificate for `n = 2`.
 
 ### Honest scope (unchanged)

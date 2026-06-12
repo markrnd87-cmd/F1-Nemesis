@@ -2,14 +2,24 @@
 F1 square — v0.18.0 stage D, brick 2: the **Bombieri–Lagarias decomposition of `λ₂`**, and the
 two-slice realization of the `Li.LiDecomposition` interface.
 
-The BL/Coffey closed form (Bombieri–Lagarias 1999; Coffey, arXiv math/0506319) splits every Li
-coefficient into an arithmetic (finite-place) and an archimedean part,
+The Bombieri–Lagarias route (J. Number Theory 77 (1999), via the Guinand–Weil explicit formula)
+splits every Li coefficient into an arithmetic (finite-place) and an archimedean part,
+`λₙ = λₙ^{arith} + λₙ^{∞}`. The ARITHMETIC part has the verified finite binomial form
 
-    λₙ = λₙ^{arith} + λₙ^{∞},
     λₙ^{arith} = −Σ_{j=1}^{n} C(n,j)·η_{j−1},
-    λₙ^{∞}    = 1 − (γ + log 4π)·n/2 + Σ_{j=2}^{n} C(n,j)·(−1)^j·(1 − 2^{−j})·ζ(j),
 
-with `η_j` the Laurent coefficients of `−ζ′/ζ` at `s = 1` (`η₀ = −γ`, `η₁ = γ² + 2γ₁`). At `n = 2`:
+with `η_j` the Laurent coefficients of `−ζ′/ζ` at `s = 1` — constructible from `Λ` alone, with
+the finite algebraic recursion `ηₙ = −(n+1)γₙ − Σ ηₖγ_{n−k−1}` tying them to the Stieltjes `γⱼ`
+(Coffey, J. Comp. Appl. Math. 166 (2004); Maslanka, arXiv math/0406312). ⚠ CONVENTION (pinned):
+this file uses the STANDARD Stieltjes convention, in which `η₀ = −γ` and `η₁ = γ² + 2γ₁` with
+`γ₁ ≈ −0.0728` — Maslanka's raw-Laurent convention flips the `γ₁` sign (his `+2γ₁` = standard
+`−2γ₁`); transcribing literature formulas without pinning the convention is the dominant error
+mode here. The general-`n` closed form of the ARCHIMEDEAN part (a `ζ(j)`-binomial sum plus a
+linear term) appears in Coffey (arXiv math-ph/0505052, Thm 1) but its exact general shape is
+not independently verified — the instances used in this file are the `n = 1, 2` cases, each
+independently verified (the `n = 2` total below reproduces the closed form
+`λ₂ = 1 + γ − γ² − 2γ₁ − log 4π + ¾ζ(2) ≈ 0.0923457`, re-checked to 30 digits against
+Keiper 1992 / Coffey 2005). At `n = 2`:
 
     λ₂^{arith} = −(2η₀ + η₁) = 2γ − (γ² + 2γ₁)        (the prime side, via the Stieltjes γ₁),
     λ₂^{∞}     = (1 − γ) − log 4π + ¾·ζ(2)            (the Γ-factor place),
@@ -141,8 +151,9 @@ theorem li_decomposition_two_realized :
       exact Req_refl _
 
 /-- **The two-slice positivity evidence**: both genuine slices of the realized Li sequence are
-    certified positive (`λ₁ ≈ 0.0231 > 0`, `λ₂ ≈ 0.0043 > 0`) — evidence for Li's criterion at
-    `n = 1, 2`, NOT the crux (`λₙ > 0 ∀ n` = RH stays open). -/
+    certified positive (certified lower bounds `λ₁ ≥ 0.0231`, `λ₂ ≥ 0.0043`; true values
+    `λ₁ ≈ 0.0230957`, `λ₂ ≈ 0.0923457`) — evidence for Li's criterion at `n = 1, 2`, NOT the
+    crux (`λₙ > 0 ∀ n` = RH stays open). -/
 theorem liTwo_evidence : Pos (liLamSeqTwo 1) ∧ Pos (liLamSeqTwo 2) :=
   ⟨Rlambda1_pos, Rlambda2_pos⟩
 

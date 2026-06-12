@@ -89,7 +89,8 @@ def Rlambda2 : Real :=
     (Rneg Rlog4pic))
     (Rmul (ofQ ⟨3, 4⟩ (by decide)) (zeta 2 (by decide)))
 
-/-- **`Pos λ₂`** — the second Li coefficient is positive (`λ₂ ≈ 0.0043 > 0`), kernel-certified from the
+/-- **`Pos λ₂`** — the second Li coefficient is positive (certified lower bound
+    `λ₂ ≥ 0.0043`; the true value is `λ₂ ≈ 0.0923457`, Keiper 1992), kernel-certified from the
     parabola `1 + γ − γ² ≥ 1.2244`, `γ₁ ≤ −0.0445`, `log 2 ≤ 0.6931`, `log π ≤ 1.1453`, `ζ(2) ≥ 1.63`.
     Evidence for Li's criterion at `n = 2`; NOT the crux (`liPositivityHolds` stays `none`, RH open). -/
 theorem Rlambda2_pos : Pos Rlambda2 := by

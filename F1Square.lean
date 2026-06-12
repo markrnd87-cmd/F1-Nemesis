@@ -773,7 +773,8 @@ example :
     `Analysis.etaDenom_Pos_normSq` — `ζ(s)` on the critical strip `0 < Re s < 1`; `Analysis.Digamma` —
     the archimedean `Γ′/Γ = ψ` EXACTLY (the convergent series `−γ + Σ[1/(n+1) − 1/(n+z)]`); and
     `Analysis.SpougeGamma` — Spouge's `Γ`-approximant (error bound cited, not formalized). The single
-    theorem-level fact bound here is **`Pos λ₂`** (`Analysis.Rlambda2_pos`, `λ₂ ≈ 0.0043 > 0`), the
+    theorem-level fact bound here is **`Pos λ₂`** (`Analysis.Rlambda2_pos`, certified `λ₂ ≥ 0.0043`;
+    true value `λ₂ ≈ 0.0923457`), the
     higher-Stieltjes capstone — EVIDENCE for Li's criterion at `n = 2`, not the crux. RH stays open:
     `liPositivityHolds = none`. -/
 example :
