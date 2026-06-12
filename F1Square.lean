@@ -250,7 +250,15 @@ def f1SquareStatus : F1SquareStatus := {
                                               -- (Square.square_hodge_pencil_blind: Δ·Γ_n = 0,
                                               -- [Γ_n] = [Δ] ∀n — no spectral input), hence NOT the
                                               -- crux; the crux is the H¹-bearing pairing's positivity.
-  liPositivityHolds         := none           -- = RH (analytic face: λₙ > 0 ∀n, Li 1997), OPEN, never asserted
+                                              -- v0.18.0: the two faces are proven EQUIVALENT
+                                              -- (Square.crux_faces_equivalent); the attempt ran and
+                                              -- certified strict negativity through n = 2
+                                              -- (spectral_strict_upTo_two) — the universal did NOT
+                                              -- close (crux_attempt_frontier), so this stays none.
+  liPositivityHolds         := none           -- = RH (analytic face: λₙ > 0 ∀n, Li 1997), OPEN, never
+                                              -- asserted. v0.18.0: equivalent to hodgeIndexHolds'
+                                              -- spectral form through the bridge; certified slices
+                                              -- n = 1, 2 only; stays none.
 }
 
 -- ===========================================================================
@@ -400,6 +408,29 @@ def f1SquareStatus : F1SquareStatus := {
 --                                Square.square_hodge_pencil_blind ([Γ_n]=[Δ], Δ·Γ_n=0 ∀n: the
 --                                coarse-lattice Hodge index carries NO spectral input, so it is
 --                                NOT the crux; same discipline as Bridge.control_psd)
+-- v0.18.0 (stage D — the bridge and the crux attempt):
+--   the function-field anchor   ← BridgeFF.{ffPair_symm, ff_gamma_bidegree, ff_trace_datum,
+--     (Castelnuovo–Severi as      primDG_perp_h/v, primDG_sq (D°² = −2(x²+axy+qy²)),
+--      a lattice derivation)      ff_hodge_iff_hasse (∀-negativity ⟺ a² ≤ 4q),
+--                                ff_hodge_iff_hodgeType (the governor DERIVED)}
+--   the λ₂ BL decomposition     ← Analysis.{Rlambda2_decomposition (λ₂ = [2γ−(γ²+2γ₁)] +
+--                                [(1−γ)−log4π+¾ζ(2)]), li_decomposition_two_realized
+--                                (LiDecomposition with TWO genuine slices), liTwo_evidence}
+--   THE BRIDGE (the release    ← Square.{SpectralSquare (the H¹-bearing enrichment as an
+--     goal: the two faces of     interface: lam, cSq, dict ⟨Cₙ,Cₙ⟩ = −2λₙ),
+--     the crux are equivalent)   spectral_bridge_nonneg (⟨Cₙ,Cₙ⟩ ≤ 0 ∀n ⟺ LiNonneg),
+--                                spectral_bridge_pos(_slice) (strict ⟺ LiPositive),
+--                                crux_faces_equivalent (SpectralCrux S ⟺ Li.LiCrux S.lam),
+--                                Pos_Radd_self/Pos_of_Radd_self (the doubling lemmas)}
+--   the attempt, under the gate ← Square.{spectral_evidence_two (⟨C₁,C₁⟩ < 0, ⟨C₂,C₂⟩ < 0 —
+--                                genuine, via Pos λ₁/λ₂ through the bridge),
+--                                spectral_strict_upTo_two (certified through n = 2),
+--                                crux_attempt_frontier(_geometric) (crux ⟺ ∀n≥3 λₙ>0,
+--                                given the certified slices), spectralTwoSlice_not_crux
+--                                (the HONESTY GUARD: the finite-slice instance provably
+--                                FAILS the crux), spectral_iff_all_upTo (no finite check
+--                                reaches it)}
+--   CONCLUSION: the attempt did not close the universal; the fields below stay `none`.
 -- The crux is NOT backed and stays `none` (BOTH faces, same RH) — λ₁ > 0 is the n=1 case, not RH:
 --   hodgeIndexHolds (= RH, geometric) ← OPEN. Crux.template_hodgeIndex proves the property on the
 --                               product-of-curves TEMPLATE; Square.square_hodgeIndex (v0.17.0)
@@ -803,5 +834,28 @@ example :
     ∧ f1SquareStatus.hodgeIndexHolds = none :=
   ⟨Square.sq_isCoproduct,
    fun p hp2 hp {k} hk => Analysis.vonMangoldt_prime_pow hp2 hp hk, rfl⟩
+
+/-- Elaboration-checked witness binding the **v0.18.0 stage-D layer** — the bridge and the
+    attempt. In order: (1) the Castelnuovo–Severi anchor — on the function-field lattice, Hodge-index
+    negativity on the primitive `{Δ,Γ}`-span ⟺ the governor (`Mechanism.hodgeType`), so the §0.3
+    mechanism is DERIVED; (2) the λ₂ Bombieri–Lagarias split is a theorem and `LiDecomposition` is
+    realized with two genuine slices; (3) **THE BRIDGE**: for every spectral square the geometric and
+    analytic faces of the crux are equivalent (`SpectralCrux S ⟺ Li.LiCrux S.lam`); (4) the attempt's
+    certified slice (strict negativity through `n = 2`) and (5) its honesty guard — the two-slice
+    instance provably FAILS the crux. The crux fields stay `none`: **RH OPEN**. -/
+example :
+    (∀ q a : Int, (∀ x y : Int,
+        BridgeFF.ffPair q a (BridgeFF.primDG q x y) (BridgeFF.primDG q x y) ≤ 0)
+      ↔ Mechanism.hodgeType q a)
+    ∧ Analysis.Req Analysis.Rlambda2 (Analysis.Radd Analysis.Rlambda2_arith Analysis.Rlambda2_arch)
+    ∧ Li.LiDecomposition Analysis.liLamSeqTwo Analysis.liArithSeqTwo Analysis.liArchSeqTwo
+    ∧ (∀ S : Square.SpectralSquare, Square.SpectralCrux S ↔ Li.LiCrux S.lam)
+    ∧ (∀ n : Nat, 0 < n → n ≤ 2 → Analysis.Pos (Analysis.Rneg (Square.spectralTwoSlice.cSq n)))
+    ∧ ¬ Square.SpectralCrux Square.spectralTwoSlice
+    ∧ f1SquareStatus.hodgeIndexHolds = none
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨BridgeFF.ff_hodge_iff_hodgeType, Analysis.Rlambda2_decomposition,
+   Analysis.li_decomposition_two_realized, Square.crux_faces_equivalent,
+   Square.spectral_strict_upTo_two, Square.spectralTwoSlice_not_crux, rfl, rfl⟩
 
 end UOR.Bridge.F1Square
