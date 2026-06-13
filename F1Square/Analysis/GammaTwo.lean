@@ -20,6 +20,7 @@ Pure Lean 4, no Mathlib, no `sorry`/`native_decide`, choice-free.
 -/
 
 import F1Square.Analysis.GammaOne
+import F1Square.Analysis.RAddNF
 
 namespace UOR.Bridge.F1Square.Analysis
 
@@ -157,5 +158,42 @@ theorem cube_diff_identity (a b : Real) :
     (Rmul b (Rmul b b))) ?_
   -- finally reorient P = a·a² → a²·a and Q = b·b² → b²·b
   exact Rsub_congr (Rmul_comm a (Rmul a a)) (Rmul_comm b (Rmul b b))
+
+/-- **`(a²+ab+b²) + (a−b)(2a+b) ≈ 3a²`** — the quadratic identity behind the `e_k` decomposition,
+    discharged by the RAddNF additive normalizer: expand `(a−b)(2a+b)`, flatten to a signed-atom
+    list, then permute (decidably, via ℕ-indices) and cancel the `ab`/`b²` pairs. -/
+theorem tri_sum_3a2 (a b : Real) :
+    Req (Radd (Radd (Radd (Rmul a a) (Rmul a b)) (Rmul b b))
+          (Rmul (Rsub a b) (Radd (Radd a a) b)))
+        (Radd (Radd (Rmul a a) (Rmul a a)) (Rmul a a)) := by
+  -- expand X = (a−b)(2a+b) ≈ (a²+a²+ab) − (ab+ab+b²)
+  have hX : Req (Rmul (Rsub a b) (Radd (Radd a a) b))
+      (Rsub (Radd (Radd (Rmul a a) (Rmul a a)) (Rmul a b))
+            (Radd (Radd (Rmul a b) (Rmul a b)) (Rmul b b))) := by
+    refine Req_trans (Rmul_sub_distrib_right a b (Radd (Radd a a) b)) ?_
+    refine Rsub_congr ?_ ?_
+    · exact Req_trans (Rmul_distrib a (Radd a a) b) (Radd_congr (Rmul_distrib a a a) (Req_refl _))
+    · refine Req_trans (Rmul_distrib b (Radd a a) b) (Radd_congr ?_ (Req_refl _))
+      exact Req_trans (Rmul_distrib b a a) (Radd_congr (Rmul_comm b a) (Rmul_comm b a))
+  -- flatten LHS to the canonical signed-atom list [0,1,2,0,0,1,3,3,4].map f
+  refine Req_trans (Radd_congr (Radd_eq_RsumL3 (Rmul a a) (Rmul a b) (Rmul b b)) hX) ?_
+  refine Req_trans (Radd_congr (Req_refl _)
+    (Req_trans (Radd_congr (Radd_eq_RsumL3 (Rmul a a) (Rmul a a) (Rmul a b))
+        (Req_trans (Rneg_congr (Radd_eq_RsumL3 (Rmul a b) (Rmul a b) (Rmul b b)))
+          (RsumL_map_Rneg [Rmul a b, Rmul a b, Rmul b b])))
+      (Req_symm (RsumL_append [Rmul a a, Rmul a a, Rmul a b]
+        [Rneg (Rmul a b), Rneg (Rmul a b), Rneg (Rmul b b)])))) ?_
+  refine Req_trans (Req_symm (RsumL_append [Rmul a a, Rmul a b, Rmul b b]
+    [Rmul a a, Rmul a a, Rmul a b, Rneg (Rmul a b), Rneg (Rmul a b), Rneg (Rmul b b)])) ?_
+  -- convert the RHS 3a² to canonical-list form
+  refine Req_trans ?_ (Req_symm (Radd_eq_RsumL3 (Rmul a a) (Rmul a a) (Rmul a a)))
+  -- now: RsumL [a²,ab,b²,a²,a²,ab,−ab,−ab,−b²]  ≈  RsumL [a²,a²,a²]
+  -- cancel the three ± pairs at known positions (choice-free, no `decide` on `Perm`):
+  --   ab (pos 1) ↔ −ab (pos 6); then ab (pos 4) ↔ −ab; then b² ↔ −b²
+  refine Req_trans (RsumL_cancel_anywhere (Rmul a b) [Rmul a a]
+    [Rmul b b, Rmul a a, Rmul a a, Rmul a b] [Rneg (Rmul a b), Rneg (Rmul b b)]) ?_
+  refine Req_trans (RsumL_cancel_anywhere (Rmul a b) [Rmul a a, Rmul b b, Rmul a a, Rmul a a]
+    [] [Rneg (Rmul b b)]) ?_
+  exact RsumL_cancel_anywhere (Rmul b b) [Rmul a a] [Rmul a a, Rmul a a] []
 
 end UOR.Bridge.F1Square.Analysis

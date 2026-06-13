@@ -74,6 +74,24 @@ theorem RsumL_append (l l' : List Real) :
       refine Req_trans (Radd_congr (Req_refl x) ih) ?_
       exact Req_symm (Radd_assoc x (RsumL xs) (RsumL l'))
 
+/-- **Head cancels its negation anywhere in the tail** (choice-free, structural — no `decide`
+    on `List.Perm`, whose `Decidable` instance pulls `Classical.choice`): `x + (l₁ + (−x) + l₂)
+    ≈ l₁ + l₂`. -/
+theorem RsumL_cancel_cons (x : Real) : ∀ (l₁ l₂ : List Real),
+    Req (RsumL (x :: (l₁ ++ Rneg x :: l₂))) (RsumL (l₁ ++ l₂))
+  | [], l₂ => RsumL_cancel_head x l₂
+  | y :: l₁', l₂ =>
+      Req_trans (RsumL_swap_head x y (l₁' ++ Rneg x :: l₂))
+        (Radd_congr (Req_refl y) (RsumL_cancel_cons x l₁' l₂))
+
+/-- **Cancel a ± pair at known positions** (the ergonomic, choice-free cancellation): give the
+    segments `l₁` (before `x`), `l₂` (between `x` and `−x`), `l₃` (after), and the pair drops. -/
+theorem RsumL_cancel_anywhere (x : Real) (l₁ l₂ l₃ : List Real) :
+    Req (RsumL (l₁ ++ x :: (l₂ ++ Rneg x :: l₃))) (RsumL (l₁ ++ (l₂ ++ l₃))) := by
+  refine Req_trans (RsumL_append l₁ (x :: (l₂ ++ Rneg x :: l₃))) ?_
+  refine Req_trans (Radd_congr (Req_refl _) (RsumL_cancel_cons x l₂ l₃)) ?_
+  exact Req_symm (RsumL_append l₁ (l₂ ++ l₃))
+
 /-- A single leaf as a one-element canonical sum: `x ≈ RsumL [x]`. -/
 theorem RsumL_singleton (x : Real) : Req x (RsumL [x]) :=
   Req_symm (Req_trans (Radd_congr (Req_refl x) (RsumL_nil ▸ Req_refl zero)) (Radd_zero x))
@@ -82,6 +100,12 @@ theorem RsumL_singleton (x : Real) : Req x (RsumL [x]) :=
 theorem Radd_eq_RsumL (x y : Real) : Req (Radd x y) (RsumL [x, y]) := by
   show Req (Radd x y) (Radd x (Radd y zero))
   exact Radd_congr (Req_refl x) (Req_symm (Radd_zero y))
+
+/-- `(x + y) + z ≈ RsumL [x, y, z]` — ternary flattening. -/
+theorem Radd_eq_RsumL3 (x y z : Real) : Req (Radd (Radd x y) z) (RsumL [x, y, z]) := by
+  show Req (Radd (Radd x y) z) (Radd x (Radd y (Radd z zero)))
+  refine Req_trans (Radd_assoc x y z) ?_
+  exact Radd_congr (Req_refl x) (Radd_congr (Req_refl y) (Req_symm (Radd_zero z)))
 
 /-- **Decidable permutations via ℕ-indices** — the ergonomic engine. `Real` has no
     `DecidableEq`, so `List.Perm` of `Real`-lists can't be `decide`d; but a permutation of the

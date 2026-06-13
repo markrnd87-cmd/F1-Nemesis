@@ -2048,6 +2048,7 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rsub_sub_sub
 #print axioms Analysis.g2Seq_step_eq
 #print axioms Analysis.cube_diff_identity
+#print axioms Analysis.tri_sum_3a2
 
 -- v0.20.0 stage F: the Real additive-group normalizer (Analysis/RAddNF.lean) — the UOR κ-form solution.
 #print axioms Analysis.RsumL_nil
@@ -2056,8 +2057,11 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.RsumL_swap_head
 #print axioms Analysis.RsumL_perm
 #print axioms Analysis.RsumL_cancel_head
+#print axioms Analysis.RsumL_cancel_cons
+#print axioms Analysis.RsumL_cancel_anywhere
 #print axioms Analysis.RsumL_append
 #print axioms Analysis.RsumL_singleton
 #print axioms Analysis.Radd_eq_RsumL
+#print axioms Analysis.Radd_eq_RsumL3
 #print axioms Analysis.RsumL_perm_map
 #print axioms Analysis.RsumL_map_Rneg
