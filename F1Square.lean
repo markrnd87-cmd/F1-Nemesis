@@ -1146,4 +1146,21 @@ example :
    Square.genuine_crux_equivalent,
    Square.genuine_crux_frontier_located, rfl, rfl⟩
 
+/-- Elaboration-checked witness binding the **v0.20.0 frontier brick** — the Voros growth
+    dichotomy, mechanized. The genuine constructive skeleton of Voros's theorem (the sharpest
+    statement of the RH-hardness of Li positivity) is unconditional: a polynomially-bounded
+    sequence (`|λₙ| ≤ C(n+1)²`, the tempered/RH regime) can NEVER oscillate exponentially
+    (exceed `2ⁿ` infinitely often, the ¬RH regime) — the two regimes are mutually exclusive,
+    "no third option" (`tempered_not_exp`/`exp_not_tempered`), via the growth bound
+    `(n+1)³ ≤ 2ⁿ` for `n ≥ 11` (`cube_le_pow2`). This sharpens the frontier (positivity lives
+    in the tempered regime) but the RH-equivalent identification of a regime stays the open
+    analytic content; the crux fields stay `none`. -/
+example :
+    (∀ lam : Nat → Analysis.Real, Analysis.TemperedGrowth lam → ¬ Analysis.ExpOscillation lam)
+    ∧ (∀ lam : Nat → Analysis.Real, Analysis.ExpOscillation lam → ¬ Analysis.TemperedGrowth lam)
+    ∧ (∀ n : Nat, 11 ≤ n → (n + 1) * (n + 1) * (n + 1) ≤ 2 ^ n)
+    ∧ f1SquareStatus.hodgeIndexHolds = none
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Analysis.tempered_not_exp, Analysis.exp_not_tempered, Analysis.cube_le_pow2, rfl, rfl⟩
+
 end UOR.Bridge.F1Square

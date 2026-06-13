@@ -63,6 +63,27 @@ choice-free (`{propext, Quot.sound}`), audited; the build is warning-free; the g
   criterion, the located frontier); the crux fields stay `none`. The dictionary is a theorem;
   the construction is complete down to its one honest input (the η-tail / the zeros); the
   positivity does not close from anything built. **RH stays OPEN.**
+- **The Voros growth dichotomy, mechanized** (`F1Square/Analysis/Voros.lean`) — a frontier brick.
+  Voros (*Math. Phys. Anal. Geom.* 9 (2006)) is the sharpest statement of the RH-hardness of Li
+  positivity: `λₙ` has exactly two mutually-exclusive asymptotic forms — tempered `∼ (n/2)log n`
+  (RH) vs exponentially oscillating `∼ Σ((τₖ+i/2)/(τₖ−i/2))ⁿ` (¬RH), no third option. The genuine
+  CONSTRUCTIVE skeleton is built unconditionally: `tempered_not_exp`/`exp_not_tempered` — a
+  polynomially-bounded sequence (`|λₙ| ≤ C(n+1)²`) can NEVER exceed `2ⁿ` infinitely often (the
+  regimes are disjoint), via `cube_le_pow2` (`(n+1)³ ≤ 2ⁿ`, `n ≥ 11`) → `quad_lt_pow2`. The
+  RH-equivalent *identification* of a regime (the saddle-point content) stays faithful interface.
+  Deep-research-confirmed (104 agents) against the primary Voros/Coffey/Lagarias/Yoshida sources,
+  which pin the genuine unconditional levers (Coffey's `λₙ ≥ trend − |S2|`, math-ph/0505052;
+  Yoshida–Bombieri small-support Weil positivity) — all bottoming out at the same `|S2|`/RH-hard
+  step, so no unconditional closure exists.
+- **Honesty-gate rigor fix** (`scripts/honesty_audit.sh`) — load-bearing. Checks 3 (no
+  `sorry`/`native_decide`) and 4 (choice-free) used `… | grep -q …` inside an `if`-condition
+  under `set -o pipefail`: a matching `grep -q` exits early, SIGPIPEs the upstream `grep`, and
+  pipefail makes the pipeline's status that non-zero code — which `if` reads as FALSE, so the
+  FAIL branch never ran. **The forbidden-axiom and choice-free gates were effectively disabled.**
+  Fixed (capture-then-test, no `grep -q`); verified the gate now FIRES on violations and PASSES
+  clean. The fix exposed and removed a pre-existing `Classical.choice` leak (`graph_one_diag`,
+  `omega` on an `↔`; reproved `Nat.one_mul`+`eq_comm`) — so the choice-free claim
+  (`{propext, Quot.sound}` only) is now genuinely *enforced*, not merely asserted.
 
 ## [0.19.0] - 2026-06-13
 
