@@ -2015,3 +2015,12 @@ open UOR.Bridge.F1Square
 #print axioms Square.vanCyc_selfpair
 #print axioms Square.genuineSpectralSquare_lam
 #print axioms Square.genuineSpectralSquare_dict
+
+-- v0.20.0 stage F, Group B (Square/Forced.lean): the forced signature, the gate reads it.
+#print axioms Square.genuine_vanCyc_normal
+#print axioms Square.genuine_crux_equivalent
+#print axioms Square.genuine_hodgeNeg_iff
+#print axioms Square.genuine_evidence_head
+#print axioms Square.genuine_crux_frontier
+#print axioms Square.genuine_signature_satisfiable
+#print axioms Square.genuine_iff_all_upTo
