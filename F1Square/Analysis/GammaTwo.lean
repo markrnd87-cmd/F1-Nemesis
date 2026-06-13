@@ -423,4 +423,40 @@ theorem e2Step_le_num (p : Nat) (hp : 1 ≤ p) :
   exact Rle_of_Req (Rmul_comm (ofQ (⟨1, p * p⟩ : Q) (Nat.mul_pos hp hp))
     (logN (p + 1) (Nat.succ_pos p)))
 
+/-- **The e_k numeric LOWER envelope** `e_k ≥ −ln(p+1)²/(p(p+1))` — the summable lower bound:
+    from `e_k ≥ a²(u−δ)` and `δ ≤ 1/p` (`deltaLog_upper`, so `(u−δ)+1/(p(p+1)) = 1/p − δ ≥ 0`). -/
+theorem e2Step_ge_num (p : Nat) (hp : 1 ≤ p) :
+    Rle (Rmul (Rmul (logN (p + 1) (Nat.succ_pos p)) (logN (p + 1) (Nat.succ_pos p)))
+          (Rneg (ofQ (⟨1, p * (p + 1)⟩ : Q) (Nat.mul_pos hp (Nat.succ_pos p)))))
+        (e2Step p hp) := by
+  have hA : Rnonneg (Rmul (logN (p + 1) (Nat.succ_pos p)) (logN (p + 1) (Nat.succ_pos p))) :=
+    Rnonneg_Rmul_self _
+  -- (u − δ) + c ≈ (u + c) − δ with u + c = 1/p, and 1/p − δ ≥ 0
+  have hsum : Req (Radd (Rsub (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p))
+        (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))
+      (ofQ (⟨1, p * (p + 1)⟩ : Q) (Nat.mul_pos hp (Nat.succ_pos p))))
+      (Rsub (ofQ (⟨1, p⟩ : Q) hp) (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))) := by
+    refine Req_trans (Radd_assoc (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p))
+      (Rneg (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))
+      (ofQ (⟨1, p * (p + 1)⟩ : Q) (Nat.mul_pos hp (Nat.succ_pos p)))) ?_
+    refine Req_trans (Radd_congr (Req_refl _) (Radd_comm _ _)) ?_
+    refine Req_trans (Req_symm (Radd_assoc _ _ _)) ?_
+    exact Radd_congr (Req_trans (@Radd_ofQ_ofQ (⟨1, p + 1⟩ : Q) (⟨1, p * (p + 1)⟩ : Q)
+        (Nat.succ_pos p) (Nat.mul_pos hp (Nat.succ_pos p)))
+      (@ofQ_congr (add (⟨1, p + 1⟩ : Q) ⟨1, p * (p + 1)⟩) (⟨1, p⟩ : Q) _ hp
+        (by show Qeq (add (⟨1, p + 1⟩ : Q) ⟨1, p * (p + 1)⟩) ⟨1, p⟩
+            simp only [add, Qeq]; push_cast; ring_uor))) (Req_refl _)
+  have hnn : Rnonneg (Rmul (Rmul (logN (p + 1) (Nat.succ_pos p)) (logN (p + 1) (Nat.succ_pos p)))
+      (Radd (Rsub (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p))
+              (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))
+        (ofQ (⟨1, p * (p + 1)⟩ : Q) (Nat.mul_pos hp (Nat.succ_pos p))))) :=
+    Rnonneg_Rmul hA (Rnonneg_congr (Req_symm hsum) (Rnonneg_Rsub_of_Rle (deltaLog_upper p hp)))
+  -- A(u−δ) − A(−c) ≈ A((u−δ)+c) ≥ 0, so A(−c) ≤ A(u−δ) ≤ e_k
+  refine Rle_trans ?_ (e2Step_ge_quad p hp)
+  refine Rle_of_Rnonneg_Rsub (Rnonneg_congr ?_ hnn)
+  -- A·((u−δ)+c) ≈ A·(u−δ) − A·(−c)
+  exact Req_trans (Rmul_congr (Req_refl _)
+      (Radd_congr (Req_refl _) (Req_symm (Rneg_Rneg_g2 _))))
+    (Rmul_sub_distrib _ _ _)
+
 end UOR.Bridge.F1Square.Analysis
