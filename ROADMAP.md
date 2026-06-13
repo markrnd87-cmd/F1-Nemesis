@@ -223,7 +223,9 @@ being unverified in print); **the fourth face** (`weilSpectralSquare`, `weil_str
 pairing positivity ⟺ crux ⟺ Li ⟺ dominance — for the genuine family, Weil positivity = RH, both
 directions elementary per the verified Weil/Burnol chain); the first computed pairing value
 (`weilPrime_demo`: the tent at `2` sees `log 2`); the CC unconditional window and Burnol's explicit
-multiplier certificate recorded as the pinned unconditional territory. The crux: ONE proposition,
+multiplier certificate recorded as the pinned unconditional territory — with **the window theorem
+proven on the built object** (`weilPrime_window`: inside the prime-free window the finite-place
+side vanishes identically; `weilValue_window`: in-window `W = poles − archimedean`). The crux: ONE proposition,
 FOUR provably equivalent faces; the fields stay `none` until a genuine proof of the universal
 lands — that is the release's faithful completion.
 

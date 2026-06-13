@@ -133,8 +133,12 @@ crux did not close — now a *sourced* result, not a presumption — so `hodgeIn
     (infinite-dimensional). Burnol's precursor window carries an EXPLICIT nonnegative spectral
     multiplier `α(τ) = 8√2·cos(τ log 2)/(1+4τ²) + h₊(τ)`, `h₊ = −log π + Re ψ(1/4 + iτ/2)` — the
     natural constructive SOS target (needs uniform-in-τ digamma bounds; the pinned next
-    mechanization). Bombieri's Lincei truncations were verified to be ZERO-INDEXED (not zero-free
-    certification targets) — that route is honestly closed.
+    mechanization). **The window theorem holds on the built object** (`weilPrime_window`/
+    `weilValue_window`): a test datum with support inside the prime-free window has identically
+    vanishing finite-place side at every truncation depth, so the assembled `W` reduces in-window
+    to `poles − archimedean` — the exact statement the certificate program starts from, as a
+    theorem of the assembly. Bombieri's Lincei truncations were verified to be ZERO-INDEXED (not
+    zero-free certification targets) — that route is honestly closed.
 
 ### Honest scope (the bright line, unchanged)
 - The dominance face RELOCATES the difficulty (Conrey–Li); it does not remove it. The open content
