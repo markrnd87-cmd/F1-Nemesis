@@ -2037,3 +2037,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.quad_lt_pow2
 #print axioms Analysis.tempered_not_exp
 #print axioms Analysis.exp_not_tempered
+#print axioms Analysis.voros_at_most_one
+#print axioms Analysis.voros_exactly_one

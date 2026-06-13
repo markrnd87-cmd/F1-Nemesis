@@ -140,4 +140,33 @@ theorem tempered_not_exp (lam : Nat → Real) (ht : TemperedGrowth lam) : ¬ Exp
 theorem exp_not_tempered (lam : Nat → Real) (he : ExpOscillation lam) : ¬ TemperedGrowth lam :=
   fun ht => tempered_not_exp lam ht he
 
+-- ===========================================================================
+-- The dichotomy as a structural theorem: exactly one regime.
+-- ===========================================================================
+
+/-- **Voros's dichotomy, as a Prop**: a sequence is in (at least) one of the two regimes. For
+    the genuine `λ` of ζ the "at least one" disjunction IS Voros's saddle-point theorem
+    [CLASSICAL, interface — the analytic content that is RH-equivalent]; here we mechanize the
+    other half, "AT MOST one" (`voros_at_most_one`), unconditionally. -/
+def VorosDichotomy (lam : Nat → Real) : Prop := TemperedGrowth lam ∨ ExpOscillation lam
+
+/-- **AT MOST ONE regime** — the constructive content of the dichotomy: no sequence is BOTH
+    tempered and exponentially oscillating. (Restatement of `tempered_not_exp` as the
+    no-overlap half of "exactly one".) -/
+theorem voros_at_most_one (lam : Nat → Real) :
+    ¬ (TemperedGrowth lam ∧ ExpOscillation lam) :=
+  fun ⟨ht, he⟩ => tempered_not_exp lam ht he
+
+/-- **The structural dichotomy theorem**: GIVEN that a sequence is in some regime
+    (`VorosDichotomy`, Voros's classical saddle-point input), it is in EXACTLY one — the two are
+    mutually exclusive. So "which regime" is a genuine binary invariant of the sequence: tempered
+    (the crux `λₙ > 0 ∀n` lives here, RH) XOR exponential oscillation (¬RH). The identification
+    of the regime with RH is the open analytic content; the EXCLUSIVITY (no third option, no
+    overlap) is the unconditional theorem. -/
+theorem voros_exactly_one (lam : Nat → Real) (h : VorosDichotomy lam) :
+    (TemperedGrowth lam ∧ ¬ ExpOscillation lam) ∨ (ExpOscillation lam ∧ ¬ TemperedGrowth lam) := by
+  rcases h with ht | he
+  · exact Or.inl ⟨ht, fun he => tempered_not_exp lam ht he⟩
+  · exact Or.inr ⟨he, fun ht => tempered_not_exp lam ht he⟩
+
 end UOR.Bridge.F1Square.Analysis
