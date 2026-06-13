@@ -378,4 +378,49 @@ theorem e2Step_ge_quad (p : Nat) (hp : 1 ≤ p) :
   exact Rle_of_Rnonneg_Rsub
     (Rnonneg_congr (Req_symm (Req_trans (Rsub_congr he2 (Req_refl _)) hlb)) hnn)
 
+/-- `c·(x·y) ≈ x·(c·y)` — pull a left factor inward. -/
+private theorem Rmul_left_comm_g2 (c x y : Real) : Req (Rmul c (Rmul x y)) (Rmul x (Rmul c y)) :=
+  Req_trans (Req_symm (Rmul_assoc c x y))
+    (Req_trans (Rmul_congr (Rmul_comm c x) (Req_refl _)) (Rmul_assoc x c y))
+
+/-- **The e_k numeric UPPER envelope** `e_k ≤ ln(p+1)/p²` — the summable bound: from
+    `e_k ≤ ⅓δ²(2a+b)`, `⅓(2a+b) ≤ a` (`b ≤ a`), and `δ ≤ 1/p` (`deltaLog_upper`). -/
+theorem e2Step_le_num (p : Nat) (hp : 1 ≤ p) :
+    Rle (e2Step p hp)
+        (Rmul (logN (p + 1) (Nat.succ_pos p)) (ofQ (⟨1, p * p⟩ : Q) (Nat.mul_pos hp hp))) := by
+  have ha : Rnonneg (logN (p + 1) (Nat.succ_pos p)) := Rnonneg_logN (p + 1) (Nat.succ_pos p)
+  have hδnn : Rnonneg (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)) :=
+    Rnonneg_Rsub_of_Rle (logN_mono hp (Nat.le_succ p))
+  have hδub : Rle (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)) (ofQ (⟨1, p⟩ : Q) hp) :=
+    deltaLog_upper p hp
+  have hofqnn : Rnonneg (ofQ (⟨1, p⟩ : Q) hp) :=
+    @Rnonneg_ofQ (⟨1, p⟩ : Q) hp (by show (0 : Int) ≤ 1; decide)
+  -- ⅓(2a+b) ≤ a
+  have hT : Rle (Rmul (ofQ (⟨1, 3⟩ : Q) (by decide))
+        (Radd (Radd (logN (p + 1) (Nat.succ_pos p)) (logN (p + 1) (Nat.succ_pos p))) (logN p hp)))
+      (logN (p + 1) (Nat.succ_pos p)) :=
+    Rle_trans (Rmul_le_Rmul_left (Rnonneg_ofQ (by decide) (by decide))
+        (Radd_le_add (Rle_refl _) (logN_mono hp (Nat.le_succ p))))
+      (Rle_of_Req (Rmul_third_three (logN (p + 1) (Nat.succ_pos p))))
+  -- δ² ≤ 1/p²
+  have hδsq : Rle (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+                       (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))
+                 (ofQ (⟨1, p * p⟩ : Q) (Nat.mul_pos hp hp)) :=
+    Rle_trans (Rle_trans (Rmul_le_Rmul_left hδnn hδub) (Rmul_le_Rmul_right hofqnn hδub))
+      (Rle_of_Req (Req_trans (@Rmul_ofQ_ofQ (⟨1, p⟩ : Q) (⟨1, p⟩ : Q) hp hp)
+        (@ofQ_congr (mul (⟨1, p⟩ : Q) ⟨1, p⟩) (⟨1, p * p⟩ : Q)
+          (@Qmul_den_pos (⟨1, p⟩ : Q) (⟨1, p⟩ : Q) hp hp) (Nat.mul_pos hp hp)
+          (by show Qeq (mul (⟨1, p⟩ : Q) ⟨1, p⟩) ⟨1, p * p⟩; simp only [mul, Qeq]; push_cast; ring_uor))))
+  -- chain
+  refine Rle_trans (e2Step_le_quad p hp) ?_
+  -- ⅓·(δ²·(2a+b)) ≈ δ²·(⅓·(2a+b)) ≤ δ²·a ≤ (1/p²)·a ≈ a·(1/p²)
+  refine Rle_trans (Rle_of_Req (Rmul_left_comm_g2 (ofQ (⟨1, 3⟩ : Q) (by decide))
+    (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+          (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))
+    (Radd (Radd (logN (p + 1) (Nat.succ_pos p)) (logN (p + 1) (Nat.succ_pos p))) (logN p hp)))) ?_
+  refine Rle_trans (Rmul_le_Rmul_left (Rnonneg_Rmul_self _) hT) ?_
+  refine Rle_trans (Rmul_le_Rmul_right ha hδsq) ?_
+  exact Rle_of_Req (Rmul_comm (ofQ (⟨1, p * p⟩ : Q) (Nat.mul_pos hp hp))
+    (logN (p + 1) (Nat.succ_pos p)))
+
 end UOR.Bridge.F1Square.Analysis
