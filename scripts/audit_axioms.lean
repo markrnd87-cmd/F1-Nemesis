@@ -2112,3 +2112,12 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.half_add_half
 #print axioms Analysis.allOnLine_ratios_one
 #print axioms Analysis.dvp_band_admits_off_line
+
+-- v0.20.0 stage F: λ₃ closed form on the constructive γ₂ (Analysis/LambdaThree.lean).
+#print axioms Analysis.Reta2
+#print axioms Analysis.nsmulR_congr
+#print axioms Analysis.Rlambda3_arith
+#print axioms Analysis.Rlambda3
+#print axioms Analysis.genuineArith_three
+#print axioms Analysis.genuineLam_three
+#print axioms Analysis.etaThreeSlice

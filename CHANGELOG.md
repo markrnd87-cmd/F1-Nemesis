@@ -91,6 +91,18 @@ choice-free (`{propext, Quot.sound}`), audited; the build is warning-free; the g
   0.96`) and a tight bracket needs an anchor `N ∼ 10⁴` (`ln²N/N ≲ 0.01`), beyond kernel `decide`'s
   reach with the current artanh log-evaluator — `γ₂`'s tail is `ln²(N)/N`, intrinsically heavier
   than `γ₁`'s clean `1/(2N)`.
+- **The third Li coefficient `λ₃` in closed form** (`F1Square/Analysis/LambdaThree.lean`) — the next
+  rung of the genuine λ-ladder, the first to carry `γ₂` (`Rgamma2`). The genuine `λₙ = λₙ^{arith} +
+  λₙ^{∞}` is already general; this adds the next η-anchor (deep-research-confirmed
+  Bombieri–Lagarias / Keiper–Li): **`η₂ = −γ³ − 3γγ₁ − (3/2)γ₂`** (`Reta2`, the first anchor needing
+  `γ₂`), the `StieltjesEta3` structure extending `StieltjesEta` with it, and `λ₃^{arith} = −(3η₀ +
+  3η₁ + η₂)` (`Rlambda3_arith`). The archimedean side `λ₃^{∞} = genuineArchSeq 3` (already general,
+  via `ζ(2), ζ(3)`) needs no new work, so `Rlambda3 = λ₃^{arith} + λ₃^{∞}` is a closed-form
+  constructive real. For ANY η-data anchored through `η₂` the genuine ladder meets it at `n = 3`
+  (`genuineArith_three`, `genuineLam_three`) exactly as at `n = 1, 2` — the closed form is faithful,
+  not ad hoc. `Pos λ₃` is NOT claimed: it is gated by a tight numeric bracket on `γ₂` (the `η₂`
+  coefficient is `3/2`), the open Euler–Maclaurin sharp-tail frontier (`γ₂`'s `ln²N/N` tail is
+  heavier than `γ₁`'s clean `1/(2N)`). Choice-free, audited. The crux fields stay `none`.
 - **Lever 1 — the Li/zero growth geometry** (`F1Square/Analysis/ZeroGeometry.lean`): the constructive
   bridge from a zero's POSITION to the GROWTH of its Li contribution, feeding the Voros dichotomy and
   the de la Vallée-Poussin zero-free region. Each Riemann zero `ρ` contributes `1 − (1−1/ρ)ⁿ` to

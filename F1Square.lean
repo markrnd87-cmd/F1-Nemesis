@@ -114,6 +114,7 @@ import F1Square.Analysis.Weil
 import F1Square.Analysis.Voros
 import F1Square.Analysis.GammaTwo
 import F1Square.Analysis.ZeroGeometry
+import F1Square.Analysis.LambdaThree
 
 open UOR.Primitives
 
@@ -1206,5 +1207,21 @@ example :
     ∧ f1SquareStatus.hodgeIndexHolds = none
     ∧ f1SquareStatus.liPositivityHolds = none :=
   ⟨Analysis.liRatio_diff_eq, Analysis.liRatio_on_line, Analysis.liRatio_left_of_line, rfl, rfl⟩
+
+/-- Elaboration-checked witness binding the **v0.20.0 λ₃ rung** (`LambdaThree.lean`): the third Li
+    coefficient as a closed-form constructive real `Rlambda3 = λ₃^{arith} + λ₃^{∞}`, the first to
+    carry `γ₂` (`Rgamma2`) through the η-anchor `η₂ = −γ³ − 3γγ₁ − (3/2)γ₂`. For ANY η-data anchored
+    through `η₂`, the genuine ladder meets the closed form at `n = 3` (`genuineLam_three`), exactly as
+    at `n = 1, 2` — so the closed form is faithful, not ad hoc. `Pos λ₃` is NOT claimed: it is gated
+    by a tight `γ₂` bracket (the η₂ coefficient is `3/2`), the open Euler–Maclaurin frontier; the
+    crux fields stay `none`. -/
+example :
+    (∀ E : Analysis.StieltjesEta3,
+        Analysis.Req (Analysis.genuineArithSeq E.eta 3) Analysis.Rlambda3_arith)
+    ∧ (∀ E : Analysis.StieltjesEta3,
+        Analysis.Req (Analysis.genuineLamSeq E.eta 3) Analysis.Rlambda3)
+    ∧ f1SquareStatus.hodgeIndexHolds = none
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Analysis.genuineArith_three, Analysis.genuineLam_three, rfl, rfl⟩
 
 end UOR.Bridge.F1Square
