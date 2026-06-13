@@ -1,4 +1,4 @@
-# F1 Square — Roadmap to completion (v0.15.0 → v0.19.0)
+# F1 Square — Roadmap to completion (v0.15.0 → v0.20.0)
 
 The genuine-proof layer (`F1Square/`) builds the 𝔽₁ / Riemann-Hypothesis program from first
 principles in **pure Lean 4** (Lean core + UOR-Foundation, **no Mathlib, no `sorry`/`native_decide`,
@@ -25,8 +25,8 @@ stop sign — the focus is always the **construction of the F1 square**, to comp
 | `classGroupFinitelyGen` | `some true` (**canonical 𝕊** — v0.17.0) | shipped in **C** |
 | `surfaceConstructed` | `some true` (**canonical 𝕊**, monoid-scheme level — v0.17.0) | shipped in **C** |
 | `parallelPencilFinding` | `some true` (**canonical 𝕊** — v0.17.0) | shipped in **C** |
-| `hodgeIndexHolds` (= RH, geometric) | `none` | stays `none` through **E** — the attempt ran (D), the dominance face pinned the open object (E); flips iff genuinely proven |
-| `liPositivityHolds` (= RH, analytic) | `none` | stays `none` through **E** — same proposition as the geometric face (D), and as the dominance face (E); flips iff genuinely proven |
+| `hodgeIndexHolds` (= RH, geometric) | `none` | the **F / v0.20.0** construction (the canonical `H¹`-object) derives the signature; flips iff that derivation forces positivity, gate-decided |
+| `liPositivityHolds` (= RH, analytic) | `none` | same proposition as the geometric face, through the bridge; flips iff the **F / v0.20.0** signature derivation closes |
 
 ---
 
@@ -190,7 +190,7 @@ State the geometric↔analytic equivalence faithfully, and **attempt** the crux 
 - **Stays open:** RH (both faces, now provably one proposition through the bridge); the genuine
   spectral instance (`H¹`, T4/§3.4); `λₙ` certification beyond `n = 2` (`γ₂, γ₃, …`).
 
-## v0.19.0 — (E) Completion: the explicit formula, the F1-square roll-up, and THE GENUINE PAIRING
+## v0.19.0 — (E) Completion: the explicit formula, the F1-square roll-up, and THE GENUINE PAIRING **[shipped]**
 
 The release goal is **closure and faithful/truthful completion of the proof**: implement the complete
 proof-strategy — the full power of the UOR-based constructive approach — to close the crux, with the
@@ -279,8 +279,68 @@ lands — that is the release's faithful completion.
 
 ---
 
+## v0.20.0 — (F) The UOR-based construction of the crux: the canonical `H¹`-object
+
+**This release plans ALL remaining work.** The goal is the full UOR-based construction — brick by
+brick from universal properties — of the canonical content-addressed 𝔽₁-object whose *intrinsic*
+self-pairing is the Weil explicit-formula functional, so that its **signature is derived, not
+assumed**. The method is the one that wrote the entire F1 square: name the canonical object by its
+universal property, encode the constraints, and let consistency *force* the theorem (as bilinearity
+forced `E₃² = −2`, and `ff_hodge_iff_hasse` *derived* `a² ≤ 4q` from lattice positivity). The bright
+line is unchanged: `hodgeIndexHolds`/`liPositivityHolds` flip `none → some true` **iff** the forced
+signature is positive — decided by the derivation and the gate, never by ambition. A forced
+obstruction is an equally valid outcome (we learn its exact canonical shape).
+
+**The template is proven — v0.20.0 mirrors `BridgeFF` column-for-column over ℤ:**
+
+| function field (proven, `BridgeFF`) | number field (the v0.20.0 target) | status entering v0.20.0 |
+|---|---|---|
+| lattice `{F_h,F_v,Δ,Γ}` of `C×C` | canonical `𝕊 = F ⊗_𝔽₁ F` | **built** (v0.17.0) |
+| trace datum `Δ·Γ = q+1−a` *intrinsic* | the explicit-formula pairing intrinsic on `𝕊`'s `H¹` | **the hard brick (A)** |
+| pencil of Frobenius `Γₙ` | parallel pencil, shift lengths `log n = Λ` | **built** (v0.17.0) |
+| primitive projection `D°` | primitive spectral classes `Cₙ` | partial (interface, v0.18.0) |
+| `primDG_sq`: `D°² = −2(x²+axy+qy²)` | `⟨Cₙ,Cₙ⟩ = −2λₙ` **derived** | **interface today → theorem (A3)** |
+| `ff_hodge_iff_hasse`: ∀-neg ⟺ `a²≤4q` | signature ⟺ `λₙ > 0 ∀n` (= RH) | **the forced signature (B)** |
+
+The verified v0.19.0 sub-structure (the four equivalent faces, the assembled functional, the window
+theorem on the built object, `ψ(1/4)`, `α(0) > 0`, the kernel monotonicity) is the **archimedean
+place** of the pairing that Group A derives — none of it is rework.
+
+### The brick sequence (each = a canonical object + a forced theorem)
+
+**Group A — make the dictionary *forced*, not assumed.** Today `Square.SpectralSquare.dict`
+(`⟨Cₙ,Cₙ⟩ = −2λₙ`) is an interface *field*; A removes it as input and *derives* it.
+- **A1.** The `H¹` named by universal property — the cohomology of `𝕊` carrying the scaling/Frobenius
+  action, characterized canonically (as the coproduct characterized `𝕊`), not modeled.
+- **A2.** The trace datum made intrinsic — the minimal κ-enrichment of `𝕊`'s lattice that breaks
+  pencil-blindness (`Square.square_hodge_pencil_blind`: `Δ·Γₙ = 0 ∀n` today), carrying the
+  explicit-formula weights `Λ(m), Λ(n)` (the built pencil shift-lengths) and the archimedean kernel
+  (the built `ψ(1/4)`, `windowTerm_mono`, `α(0)`).
+- **A3.** Derive the Gram pairing from A1 + A2 — forcing **`⟨Cₙ,Cₙ⟩ = −2λₙ` as a THEOREM** (the line
+  that converts the v0.18.0 bridge from interface to construction).
+
+**Group B — the forced signature** (mirror `primDG_sq` → `ff_hodge_iff_hasse`).
+- **B1.** The primitive projection and the forced self-pairing normal form (the completed-square analog).
+- **B2.** Run the consistency engine that forced `a² ≤ 4q`: *derive* the signature criterion. The forced
+  criterion **is** `λₙ > 0 ∀n` = Weil positivity = the crux.
+- **B3.** The gate reads the forced signature: a completed square (RH closes; the fields flip) or a
+  precise canonical obstruction (its exact shape recorded). Either is UOR writing the proof.
+
+**Group C — roll-up.** The crux-field adjudication, the final `F1SquareStatus`, and the
+v1.0.0-candidate state.
+
+### The one honest hard brick
+**A1–A3 is the genuine difficulty**, and naming it precisely is the point of this map. In the
+function-field case the object is the actual surface cohomology, which *exists* — so `primDG_sq` was a
+free derivation. Over 𝔽₁ the `H¹` must be *constructed* canonically so that its universal property
+**forces** the dictionary. That construction is the open content of RH restated in UOR's own terms —
+not a mechanical step, but now a *well-posed construction target*: the object that makes `dict` a
+theorem. The method dictates what to build; the gate decides whether it closes.
+
+---
+
 ## What stays open regardless
 
-If v0.18 / v0.19 do not close the crux axiom-clean, `hodgeIndexHolds` / `liPositivityHolds` stay `none`
-and **RH stays open** — the releases still ship every surrounding construction. The bright line is
-permanent: the crux is de-hedged iff RH is proven, and it is not until it is.
+If v0.18 / v0.19 / v0.20 do not close the crux axiom-clean, `hodgeIndexHolds` / `liPositivityHolds`
+stay `none` and **RH stays open** — the releases still ship every surrounding construction. The bright
+line is permanent: the crux is de-hedged iff RH is proven, and it is not until it is.
