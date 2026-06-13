@@ -42,6 +42,7 @@ import F1Square.Square.Spectral
 import F1Square.Square.Attempt
 import F1Square.Square.Dominance
 import F1Square.Square.Pairing
+import F1Square.Square.Cohomology
 import F1Square.Tropical.Closure
 import F1Square.Tropical.Signature
 import F1Square.Tropical.Spectrum

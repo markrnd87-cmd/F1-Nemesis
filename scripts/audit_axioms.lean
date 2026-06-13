@@ -1996,3 +1996,10 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rnonneg_Rlog_of_one_le
 #print axioms Analysis.Rnonneg_RlogPos
 #print axioms Analysis.Pos_RrpowPos_of_base_ge_one
+
+-- v0.20.0 stage F, brick A1 (Square/Cohomology.lean): the canonical H¹-object.
+#print axioms Square.H1_orbit
+#print axioms Square.H1_universal
+#print axioms Square.H1_isFree
+#print axioms Square.freeFrob_unique_upto_iso
+#print axioms Square.orbit_shiftLength
