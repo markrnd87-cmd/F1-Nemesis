@@ -60,4 +60,102 @@ theorem logCube_nonneg (N : Nat) (hN : 1 ≤ N) : Rnonneg (logCube N hN) :=
 def g2Seq (j : Nat) : Real :=
   Rsub (lnSqSum (j + 1)) (Rmul (ofQ ⟨1, 3⟩ (by decide)) (logCube (j + 1) (by omega)))
 
+-- ===========================================================================
+-- The per-step difference `e_{p+1} = g₂(p+1) − g₂(p)` and its telescoping identity.
+-- ===========================================================================
+
+/-- `(a₁ − b₁) − (a₀ − b₀) ≈ (a₁ − a₀) − (b₁ − b₀)` — pointwise (all of `Rsub`/`Radd`/`Rneg`
+    are pointwise on the regular sequences). -/
+theorem Rsub_sub_sub (a₁ b₁ a₀ b₀ : Real) :
+    Req (Rsub (Rsub a₁ b₁) (Rsub a₀ b₀)) (Rsub (Rsub a₁ a₀) (Rsub b₁ b₀)) := by
+  apply Req_of_seq_Qeq; intro n
+  simp only [Rsub, Radd, Rneg, neg, add, Qeq]; push_cast; ring_uor
+
+/-- The per-step difference `e_{p+1} = g₂(p+1) − g₂(p) = (ln(p+1))²/(p+1) − ⅓((ln(p+1))³ − (ln p)³)`
+    (`p ≥ 1`). -/
+def e2Step (p : Nat) (hp : 1 ≤ p) : Real :=
+  Rsub (lnSqOver (p + 1) (Nat.succ_pos p))
+    (Rmul (ofQ ⟨1, 3⟩ (by decide))
+      (Rsub (logCube (p + 1) (Nat.succ_pos p)) (logCube p hp)))
+
+/-- **`g₂(j+1) − g₂(j) ≈ e_{j+1}`** — the consecutive difference is the per-step `e`. -/
+theorem g2Seq_step_eq (j : Nat) :
+    Req (Rsub (g2Seq (j + 1)) (g2Seq j)) (e2Step (j + 1) (Nat.succ_pos j)) := by
+  -- the sum telescopes: S₂(j+2) − S₂(j+1) = (ln(j+2))²/(j+2)
+  have hA : Req (Rsub (lnSqSum (j + 2)) (lnSqSum (j + 1)))
+      (lnSqOver (j + 2) (Nat.succ_pos (j + 1))) := by
+    show Req (Rsub (Radd (lnSqSum (j + 1)) (lnSqOver (j + 2) (by omega))) (lnSqSum (j + 1)))
+             (lnSqOver (j + 2) (Nat.succ_pos (j + 1)))
+    refine Req_trans (Rsub_congr (Radd_comm (lnSqSum (j + 1)) (lnSqOver (j + 2) (by omega)))
+      (Req_refl _)) ?_
+    refine Req_trans (Radd_assoc (lnSqOver (j + 2) (by omega)) (lnSqSum (j + 1))
+      (Rneg (lnSqSum (j + 1)))) ?_
+    exact Req_trans (Radd_congr (Req_refl _) (Radd_neg (lnSqSum (j + 1)))) (Radd_zero _)
+  -- the cube term: ⅓C(j+2) − ⅓C(j+1) = ⅓(C(j+2) − C(j+1))
+  have hB : Req (Rsub (Rmul (ofQ ⟨1, 3⟩ (by decide)) (logCube (j + 2) (by omega)))
+        (Rmul (ofQ ⟨1, 3⟩ (by decide)) (logCube (j + 1) (by omega))))
+      (Rmul (ofQ ⟨1, 3⟩ (by decide))
+        (Rsub (logCube (j + 2) (by omega)) (logCube (j + 1) (by omega)))) :=
+    Req_symm (Rmul_sub_distrib (ofQ ⟨1, 3⟩ (by decide)) (logCube (j + 2) (by omega))
+      (logCube (j + 1) (by omega)))
+  -- rearrange and combine
+  refine Req_trans (Rsub_sub_sub (lnSqSum (j + 2))
+    (Rmul (ofQ ⟨1, 3⟩ (by decide)) (logCube (j + 2) (by omega)))
+    (lnSqSum (j + 1)) (Rmul (ofQ ⟨1, 3⟩ (by decide)) (logCube (j + 1) (by omega)))) ?_
+  exact Rsub_congr hA hB
+
+-- ===========================================================================
+-- The cubic algebra: `a³ − b³ = (a−b)(a²+ab+b²)` and the cancellation identity.
+-- ===========================================================================
+
+/-- **`(a−b)(a² + ab + b²) ≈ a³ − b³`** — the difference-of-cubes factoring (the cubic analogue
+    of `sq_diff_identity`), by distributing and telescoping the cross terms. -/
+theorem cube_diff_identity (a b : Real) :
+    Req (Rmul (Rsub a b) (Radd (Radd (Rmul a a) (Rmul a b)) (Rmul b b)))
+        (Rsub (Rmul (Rmul a a) a) (Rmul (Rmul b b) b)) := by
+  -- (a−b)·S = a·S − b·S
+  refine Req_trans (Rmul_sub_distrib_right a b
+    (Radd (Radd (Rmul a a) (Rmul a b)) (Rmul b b))) ?_
+  -- expand a·S = a·a² + a·ab + a·b² and b·S = b·a² + b·ab + b·b²
+  have haS : Req (Rmul a (Radd (Radd (Rmul a a) (Rmul a b)) (Rmul b b)))
+      (Radd (Radd (Rmul a (Rmul a a)) (Rmul a (Rmul a b))) (Rmul a (Rmul b b))) :=
+    Req_trans (Rmul_distrib a (Radd (Rmul a a) (Rmul a b)) (Rmul b b))
+      (Radd_congr (Rmul_distrib a (Rmul a a) (Rmul a b)) (Req_refl _))
+  have hbS : Req (Rmul b (Radd (Radd (Rmul a a) (Rmul a b)) (Rmul b b)))
+      (Radd (Radd (Rmul b (Rmul a a)) (Rmul b (Rmul a b))) (Rmul b (Rmul b b))) :=
+    Req_trans (Rmul_distrib b (Radd (Rmul a a) (Rmul a b)) (Rmul b b))
+      (Radd_congr (Rmul_distrib b (Rmul a a) (Rmul a b)) (Req_refl _))
+  refine Req_trans (Rsub_congr haS hbS) ?_
+  -- now a pure Radd/Rneg/Rsub rearrangement on the six atoms (pointwise), modulo identifying
+  -- the equal cross terms a·(a·b) = b·(a·a) and a·(b·b) = b·(a·b)
+  have hx1 : Req (Rmul a (Rmul a b)) (Rmul b (Rmul a a)) := by
+    refine Req_trans (Req_symm (Rmul_assoc a a b)) ?_
+    refine Req_trans (Rmul_comm (Rmul a a) b) ?_
+    exact Req_refl _
+  have hx2 : Req (Rmul a (Rmul b b)) (Rmul b (Rmul a b)) := by
+    refine Req_trans (Req_symm (Rmul_assoc a b b)) ?_
+    refine Req_trans (Rmul_congr (Rmul_comm a b) (Req_refl b)) ?_
+    refine Req_trans (Rmul_assoc b a b) ?_
+    exact Req_refl _
+  -- substitute the cross-term identifications, making the two middle pairs syntactically equal
+  refine Req_trans (Rsub_congr (Radd_congr (Radd_congr (Req_refl _) hx1) hx2) (Req_refl _)) ?_
+  -- telescope the matched atoms: (P + M₁ + M₂) − (M₁ + M₂ + Q) ≈ P − Q.  Done by Real algebra
+  -- (assoc + `Radd_neg`), NOT pointwise: M₁,M₂ recur in both halves, so the cleared denominators
+  -- would be squared and overrun `ring_uor`.
+  have hcancel : ∀ P S Q : Real, Req (Rsub (Radd P S) (Radd S Q)) (Rsub P Q) := by
+    intro P S Q
+    refine Req_trans (Radd_congr (Req_refl (Radd P S)) (Rneg_Radd S Q)) ?_
+    refine Req_trans (Radd_assoc P S (Radd (Rneg S) (Rneg Q))) ?_
+    refine Req_trans (Radd_congr (Req_refl P) (Req_symm (Radd_assoc S (Rneg S) (Rneg Q)))) ?_
+    refine Req_trans (Radd_congr (Req_refl P) (Radd_congr (Radd_neg S) (Req_refl (Rneg Q)))) ?_
+    exact Radd_congr (Req_refl P)
+      (Req_trans (Radd_comm zero (Rneg Q)) (Radd_zero (Rneg Q)))
+  have htel : ∀ P M₁ M₂ Q : Real,
+      Req (Rsub (Radd (Radd P M₁) M₂) (Radd (Radd M₁ M₂) Q)) (Rsub P Q) := fun P M₁ M₂ Q =>
+    Req_trans (Rsub_congr (Radd_assoc P M₁ M₂) (Req_refl _)) (hcancel P (Radd M₁ M₂) Q)
+  refine Req_trans (htel (Rmul a (Rmul a a)) (Rmul b (Rmul a a)) (Rmul b (Rmul a b))
+    (Rmul b (Rmul b b))) ?_
+  -- finally reorient P = a·a² → a²·a and Q = b·b² → b²·b
+  exact Rsub_congr (Rmul_comm a (Rmul a a)) (Rmul_comm b (Rmul b b))
+
 end UOR.Bridge.F1Square.Analysis

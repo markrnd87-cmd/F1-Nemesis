@@ -2045,3 +2045,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.lnSqSum_step
 #print axioms Analysis.lnSqSum_mono
 #print axioms Analysis.logCube_nonneg
+#print axioms Analysis.Rsub_sub_sub
+#print axioms Analysis.g2Seq_step_eq
+#print axioms Analysis.cube_diff_identity
