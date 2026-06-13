@@ -459,4 +459,80 @@ theorem e2Step_ge_num (p : Nat) (hp : 1 ≤ p) :
       (Radd_congr (Req_refl _) (Req_symm (Rneg_Rneg_g2 _))))
     (Rmul_sub_distrib _ _ _)
 
+-- ===========================================================================
+-- **γ₂ dyadic tail (Brick 4a): per-step block bounds.**  Both envelopes are log-bearing (unlike
+-- `γ₁`, whose upper step was the clean `1/(2(j+1)²)`), so BOTH sides need the dyadic-block log cap
+-- `logN(j+2) ≤ a+2` (for `j+2 ≤ 2^{a+2}`, `logN_le_block`). The upper step `≤ logN(j+2)/(j+1)²`
+-- becomes `≤ 2(a+2)/((j+1)(j+2))` (cap + `1/(j+1)² ≤ 2/((j+1)(j+2))`); the lower step
+-- `≥ −logN(j+2)²/((j+1)(j+2))` becomes `≥ −(a+2)²/((j+1)(j+2))` (squared cap). Both land on the
+-- common `c/((j+1)(j+2))` denominator — the `γ₁` lower-block shape — so the inner telescoping reuses
+-- the `Vsum`/`Wsum` antiderivative pattern (with quadratic coefficient on the lower outer sum).
+-- ===========================================================================
+
+/-- **Squared block-log cap** `logN(j+2)² ≤ (a+2)²` for `j+2 ≤ 2^{a+2}` (square the cap
+    `logN_le_block`, both sides nonneg). -/
+theorem logSq_le_block (a j : Nat) (hj : j + 2 ≤ 2 ^ (a + 2)) :
+    Rle (Rmul (logN (j + 2) (by omega)) (logN (j + 2) (by omega)))
+        (ofQ (⟨((a : Int) + 2) * ((a : Int) + 2), 1⟩ : Q) Nat.one_pos) := by
+  have hcap : Rle (logN (j + 2) (by omega)) (ofQ (⟨(a + 2 : Int), 1⟩ : Q) Nat.one_pos) :=
+    logN_le_block a j hj
+  have hnn : Rnonneg (logN (j + 2) (by omega)) := Rnonneg_logN _ _
+  have hcapnn : Rnonneg (ofQ (⟨(a + 2 : Int), 1⟩ : Q) Nat.one_pos) :=
+    Rnonneg_ofQ Nat.one_pos (by show (0 : Int) ≤ (a : Int) + 2; have := Int.ofNat_nonneg a; omega)
+  refine Rle_trans (Rmul_le_Rmul_right hnn hcap) ?_
+  refine Rle_trans (Rmul_le_Rmul_left hcapnn hcap) ?_
+  exact Rle_of_Req (Req_trans (Rmul_ofQ_ofQ Nat.one_pos Nat.one_pos)
+    (ofQ_congr _ _ (by simp only [mul, Qeq])))
+
+/-- `c/((j+1)²) ≤ 2c/((j+1)(j+2))` for `c ≥ 0` (difference `c(j+1)·j ≥ 0`) — the upper-step
+    denominator relaxation `1/(j+1)² ≤ 2/((j+1)(j+2))`. -/
+theorem Qblock_upper (c : Int) (hc : 0 ≤ c) (j : Nat) :
+    Qle (⟨c, (j + 1) * (j + 1)⟩ : Q) ⟨2 * c, (j + 1) * (j + 2)⟩ := by
+  simp only [Qle]; push_cast
+  have hj : (0 : Int) ≤ (j : Int) := Int.ofNat_nonneg j
+  have key : 2 * c * (((j : Int) + 1) * ((j : Int) + 1)) - c * (((j : Int) + 1) * ((j : Int) + 2))
+      = c * ((j : Int) + 1) * (j : Int) := by ring_uor
+  have hnn : 0 ≤ c * ((j : Int) + 1) * (j : Int) :=
+    Int.mul_nonneg (Int.mul_nonneg hc (by omega)) hj
+  omega
+
+/-- **Per-step block UPPER bound** `g₂(j+1) − g₂(j) ≤ 2(a+2)/((j+1)(j+2))` for `j+2 ≤ 2^{a+2}`. -/
+theorem g2Seq_step_le_block (a j : Nat) (hj : j + 2 ≤ 2 ^ (a + 2)) :
+    Rle (Rsub (g2Seq (j + 1)) (g2Seq j))
+        (ofQ (⟨(2 * ((a : Int) + 2)), (j + 1) * (j + 2)⟩ : Q)
+          (Nat.mul_pos (Nat.succ_pos j) (Nat.succ_pos (j + 1)))) := by
+  refine Rle_trans (Rle_of_Req (g2Seq_step_eq j)) ?_
+  -- e_{j+1} ≤ logN(j+2)·(1/(j+1)²) ≤ (a+2)·(1/(j+1)²) ≤ 2(a+2)/((j+1)(j+2))
+  refine Rle_trans (e2Step_le_num (j + 1) (Nat.succ_pos j)) ?_
+  have hden : 0 < (⟨1, (j + 1) * (j + 1)⟩ : Q).den := Nat.mul_pos (Nat.succ_pos j) (Nat.succ_pos j)
+  refine Rle_trans (Rmul_le_Rmul_right (Rnonneg_ofQ hden (by show (0 : Int) ≤ 1; decide))
+    (logN_le_block a j hj)) ?_
+  refine Rle_trans (Rle_of_Req (Req_trans (Rmul_ofQ_ofQ Nat.one_pos hden)
+    (@ofQ_congr (mul (⟨(a + 2 : Int), 1⟩ : Q) ⟨1, (j + 1) * (j + 1)⟩)
+        (⟨(a + 2 : Int), (j + 1) * (j + 1)⟩ : Q) (Qmul_den_pos Nat.one_pos hden) hden
+      (by simp only [mul, Qeq]; push_cast; ring_uor)))) ?_
+  exact Rle_ofQ_ofQ _ _
+    (Qblock_upper ((a : Int) + 2) (by show (0 : Int) ≤ (a : Int) + 2; have := Int.ofNat_nonneg a; omega) j)
+
+/-- **Per-step block LOWER bound** `g₂(j+1) − g₂(j) ≥ −(a+2)²/((j+1)(j+2))` for `j+2 ≤ 2^{a+2}`. -/
+theorem g2Seq_step_ge_block (a j : Nat) (hj : j + 2 ≤ 2 ^ (a + 2)) :
+    Rle (Rneg (ofQ (⟨((a : Int) + 2) * ((a : Int) + 2), (j + 1) * (j + 2)⟩ : Q)
+          (Nat.mul_pos (Nat.succ_pos j) (Nat.succ_pos (j + 1)))))
+        (Rsub (g2Seq (j + 1)) (g2Seq j)) := by
+  refine Rle_trans ?_ (Rle_of_Req (Req_symm (g2Seq_step_eq j)))
+  refine Rle_trans ?_ (e2Step_ge_num (j + 1) (Nat.succ_pos j))
+  -- −(a+2)²/D ≤ logN(j+2)²·(−1/D), via squared cap multiplied by 1/D (≥0) then negated.
+  have hden : 0 < (⟨1, (j + 1) * (j + 2)⟩ : Q).den :=
+    Nat.mul_pos (Nat.succ_pos j) (Nat.succ_pos (j + 1))
+  have hofdnn : Rnonneg (ofQ (⟨1, (j + 1) * (j + 2)⟩ : Q) hden) :=
+    Rnonneg_ofQ hden (by show (0 : Int) ≤ 1; decide)
+  have hneg := Rle_Rneg (Rmul_le_Rmul_right hofdnn (logSq_le_block a j hj))
+  refine Rle_trans (Rle_of_Req ?_) (Rle_trans hneg (Rle_of_Req ?_))
+  · -- target LHS  −(a+2)²/D  ≈  −((a+2)²·(1/D))
+    apply Rneg_congr
+    refine Req_symm (Req_trans (Rmul_ofQ_ofQ Nat.one_pos hden) (ofQ_congr _ _ ?_))
+    simp only [mul, Qeq]; push_cast; ring_uor
+  · -- −(logN²·(1/D)) ≈ logN²·(−1/D)  (matches e2Step_ge_num's LHS)
+    exact Req_symm (Rmul_neg_right _ _)
+
 end UOR.Bridge.F1Square.Analysis
