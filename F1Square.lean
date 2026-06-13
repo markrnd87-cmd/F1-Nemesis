@@ -269,6 +269,12 @@ def f1SquareStatus : F1SquareStatus := {
                                               -- certified strict negativity through n = 2
                                               -- (spectral_strict_upTo_two) — the universal did NOT
                                               -- close (crux_attempt_frontier), so this stays none.
+                                              -- v0.20.0 (stage F): the dictionary ⟨Cₙ,Cₙ⟩ = −2λₙ is
+                                              -- now DERIVED, not assumed (Square.genuineSpectralSquare_dict
+                                              -- from the intrinsic H¹ pairing's vanishing cycle), and the
+                                              -- forced signature read (Square.genuine_crux_equivalent):
+                                              -- it is exactly LiCrux (genuineLamSeq) = RH, which needs the
+                                              -- genuine Stieltjes η-tail (the zeros) — so this stays none.
   liPositivityHolds         := none           -- = RH (analytic face: λₙ > 0 ∀n, Li 1997), OPEN, never
                                               -- asserted. v0.18.0: equivalent to hodgeIndexHolds'
                                               -- spectral form through the bridge; certified slices
@@ -277,7 +283,15 @@ def f1SquareStatus : F1SquareStatus := {
                                               -- (Square.dominance_crux_equivalent) — and the
                                               -- explicit-formula trace completed at the built
                                               -- slices (Analysis.weilTraceTwo); the trace bears no
-                                              -- positivity content, so this stays none.
+                                              -- positivity content, so this stays none. v0.20.0
+                                              -- (stage F): the abstract H¹ carrier + the intrinsic
+                                              -- lattice are CONSTRUCTED (Square.genuineSpectralSquare;
+                                              -- the vanishing cycle Δ−Γ is PROVEN primitive,
+                                              -- vanCyc_perp_Fh/Fv, and dict is a theorem) — but the
+                                              -- genuine SPECTRAL H¹ (trace datum = the zeros) is the
+                                              -- open frontier: the forced criterion is exactly
+                                              -- ∀n, Pos (genuineLamSeq n) (Square.genuine_crux_frontier)
+                                              -- = RH; stays none.
 }
 
 -- ===========================================================================
@@ -530,6 +544,47 @@ def f1SquareStatus : F1SquareStatus := {
 --   side computed. The crux = positivity of the genuine assembled family — one
 --   proposition, FOUR provably equivalent faces; it closes iff RH is proven, and the
 --   fields below stay `none` until then.
+--
+-- v0.20.0 (stage F — the UOR construction of the crux: the canonical H¹-object). The v0.18.0
+-- bridge carried the dictionary ⟨Cₙ,Cₙ⟩ = −2λₙ as INTERFACE DATA (a SpectralSquare field). This
+-- release removes the assumption and DERIVES it, mirroring BridgeFF.primDG_sq column-for-column
+-- over ℤ (the proven function-field template):
+--   A1, the H¹ CARRIER by universal property ← Square.{H1, FrobSys, FrobHom, H1_universal,
+--                               H1_isFree (H1 is the free/initial Frobenius system on one
+--                               generator — a morphism out of it is forced, as the coproduct
+--                               forced 𝕊), freeFrob_unique_upto_iso; orbit_realizes_pencil +
+--                               orbitShift_succ (the Frobenius orbit realizes as the built
+--                               prime-power pencil — ONE equivariant identification, shift length
+--                               log p = Λ per step). NOTE: this builds the ABSTRACT carrier of
+--                               the action, NOT the genuine spectral H¹ (whose spectrum is the
+--                               zeros) — Square/Cohomology.lean}
+--   A2, the intrinsic lattice + trace datum ← Square.{hPair (the rank-4 NS-style lattice
+--                               {F_h,F_v,Δ,Γ} with spectral data Δ²,Γ²,Δ·Γ), vanCyc (= Δ−Γₙ),
+--                               vanCyc_perp_Fh/Fv (the cycle is GENUINELY PRIMITIVE — orthogonal
+--                               to both rulings, the BridgeFF.primDG_perp analog, for every
+--                               parameter), vanCyc_blind (coarse Δ²=Γ²=Δ·Γ=0 ⟹ NULL — pencil-blind)
+--                               vs the enrichment carrying Δ·Γₙ = λₙ — Square/WeilLattice.lean}
+--   A3, THE FORCED DICTIONARY       ← Square.{vanCyc_selfpair_gen (⟨Δ−Γ,Δ−Γ⟩ = dd−2dg+gg, the
+--                               BridgeFF.primDG_sq analog), vanCyc_selfpair_built (the inputs
+--                               Δ²=Γ²=0 TIED to the v0.17.0 derived sqPair theorems, not plugged),
+--                               vanCyc_selfpair (= −2λₙ, the −2 the lattice's own cross term),
+--                               IntrinsicH1 (assumption-free: only datum is lam, cSq FORCED to the
+--                               pairing diagonal — no false dict CAN be inhabited),
+--                               genuineSpectralSquare / genuineSpectralSquare_dict (dict a THEOREM)}
+--   B, the forced signature read    ← Square.{genuine_vanCyc_normal (−⟨Cₙ,Cₙ⟩ = 2λₙ, the
+--                               completed-square normal form), genuine_crux_equivalent (the crux on
+--                               the constructed object ⟺ LiCrux (genuineLamSeq) = RH),
+--                               genuine_evidence_head (⟨C₁,C₁⟩<0, ⟨C₂,C₂⟩<0 on the DERIVED object),
+--                               genuine_crux_frontier (the criterion is exactly ∀n, Pos λₙ),
+--                               genuine_signature_satisfiable (no hidden impossibility) —
+--                               Square/Forced.lean}
+--   WHICH BridgeFF COLUMN IS DONE, WHICH IS OPEN: the DICTIONARY column (primDG_sq: ⟨Cₙ,Cₙ⟩=−2λₙ)
+--   is now a genuine THEOREM (lattice + primitive projection + orthogonality, all built). The
+--   SIGNATURE-FORCING column (ff_hodge_iff_hasse, where the function field's `4q−a²` completed
+--   square forces the bound) has NO unconditional analog over ℤ: the forced criterion is
+--   ∀n, Pos λₙ = Li's criterion = RH, which needs the genuine Stieltjes η-tail (the zeros — the
+--   truncated etaTwoSlice is not it). The construction is complete down to that one honest input;
+--   the positivity does NOT close from anything built. So the fields stay `none`.
 -- The crux is NOT backed and stays `none` (BOTH faces, same RH) — λ₁ > 0 is the n=1 case, not RH:
 --   hodgeIndexHolds (= RH, geometric) ← OPEN. Crux.template_hodgeIndex proves the property on the
 --                               product-of-curves TEMPLATE; Square.square_hodgeIndex (v0.17.0)
@@ -1036,5 +1091,47 @@ example :
     ∧ f1SquareStatus.liPositivityHolds = none :=
   ⟨Square.weilValue_window, Analysis.psiQuarter_lower, Analysis.one_le_sqrt2,
    Analysis.burnolAlphaZero_pos, rfl, rfl⟩
+
+/-- Elaboration-checked witness binding the **v0.20.0 stage-F layer** — the UOR construction of
+    the crux: the canonical `H¹` carrier and the FORCED dictionary, mirroring `BridgeFF`'s
+    dictionary column over ℤ. In order: (1) A1 — the `H¹` carrier named by its universal property
+    (`H1` is the free/initial Frobenius system on one generator: a morphism out of it is forced —
+    this is the ABSTRACT carrier of the action, not the genuine spectral H¹); (2) A2 — the
+    vanishing cycle `Cₙ = Δ−Γₙ` is GENUINELY PRIMITIVE (orthogonal to BOTH rulings, for every
+    spectral datum — the `BridgeFF.primDG_perp` analog, so it is projected out, not hand-picked),
+    and pencil-blind on the coarse lattice (`Δ²=Γ²=Δ·Γ=0 ⟹ NULL`); (3) A3 — **THE FORCED
+    DICTIONARY**: with the geometric inputs `Δ²=Γ²=0` TIED to the v0.17.0 derived lattice
+    (`vanCyc_selfpair_built` — `sqPair clsDiag clsDiag = 0`, not plugged) and the trace datum
+    `Δ·Γₙ=λₙ`, `⟨Cₙ,Cₙ⟩ = −2λₙ` is DERIVED (`genuineSpectralSquare_dict`), no longer a field; (4)
+    B — the forced criterion (`genuine_crux_equivalent`): the geometric crux on the constructed
+    object ⟺ `LiCrux (genuineLamSeq)` = RH; (5) the two-sidedness guard (SATISFIABLE — no hidden
+    impossibility). The forced signature is RH and needs the genuine Stieltjes η-tail (the zeros);
+    the crux fields stay `none`: **RH OPEN**. -/
+example :
+    Square.IsFreeFrob Square.H1
+    ∧ (∀ dd gg dg : Analysis.Real,
+        Analysis.Req (Square.hPair dd gg dg Square.vanCyc Square.eFh) Analysis.zero
+        ∧ Analysis.Req (Square.hPair dd gg dg Square.vanCyc Square.eFv) Analysis.zero)
+    ∧ (∀ (n : Nat) (t : Analysis.Real),
+        Analysis.Req (Square.hPair (Square.RofInt (Square.sqPair Square.clsDiag Square.clsDiag))
+            (Square.RofInt (Square.sqPair (Square.clsGraph n) (Square.clsGraph n))) t
+            Square.vanCyc Square.vanCyc)
+          (Analysis.Rneg (Analysis.Radd t t)))
+    ∧ (∀ (E : Analysis.StieltjesEta) (n : Nat),
+        Analysis.Req ((Square.genuineSpectralSquare E).cSq n)
+          (Analysis.Rneg (Analysis.Radd (Analysis.genuineLamSeq E.eta n)
+            (Analysis.genuineLamSeq E.eta n))))
+    ∧ (∀ E : Analysis.StieltjesEta,
+        Square.SpectralCrux (Square.genuineSpectralSquare E)
+          ↔ Li.LiCrux (Analysis.genuineLamSeq E.eta))
+    ∧ (∃ S : Square.SpectralSquare, Square.SpectralCrux S)
+    ∧ f1SquareStatus.hodgeIndexHolds = none
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Square.H1_isFree,
+   fun dd gg dg => ⟨Square.vanCyc_perp_Fh dd gg dg, Square.vanCyc_perp_Fv dd gg dg⟩,
+   Square.vanCyc_selfpair_built,
+   Square.genuineSpectralSquare_dict,
+   Square.genuine_crux_equivalent,
+   Square.genuine_signature_satisfiable, rfl, rfl⟩
 
 end UOR.Bridge.F1Square

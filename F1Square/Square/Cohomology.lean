@@ -138,19 +138,33 @@ theorem freeFrob_unique_upto_iso (T : FrobSys)
 -- The arithmetic tie: the Frobenius orbit IS the built prime-power pencil.
 -- ===========================================================================
 
-/-- **THE ORBIT IS THE BUILT PENCIL** (the arithmetic content of A1): at a prime `p`, the
-    `k`-th class of the Frobenius-at-`p` orbit realizes as the pencil member `Γ_{pᵏ}`, sitting
-    at log-separation `k·Λ(pᵏ) = k·log p` from the diagonal — the Connes–Consani closed orbit
-    of length `log p` traversed `k` times (`Square.pencil_separation_pow_vonMangoldt`). The
-    abstract free action of `H1` is the constructed scaling flow; its shift lengths are the
-    explicit-formula weights `Λ`. (`H1.orbit k = k` indexes the orbit position; the pencil
-    member at that position is `Γ_{pᵏ}`.) -/
-theorem orbit_shiftLength (p : Nat) (hp2 : 2 ≤ p)
-    (hp : ∀ d, d ∣ p → d = 1 ∨ d = p) (k : Nat) (hk : 1 ≤ k) (hpk : 1 ≤ p ^ k)
+/-- **The shift-length realization of the canonical `H¹`** at a prime `p`: the orbit position
+    `k` is assigned its log-separation `k·log p` from the diagonal. This is the bridge from the
+    abstract free action to the constructed scaling flow. -/
+def orbitShift (p : Nat) (hp : 1 ≤ p) (k : Nat) : Real := Rnsmul k (logN p hp)
+
+/-- **The realization is Frobenius-EQUIVARIANT**: one Frobenius step adds exactly `log p`,
+    `orbitShift(k+1) = log p + orbitShift(k)` — the abstract shift `φ : k ↦ k+1` of `H1`
+    realizes as translation by the explicit-formula weight `Λ(p) = log p`. -/
+theorem orbitShift_succ (p : Nat) (hp : 1 ≤ p) (k : Nat) :
+    Req (orbitShift p hp (k + 1)) (Radd (logN p hp) (orbitShift p hp k)) := by
+  show Req (Rnsmul (k + 1) (logN p hp)) (Radd (logN p hp) (Rnsmul k (logN p hp)))
+  rw [Rnsmul_succ]
+  exact Req_refl _
+
+/-- **THE ORBIT REALIZES THE BUILT PENCIL** (the arithmetic content of A1), as ONE structural
+    identification — not a pair of separate facts: the log-separation of the built pencil
+    member `Γ_{pᵏ}` (any point of `graph (pᵏ)`) from the diagonal EQUALS the shift-length
+    realization `orbitShift p (H1.orbit k)` of the `k`-th orbit position (`H1.orbit k = k`
+    feeding the abstract orbit into the geometry). With `orbitShift_succ`, the abstract free
+    `H1`-action IS the constructed scaling flow, shift length `log p = Λ(pᵏ)` per step — the
+    Connes–Consani closed orbit of length `log p` traversed `k` times
+    (`Square.pencil_separation_pow`). -/
+theorem orbit_realizes_pencil (p : Nat) (hp2 : 2 ≤ p) (k : Nat) (hpk : 1 ≤ p ^ k)
     (z : SqPt) (hz : graph (p ^ k) z) :
-    H1.orbit k = k
-    ∧ Req (Rsub (logN z.2.val z.2.property) (logN z.1.val z.1.property))
-        (Rnsmul k (vonMangoldt (p ^ k))) :=
-  ⟨H1_orbit k, pencil_separation_pow_vonMangoldt p hp2 hp k hk hpk z hz⟩
+    Req (Rsub (logN z.2.val z.2.property) (logN z.1.val z.1.property))
+      (orbitShift p (by omega) (H1.orbit k)) := by
+  rw [H1_orbit]
+  exact pencil_separation_pow p (by omega) k hpk z hz
 
 end UOR.Bridge.F1Square.Square

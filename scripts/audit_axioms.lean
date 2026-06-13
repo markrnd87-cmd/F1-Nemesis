@@ -2002,17 +2002,23 @@ open UOR.Bridge.F1Square
 #print axioms Square.H1_universal
 #print axioms Square.H1_isFree
 #print axioms Square.freeFrob_unique_upto_iso
-#print axioms Square.orbit_shiftLength
+#print axioms Square.orbitShift_succ
+#print axioms Square.orbit_realizes_pencil
 
 -- v0.20.0 stage F, bricks A2 + A3 (Square/WeilLattice.lean): trace datum + forced dictionary.
 #print axioms Square.zmulR_zero
 #print axioms Square.zmulR_one
 #print axioms Square.zmulR_negTwo
 #print axioms Square.zmulR_congr_coeff
+#print axioms Square.RofInt_zero
 #print axioms Square.hPair_symm
+#print axioms Square.vanCyc_perp_Fh
+#print axioms Square.vanCyc_perp_Fv
 #print axioms Square.vanCyc_selfpair_gen
 #print axioms Square.vanCyc_blind
 #print axioms Square.vanCyc_selfpair
+#print axioms Square.vanCyc_selfpair_built
+#print axioms Square.intrinsicH1_dict
 #print axioms Square.genuineSpectralSquare_lam
 #print axioms Square.genuineSpectralSquare_dict
 
