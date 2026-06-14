@@ -802,4 +802,53 @@ theorem C2_nonneg (p : Nat) (hp : 1 ≤ p) :
         (add_den_pos (a := (⟨1, p⟩ : Q)) (b := (⟨1, p + 1⟩ : Q)) hp (Nat.succ_pos p)))
   exact Rnonneg_Rsub_of_Rle (Rle_trans hdM (Rle_of_Req (Req_symm hMeq)))
 
+-- ===========================================================================
+-- (C3e) R1 and R0 LOWER rational frames.  For the tail LOWER bound `Σ s_p ≥ −ε` (all that γ₂ ≥ −0.02
+-- needs), the negative coefficients `R1 = d·u1 − d²` (keep cancellation: `≥ dMinusQ·u1 − dPlusQ²`)
+-- and `R0 = ½d²u1 − ⅓d³` (`≥ ½dMinusQ²u1 − ⅓dPlusQ³`) are bounded below by rationals.
+-- ===========================================================================
+
+/-- **`R1 = d·u1 − d² ≥ dMinusQ·u1 − dPlusQ²`** — the (negative) `b`-coefficient bounded below by a
+    rational, keeping the near-cancellation (`d·u1 ≥ dMinusQ·u1`, `d² ≤ dPlusQ²`). -/
+theorem R1_lower_frame (p T : Nat) (hp : 1 ≤ p)
+    (hT : T ≤ (2 * p + 1) * (2 * p + 1) + 4 * (2 * p + 1)) :
+    Rle (Rsub (Rmul (ofQ (dMinusQ T p) (dMinusQ_den_pos T p))
+              (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p)))
+            (ofQ (mul (dPlusQ T p) (dPlusQ T p))
+              (Qmul_den_pos (dPlusQ_den_pos T p hp) (dPlusQ_den_pos T p hp))))
+        (Rsub (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+                (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p)))
+          (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+                (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))) :=
+  Rsub_le_sub
+    (Rmul_le_Rmul_right (Rnonneg_ofQ (Nat.succ_pos p) (by show (0 : Int) ≤ 1; decide))
+      (deltaLog_lower_tight p T hp hT))
+    (dsq_le p T hp)
+
+/-- **`R0 = ½d²u1 − ⅓d³ ≥ ½dMinusQ²u1 − ⅓dPlusQ³`** — the constant coefficient bounded below by a
+    rational (`d² ≥ dMinusQ²`, `d³ ≤ dPlusQ³`). -/
+theorem R0_lower_frame (p T : Nat) (hp : 1 ≤ p)
+    (hT : T ≤ (2 * p + 1) * (2 * p + 1) + 4 * (2 * p + 1)) :
+    Rle (Rsub (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide))
+              (Rmul (ofQ (mul (dMinusQ T p) (dMinusQ T p))
+                    (Qmul_den_pos (dMinusQ_den_pos T p) (dMinusQ_den_pos T p)))
+                (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p))))
+            (Rmul (ofQ (⟨1, 3⟩ : Q) (by decide))
+              (ofQ (mul (mul (dPlusQ T p) (dPlusQ T p)) (dPlusQ T p))
+                (Qmul_den_pos (Qmul_den_pos (dPlusQ_den_pos T p hp) (dPlusQ_den_pos T p hp))
+                  (dPlusQ_den_pos T p hp)))))
+        (Rsub (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide))
+              (Rmul (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+                    (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))
+                (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p))))
+          (Rmul (ofQ (⟨1, 3⟩ : Q) (by decide))
+            (Rmul (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+                  (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))
+              (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))))) :=
+  Rsub_le_sub
+    (Rmul_le_Rmul_left (Rnonneg_ofQ (by decide) (by decide))
+      (Rmul_le_Rmul_right (Rnonneg_ofQ (Nat.succ_pos p) (by show (0 : Int) ≤ 1; decide))
+        (dsq_ge p T hp hT)))
+    (Rmul_le_Rmul_left (Rnonneg_ofQ (by decide) (by decide)) (dcube_le p T hp))
+
 end UOR.Bridge.F1Square.Analysis
