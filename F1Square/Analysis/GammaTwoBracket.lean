@@ -1128,4 +1128,21 @@ theorem R0_lower_clean (p : Nat) (hp : 1 ≤ p) :
         (by decide) (Qmul_den_pos (Qmul_den_pos hp hp) hp)))
   exact Rle_trans (Rle_Rneg hcube) hR0
 
+/-- **`s_{j+1} ≥ −1/(2(j+1)(j+2)) − 1/(3(j+1)³)`** — the CLEAN per-step lower bound (telescoping
+    tail).  `b²C2 ≥ 0`, `b·R1 ≥ −1/(2p(p+1))` (`bR1_lower`), `R0 ≥ −1/(3p³)` (`R0_lower_clean`),
+    `p = j+1`. -/
+theorem sStep_lower_clean (j : Nat) :
+    Rle (Radd (Radd zero
+            (Rneg (ofQ (⟨1, 2 * (j + 1) * ((j + 1) + 1)⟩ : Q)
+              (Nat.mul_pos (Nat.mul_pos (by decide) (Nat.succ_pos j)) (Nat.succ_pos (j + 1))))))
+          (Rneg (ofQ (mul (⟨1, 3⟩ : Q) (mul (mul (⟨1, j + 1⟩ : Q) (⟨1, j + 1⟩ : Q)) (⟨1, j + 1⟩ : Q)))
+            (Qmul_den_pos (by decide)
+              (Qmul_den_pos (Qmul_den_pos (Nat.succ_pos j) (Nat.succ_pos j)) (Nat.succ_pos j))))))
+        (sStep (j + 1) (Nat.succ_pos j)) := by
+  refine Rle_trans ?_ (Rle_of_Req (Req_symm (sStep_decomp (j + 1) (Nat.succ_pos j))))
+  refine Radd_le_add (Radd_le_add ?_ (bR1_lower (j + 1) (Nat.succ_pos j)))
+    (R0_lower_clean (j + 1) (Nat.succ_pos j))
+  exact Rle_zero_of_Rnonneg (Rnonneg_Rmul (Rnonneg_Rmul_self (logN (j + 1) (Nat.succ_pos j)))
+    (C2_nonneg (j + 1) (Nat.succ_pos j)))
+
 end UOR.Bridge.F1Square.Analysis
