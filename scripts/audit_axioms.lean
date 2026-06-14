@@ -2150,3 +2150,11 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rnpow_le_Rnpow
 #print axioms Analysis.cnormSq_nonneg
 #print axioms Analysis.liTerm_dominates
+
+-- v0.20.0 stage F: γ₂≥−0.02 bracket evaluators (Analysis/GammaTwoBracket.lean) — parts (A),(B).
+#print axioms Analysis.lnSqSumLo_den_pos
+#print axioms Analysis.lnSqSumLo_le
+#print axioms Analysis.logBound_ofQ_nonneg
+#print axioms Analysis.logNsq_le
+#print axioms Analysis.logCube_le
+#print axioms Analysis.halfSqOver_le
