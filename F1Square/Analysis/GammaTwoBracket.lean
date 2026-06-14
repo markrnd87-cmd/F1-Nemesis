@@ -136,4 +136,63 @@ theorem halfSqOver_le (T D M : Nat) (hD : 0 < D) :
   exact Rle_of_Req (Req_trans (Rmul_congr (Req_refl _) hinnerEq)
     (Rmul_ofQ_ofQ (by decide) (Qmul_den_pos (Qmul_den_pos LBd LBd) (Nat.succ_pos M))))
 
+-- ===========================================================================
+-- (C1) The residual framework: `hSeq j = g₂(j) − ½·(ln(j+1))²/(j+1)` (the trapezoidal-corrected
+-- sequence, `→ γ₂`), whose per-step increment is the trapezoidal residual `sStep`.
+-- ===========================================================================
+
+/-- `x = ½x + ½x`. -/
+theorem half_add_self (x : Real) :
+    Req x (Radd (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) x) (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) x)) := by
+  have hone : Req (Radd (ofQ (⟨1, 2⟩ : Q) (by decide)) (ofQ (⟨1, 2⟩ : Q) (by decide))) one := by
+    apply Req_of_seq_Qeq; intro n; simp only [Radd, one, ofQ, add, Qeq]; push_cast
+  refine Req_trans ?_ (Rmul_distrib_right (ofQ (⟨1, 2⟩ : Q) (by decide)) (ofQ (⟨1, 2⟩ : Q) (by decide)) x)
+  exact Req_symm (Req_trans (Rmul_congr hone (Req_refl x)) (Req_trans (Rmul_comm one x) (Rmul_one x)))
+
+/-- `((u+u) − C) − (u − v) ≈ (u+v) − C` (the residual regrouping; the `u`/`−u` cancel). -/
+theorem resid_regroup (u v C : Real) :
+    Req (Rsub (Rsub (Radd u u) C) (Rsub u v)) (Rsub (Radd u v) C) := by
+  show Req (Radd (Radd (Radd u u) (Rneg C)) (Rneg (Radd u (Rneg v)))) (Radd (Radd u v) (Rneg C))
+  have hrn : Req (Rneg (Radd u (Rneg v))) (Radd (Rneg u) v) :=
+    Req_trans (Rneg_Radd u (Rneg v)) (Radd_congr (Req_refl _) (Rneg_neg v))
+  refine Req_trans (Radd_congr (Req_refl _) hrn) ?_
+  refine Req_trans (Radd_assoc (Radd u u) (Rneg C) (Radd (Rneg u) v)) ?_
+  refine Req_trans (Radd_congr (Req_refl _) (Radd_comm (Rneg C) (Radd (Rneg u) v))) ?_
+  refine Req_trans (Radd_congr (Req_refl _) (Radd_assoc (Rneg u) v (Rneg C))) ?_
+  refine Req_trans (Req_symm (Radd_assoc (Radd u u) (Rneg u) (Radd v (Rneg C)))) ?_
+  refine Req_trans (Radd_congr ?_ (Req_refl _)) (Req_symm (Radd_assoc u v (Rneg C)))
+  exact Req_trans (Radd_assoc u u (Rneg u))
+    (Req_trans (Radd_congr (Req_refl u) (Radd_neg u)) (Radd_zero u))
+
+/-- The **trapezoidal-corrected sequence** `h(j) = g₂(j) − ½·(ln(j+1))²/(j+1)` — same limit `γ₂` as
+    `g₂`, but its increment is the summable trapezoidal residual. -/
+def hSeq (j : Nat) : Real :=
+  Rsub (g2Seq j) (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) (lnSqOver (j + 1) (Nat.succ_pos j)))
+
+/-- The **per-step trapezoidal residual** `s_p = ½[(ln(p+1))²/(p+1) + (ln p)²/p] − ⅓[(ln(p+1))³ −
+    (ln p)³]` (`p ≥ 1`) — `O(ln²p/p³)`, the increment of `hSeq`. -/
+def sStep (p : Nat) (hp : 1 ≤ p) : Real :=
+  Rsub (Radd (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) (lnSqOver (p + 1) (Nat.succ_pos p)))
+             (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) (lnSqOver p hp)))
+       (Rmul (ofQ (⟨1, 3⟩ : Q) (by decide))
+         (Rsub (logCube (p + 1) (Nat.succ_pos p)) (logCube p hp)))
+
+/-- **`h(j+1) − h(j) ≈ s_{j+1}`** — the increment of the corrected sequence is the trapezoidal
+    residual (`e_{j+1} − ½(f(j+2)−f(j+1))`, regrouped via `half_add_self`/`resid_regroup`). -/
+theorem hSeq_step_eq (j : Nat) :
+    Req (Rsub (hSeq (j + 1)) (hSeq j)) (sStep (j + 1) (Nat.succ_pos j)) := by
+  unfold hSeq sStep
+  refine Req_trans (Rsub_sub_sub (g2Seq (j + 1))
+    (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) (lnSqOver (j + 2) (Nat.succ_pos (j + 1))))
+    (g2Seq j) (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) (lnSqOver (j + 1) (Nat.succ_pos j)))) ?_
+  refine Req_trans (Rsub_congr (g2Seq_step_eq j) (Req_refl _)) ?_
+  -- e_{j+1} = (ln(j+2))²/(j+2) − ⅓Δ;  rewrite the leading `(ln(j+2))²/(j+2)` as ½·+½·
+  refine Req_trans (Rsub_congr
+    (Rsub_congr (half_add_self (lnSqOver (j + 2) (Nat.succ_pos (j + 1)))) (Req_refl _))
+    (Req_refl _)) ?_
+  exact resid_regroup (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) (lnSqOver (j + 2) (Nat.succ_pos (j + 1))))
+    (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide)) (lnSqOver (j + 1) (Nat.succ_pos j)))
+    (Rmul (ofQ (⟨1, 3⟩ : Q) (by decide))
+      (Rsub (logCube (j + 2) (Nat.succ_pos (j + 1))) (logCube (j + 1) (Nat.succ_pos j))))
+
 end UOR.Bridge.F1Square.Analysis

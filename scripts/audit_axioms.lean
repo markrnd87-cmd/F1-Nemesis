@@ -2158,3 +2158,6 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.logNsq_le
 #print axioms Analysis.logCube_le
 #print axioms Analysis.halfSqOver_le
+#print axioms Analysis.half_add_self
+#print axioms Analysis.resid_regroup
+#print axioms Analysis.hSeq_step_eq
