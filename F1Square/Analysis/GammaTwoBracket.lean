@@ -851,4 +851,39 @@ theorem R0_lower_frame (p T : Nat) (hp : 1 ≤ p)
         (dsq_ge p T hp hT)))
     (Rmul_le_Rmul_left (Rnonneg_ofQ (by decide) (by decide)) (dcube_le p T hp))
 
+-- ===========================================================================
+-- (C3f) The `s_p` lower bound `sStep p ≥ L_p` (rational, summable) — the tail-ready form.
+-- ===========================================================================
+
+/-- **Multiplying by a nonpositive reverses**: `c ≤ 0`, `a ≤ b ⟹ b·c ≤ a·c`. -/
+theorem Rmul_le_Rmul_right_nonpos {c a b : Real} (hc : Rle c zero) (h : Rle a b) :
+    Rle (Rmul b c) (Rmul a c) := by
+  have hnc : Rnonneg (Rneg c) :=
+    Rnonneg_congr (Req_trans (Radd_comm zero (Rneg c)) (Radd_zero (Rneg c)))
+      (Rnonneg_Rsub_of_Rle hc)
+  have key : Rle (Rmul a (Rneg c)) (Rmul b (Rneg c)) := Rmul_le_Rmul_right hnc h
+  have key2 : Rle (Rneg (Rmul a c)) (Rneg (Rmul b c)) :=
+    Rle_trans (Rle_of_Req (Req_symm (Rmul_neg_right a c)))
+      (Rle_trans key (Rle_of_Req (Rmul_neg_right b c)))
+  exact Rle_trans (Rle_of_Req (Req_symm (Rneg_neg (Rmul b c))))
+    (Rle_trans (Rle_Rneg key2) (Rle_of_Req (Rneg_neg (Rmul a c))))
+
+/-- **`R1 = d·u1 − d² ≤ 0`** — since `d ≥ u1 = 1/(p+1)` (`deltaLog_lower`), `d·u1 ≤ d²`. -/
+theorem R1_nonpos (p : Nat) (hp : 1 ≤ p) :
+    Rle (Rsub (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+              (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p)))
+          (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+                (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))))
+        zero := by
+  have hdnn : Rnonneg (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)) :=
+    Rnonneg_Rsub_of_Rle (logN_mono hp (Nat.le_succ p))
+  have hxy : Rle (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+        (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p)))
+      (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+            (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))) :=
+    Rmul_le_Rmul_left hdnn (deltaLog_lower p hp)
+  exact Rle_trans (Rsub_le_sub hxy (Rle_of_Req (Req_refl _)))
+    (Rle_of_Req (Radd_neg (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+      (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))))
+
 end UOR.Bridge.F1Square.Analysis

@@ -2194,3 +2194,5 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.C2_nonneg
 #print axioms Analysis.R1_lower_frame
 #print axioms Analysis.R0_lower_frame
+#print axioms Analysis.Rmul_le_Rmul_right_nonpos
+#print axioms Analysis.R1_nonpos
