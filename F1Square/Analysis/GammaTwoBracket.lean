@@ -195,4 +195,29 @@ theorem hSeq_step_eq (j : Nat) :
     (Rmul (ofQ (⟨1, 3⟩ : Q) (by decide))
       (Rsub (logCube (j + 2) (Nat.succ_pos (j + 1))) (logCube (j + 1) (Nat.succ_pos j))))
 
+-- ===========================================================================
+-- (C2) The `s_p` decomposition.  Stage 1: replace the cube difference `a³−b³` by `δ·(a²+ab+b²)`
+-- (`cube_diff_identity`), exposing the trapezoidal structure.  Stage 2 (`a = b+δ` collection) follows.
+-- ===========================================================================
+
+/-- **Stage 1 of the `s_p` decomposition**: `s_p = ½a²/(p+1) + ½b²/p − ⅓·δ·(a²+ab+b²)`, with
+    `a = ln(p+1)`, `b = ln p`, `δ = a − b`. (`a³−b³ = δ(a²+ab+b²)` via `cube_diff_identity`.) -/
+theorem sStep_stage1 (p : Nat) (hp : 1 ≤ p) :
+    Req (sStep p hp)
+        (Rsub (Radd (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide))
+                  (Rmul (Rmul (logN (p + 1) (Nat.succ_pos p)) (logN (p + 1) (Nat.succ_pos p)))
+                    (ofQ (⟨1, p + 1⟩ : Q) (Nat.succ_pos p))))
+                (Rmul (ofQ (⟨1, 2⟩ : Q) (by decide))
+                  (Rmul (Rmul (logN p hp) (logN p hp)) (ofQ (⟨1, p⟩ : Q) hp))))
+          (Rmul (ofQ (⟨1, 3⟩ : Q) (by decide))
+            (Rmul (Rsub (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+              (Radd (Radd (Rmul (logN (p + 1) (Nat.succ_pos p)) (logN (p + 1) (Nat.succ_pos p)))
+                      (Rmul (logN (p + 1) (Nat.succ_pos p)) (logN p hp)))
+                (Rmul (logN p hp) (logN p hp)))))) := by
+  -- `s_p` is `½·lnSqOver(p+1) + ½·lnSqOver(p) − ⅓·(logCube(p+1) − logCube(p))`; rewrite the cube diff.
+  unfold sStep lnSqOver logCube
+  refine Rsub_congr (Req_refl _) (Rmul_congr (Req_refl _) ?_)
+  -- a³ − b³  ≈  δ·(a²+ab+b²)
+  exact Req_symm (cube_diff_identity (logN (p + 1) (Nat.succ_pos p)) (logN p hp))
+
 end UOR.Bridge.F1Square.Analysis
