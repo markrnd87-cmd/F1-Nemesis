@@ -115,6 +115,7 @@ import F1Square.Analysis.Voros
 import F1Square.Analysis.GammaTwo
 import F1Square.Analysis.ZeroGeometry
 import F1Square.Analysis.LambdaThree
+import F1Square.Analysis.RMulNF
 
 open UOR.Primitives
 

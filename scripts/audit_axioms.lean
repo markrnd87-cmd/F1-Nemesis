@@ -2121,3 +2121,18 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.genuineArith_three
 #print axioms Analysis.genuineLam_three
 #print axioms Analysis.etaThreeSlice
+
+-- v0.20.0 stage F: the Real multiplicative normalizer (Analysis/RMulNF.lean) — κ-form companion of RAddNF.
+#print axioms Analysis.RprodL_nil
+#print axioms Analysis.RprodL_cons
+#print axioms Analysis.RprodL_cons_congr
+#print axioms Analysis.RprodL_swap_head
+#print axioms Analysis.RprodL_perm
+#print axioms Analysis.RprodL_append
+#print axioms Analysis.RprodL_singleton
+#print axioms Analysis.Rmul_eq_RprodL
+#print axioms Analysis.Rmul_eq_RprodL3
+#print axioms Analysis.RprodL_perm_map
+#print axioms Analysis.Rmul_pair_eq_RprodL4
+#print axioms Analysis.prod_sq_reassoc
+#print axioms Analysis.prod_cross_reassoc
