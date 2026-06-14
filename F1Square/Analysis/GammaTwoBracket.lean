@@ -1145,4 +1145,23 @@ theorem sStep_lower_clean (j : Nat) :
   exact Rle_zero_of_Rnonneg (Rnonneg_Rmul (Rnonneg_Rmul_self (logN (j + 1) (Nat.succ_pos j)))
     (C2_nonneg (j + 1) (Nat.succ_pos j)))
 
+-- ===========================================================================
+-- (C4) The telescoping tail.  Consolidate to a single term `s_{j+1} ≥ −1/((j+1)(j+2))` (`j ≥ 1`),
+-- then sum: `hSeq(M) ≥ hSeq(N) − 1/(N+1)`.
+-- ===========================================================================
+
+/-- **`2(j+1)(j+2) ≤ 3(j+1)³`** (`j ≥ 1`) — the cube domination behind `1/(3(j+1)³) ≤
+    1/(2(j+1)(j+2))` (so the two per-step terms collapse to one telescoping `1/((j+1)(j+2))`). -/
+theorem cube_dom_nat (j : Nat) (hj : 1 ≤ j) :
+    2 * (j + 1) * (j + 2) ≤ 3 * (j + 1) * (j + 1) * (j + 1) := by
+  have hid : 3 * (j + 1) * (j + 1) * (j + 1) + (j + 1)
+           = 2 * (j + 1) * (j + 2) + (j + 1) * (3 * (j * j) + 4 * j) := by
+    have hi : ((3 * (j + 1) * (j + 1) * (j + 1) + (j + 1) : Nat) : Int)
+            = ((2 * (j + 1) * (j + 2) + (j + 1) * (3 * (j * j) + 4 * j) : Nat) : Int) := by
+      push_cast; ring_uor
+    exact_mod_cast hi
+  have hge : (j + 1) ≤ (j + 1) * (3 * (j * j) + 4 * j) :=
+    Nat.le_mul_of_pos_right (j + 1) (by omega)
+  omega
+
 end UOR.Bridge.F1Square.Analysis

@@ -2208,3 +2208,4 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.dcube_self_le
 #print axioms Analysis.R0_lower_clean
 #print axioms Analysis.sStep_lower_clean
+#print axioms Analysis.cube_dom_nat
