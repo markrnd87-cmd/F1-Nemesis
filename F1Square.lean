@@ -116,6 +116,7 @@ import F1Square.Analysis.GammaTwo
 import F1Square.Analysis.ZeroGeometry
 import F1Square.Analysis.LambdaThree
 import F1Square.Analysis.RMulNF
+import F1Square.Analysis.LiGrowth
 
 open UOR.Primitives
 
@@ -1224,5 +1225,27 @@ example :
     ∧ f1SquareStatus.hodgeIndexHolds = none
     ∧ f1SquareStatus.liPositivityHolds = none :=
   ⟨Analysis.genuineArith_three, Analysis.genuineLam_three, rfl, rfl⟩
+
+/-- Elaboration-checked witness binding the **v0.20.0 Li-term modulus growth law** (`LiGrowth.lean`),
+    tying Lever 1 to the Voros dichotomy via the genuine ring engine (`RAddNF` + `RMulNF`): modulus
+    multiplicativity `|zw|² = |z|²·|w|²` (`cnormSq_mul`, Brahmagupta–Fibonacci), the power law
+    `|zⁿ|² = (|z|²)ⁿ` (`cnormSq_npow`), and the growth seed — a zero LEFT of the critical line makes
+    its Li numerator `(ρ−1)ⁿ` dominate `ρⁿ` in modulus for EVERY `n` (`liTerm_dominates`:
+    `(cnormSq ρ)ⁿ ≤ (csubOneNormSq ρ)ⁿ`), the constructive heart of the exponential (¬RH) regime. The
+    SUM aggregation (Voros saddle-point) and WHERE zeros sit stay the open analytic content; crux
+    fields stay `none`. -/
+example :
+    (∀ z w : Analysis.Complex,
+        Analysis.Req (Analysis.cnormSq (Analysis.Cmul z w))
+          (Analysis.Rmul (Analysis.cnormSq z) (Analysis.cnormSq w)))
+    ∧ (∀ (z : Analysis.Complex) (k : Nat),
+        Analysis.Req (Analysis.cnormSq (Analysis.Cnpow z k))
+          (Analysis.Rnpow (Analysis.cnormSq z) k))
+    ∧ (∀ (ρ : Analysis.Complex), Analysis.Pos (Analysis.Rsub Analysis.half ρ.re) →
+        ∀ n, Analysis.Rle (Analysis.Rnpow (Analysis.cnormSq ρ) n)
+          (Analysis.Rnpow (Analysis.csubOneNormSq ρ) n))
+    ∧ f1SquareStatus.hodgeIndexHolds = none
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Analysis.cnormSq_mul, Analysis.cnormSq_npow, Analysis.liTerm_dominates, rfl, rfl⟩
 
 end UOR.Bridge.F1Square

@@ -103,6 +103,17 @@ choice-free (`{propext, Quot.sound}`), audited; the build is warning-free; the g
   not ad hoc. `Pos λ₃` is NOT claimed: it is gated by a tight numeric bracket on `γ₂` (the `η₂`
   coefficient is `3/2`), the open Euler–Maclaurin sharp-tail frontier (`γ₂`'s `ln²N/N` tail is
   heavier than `γ₁`'s clean `1/(2N)`). Choice-free, audited. The crux fields stay `none`.
+- **The Li-term modulus growth law** (`F1Square/Analysis/LiGrowth.lean`) — ties Lever 1 to the Voros
+  dichotomy, and is the first end-to-end use of the `RAddNF`+`RMulNF` "ring" engine. `cnormSq_mul`
+  proves the Brahmagupta–Fibonacci multiplicativity `|zw|² = |z|²·|w|²` constructively: expand both
+  squared parts into degree-4 monomials, the cross terms `±abcd` cancel (`cancelC`, one pair after
+  `regroupX`/`add4_perm1`), the four surviving squares match `(a²+b²)(c²+d²)` (`prod_sq_reassoc` +
+  `add4_perm2`). Hence the power law `|zⁿ|² = (|z|²)ⁿ` (`cnormSq_npow`) and **the growth seed**
+  (`liTerm_dominates`): a zero LEFT of the critical line (`Re ρ < ½`) makes its Li numerator `(ρ−1)ⁿ`
+  dominate `ρⁿ` in modulus for EVERY `n` — `(cnormSq ρ)ⁿ ≤ (csubOneNormSq ρ)ⁿ` — so
+  `|(1−1/ρ)ⁿ| ≥ 1` grows geometrically, the constructive heart of the exponential (¬RH) regime. The
+  SUM aggregation (Voros's saddle-point) and WHERE the zeros sit stay [CLASSICAL] interface; crux
+  fields stay `none`. Choice-free, audited.
 - **Lever 1 — the Li/zero growth geometry** (`F1Square/Analysis/ZeroGeometry.lean`): the constructive
   bridge from a zero's POSITION to the GROWTH of its Li contribution, feeding the Voros dichotomy and
   the de la Vallée-Poussin zero-free region. Each Riemann zero `ρ` contributes `1 − (1−1/ρ)ⁿ` to

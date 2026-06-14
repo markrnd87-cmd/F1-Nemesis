@@ -2136,3 +2136,17 @@ open UOR.Bridge.F1Square
 #print axioms Analysis.Rmul_pair_eq_RprodL4
 #print axioms Analysis.prod_sq_reassoc
 #print axioms Analysis.prod_cross_reassoc
+
+-- v0.20.0 stage F: the Li-term modulus growth law (Analysis/LiGrowth.lean) — ring engine end-to-end.
+#print axioms Analysis.Radd_pair_eq_RsumL4
+#print axioms Analysis.add4_perm1
+#print axioms Analysis.add4_perm2
+#print axioms Analysis.cancelC
+#print axioms Analysis.regroupX
+#print axioms Analysis.cnormSq_mul
+#print axioms Analysis.cnormSq_one
+#print axioms Analysis.cnormSq_npow
+#print axioms Analysis.Rnpow_nonneg
+#print axioms Analysis.Rnpow_le_Rnpow
+#print axioms Analysis.cnormSq_nonneg
+#print axioms Analysis.liTerm_dominates
