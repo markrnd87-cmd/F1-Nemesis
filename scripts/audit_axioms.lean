@@ -2257,3 +2257,9 @@ open UOR.Bridge.F1Square
 #print axioms Square.Rdouble_inj
 #print axioms Square.cayleyRatio_match_iff_onLine
 #print axioms Square.cayley_relocation
+
+-- v0.21.0 stage G, brick G0 (the numerical kill-test, throwaway pre-filter): the decidable
+-- finite Gram-diagonal match test, with the growth-kill, the match-admission, and the §6 caveat.
+#print axioms Square.killTest_admits_match
+#print axioms Square.killTest_kills_wrong_growth
+#print axioms Square.killTest_match_not_sufficient
