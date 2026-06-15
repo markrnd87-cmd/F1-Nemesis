@@ -2249,3 +2249,11 @@ open UOR.Bridge.F1Square
 #print axioms Square.FullForm.diag_genuine
 #print axioms Square.FullForm.negPSD_to_hodgeNeg
 #print axioms Square.shiftOffDiag_symm
+
+-- v0.21.0 stage G, brick G0a (the atlas rule + the §6 relocation): the zero-free rule type,
+-- Gate B free, the growth pre-filter, and the Cayley relocation made formal at the match level.
+#print axioms Square.atlasRule_gateB
+#print axioms Square.atlasRule_growth_filter
+#print axioms Square.Rdouble_inj
+#print axioms Square.cayleyRatio_match_iff_onLine
+#print axioms Square.cayley_relocation
