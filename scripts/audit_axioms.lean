@@ -2263,3 +2263,10 @@ open UOR.Bridge.F1Square
 #print axioms Square.killTest_admits_match
 #print axioms Square.killTest_kills_wrong_growth
 #print axioms Square.killTest_match_not_sufficient
+
+-- v0.21.0 stage G, brick G1 (Gate A, the faithful match): the λ-free atlas pairing, Gate B free,
+-- the match-is-RH identity, and the two-sided no-smuggling guards (satisfiable + can-fail).
+#print axioms Square.atlasPair_psd
+#print axioms Square.gateA_is_liNonneg
+#print axioms Square.gateA_satisfiable
+#print axioms Square.gateA_can_fail

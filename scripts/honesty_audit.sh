@@ -70,4 +70,22 @@ if [ -n "$nonminimal" ]; then
   exit 1
 fi
 
+# 5. NO-SMUGGLING (v0.21.0 stage G, Gate A). The missing-object pairing must be defined from the
+#    atlas rule ALONE — never from the spectral diagonal λ. Baking λ into the pairing
+#    (`atlasPair := −2λ`) would make Gate A trivial while relocating the crux into Gate B (the
+#    §4.1 smuggling corner). This is the metric analog of `intrinsicH1_dict`'s "no false dictionary
+#    can be supplied": the Gate-A pairing `gramOf` / `atlasPair` is λ-free, so a successful match
+#    genuinely EXHIBITS λ as a sum of squares rather than asserting it. We verify structurally that
+#    those definitions reference none of `genuineLamSeq` / `.lam` / `cSq` / `StieltjesEta`. Same
+#    capture-then-test discipline (no `grep -q` in the `if`).
+smuggle="$(grep -A1 -E '^def (gramOf|atlasPair)\b' \
+  F1Square/Square/WeilPSD.lean F1Square/Square/GateA.lean \
+  | grep -E 'genuineLamSeq|cSq|StieltjesEta|\.lam|\blam\b' || true)"
+if [ -n "$smuggle" ]; then
+  echo "FAIL: the Gate-A pairing (gramOf/atlasPair) references the spectral diagonal λ (smuggling):" >&2
+  printf '%s\n' "$smuggle" >&2
+  exit 1
+fi
+echo "no-smuggling: the Gate-A pairing is λ-free (defined from atlas data alone)."
+
 echo "PASS: the proof layer is axiom-clean (no sorry, no native_decide, no stray axioms)."
