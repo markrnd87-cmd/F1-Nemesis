@@ -2286,3 +2286,7 @@ open UOR.Bridge.F1Square
 #print axioms Square.not_WeilPSD_of_neg_diag
 #print axioms Square.limit_indefinite_of_neg_signature
 #print axioms Square.sigmaMetric_not_psd
+
+-- v0.21.0 stage G, brick G3 (assembly and adjudication): the missing-object embedding route,
+-- located — the §9 Localized terminal state, crux fields stay none.
+#print axioms Square.stageG_frontier_located

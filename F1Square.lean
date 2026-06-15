@@ -52,6 +52,7 @@ import F1Square.Square.KillTest
 import F1Square.Square.GateA
 import F1Square.Square.E8Seed
 import F1Square.Square.GaugeTower
+import F1Square.Square.StageG
 import F1Square.Tropical.Closure
 import F1Square.Tropical.Signature
 import F1Square.Tropical.Spectrum
@@ -290,6 +291,12 @@ def f1SquareStatus : F1SquareStatus := {
                                               -- forced signature read (Square.genuine_crux_equivalent):
                                               -- it is exactly LiCrux (genuineLamSeq) = RH, which needs the
                                               -- genuine Stieltjes η-tail (the zeros) — so this stays none.
+                                              -- v0.21.0 (stage G): the missing-object embedding route is
+                                              -- built (Square.WeilPSD … StageG) and the gate LOCATED the
+                                              -- frontier (Square.stageG_frontier_located): Gate A (the
+                                              -- diagonal match) IS RH, Gate B is free at finite rank but
+                                              -- its infinite limit is obstructed by a negative signature
+                                              -- entry (unsourced atlas Σ) — LOCALIZED, so this stays none.
   liPositivityHolds         := none           -- = RH (analytic face: λₙ > 0 ∀n, Li 1997), OPEN, never
                                               -- asserted. v0.18.0: equivalent to hodgeIndexHolds'
                                               -- spectral form through the bridge; certified slices
@@ -306,7 +313,11 @@ def f1SquareStatus : F1SquareStatus := {
                                               -- genuine SPECTRAL H¹ (trace datum = the zeros) is the
                                               -- open frontier: the forced criterion is exactly
                                               -- ∀n, Pos (genuineLamSeq n) (Square.genuine_crux_frontier)
-                                              -- = RH; stays none.
+                                              -- = RH; stays none. v0.21.0 (stage G): the embedding
+                                              -- route writes 2λₙ as ‖ι Cₙ‖² (a manifest sum of squares);
+                                              -- Gate A proven = LiNonneg (genuineLamSeq) = RH
+                                              -- (Square.gateA_is_liNonneg), Gate B's infinite limit
+                                              -- unsourced/obstructed — LOCALIZED, stays none.
 }
 
 -- ===========================================================================
@@ -1255,5 +1266,28 @@ example :
     ∧ f1SquareStatus.hodgeIndexHolds = none
     ∧ f1SquareStatus.liPositivityHolds = none :=
   ⟨Analysis.cnormSq_mul, Analysis.cnormSq_npow, Analysis.liTerm_dominates, rfl, rfl⟩
+
+/-- Elaboration-checked witness binding **v0.21.0 stage G — the missing-object embedding route**
+    (`Square/WeilPSD.lean` … `Square/StageG.lean`): the arithmetic Hodge-index crux attacked by an
+    isometric embedding of the primitive span into the NEGATIVE of a positive-definite atlas space.
+    The route is built end to end — the `WeilPSD` finite-truncation substrate, the full primitive
+    form on the Frobenius carrier, the zero-free atlas rule with its growth pre-filter, the E₈
+    definite seed (`= 4×` the Cartan matrix), and the gauge tower — and the gate LOCATED the
+    frontier (`Square.stageG_frontier_located`): **Gate A** (the diagonal match for the genuine
+    square) IS RH — a match proves `LiNonneg (genuineLamSeq)` (first conjunct); **Gate B** is free at
+    every finite rank — the atlas pairing is a manifest sum of squares (second conjunct) — but its
+    infinite limit is obstructed by ANY negative signature entry, so the hypothesized atlas
+    signature `Σ = {10,2,7,−1}` is indefinite (`¬ WeilPSD sigmaMetric`, third conjunct). The
+    difficulty is conserved (§4.1) and the atlas signature is unsourced (§10): positivity is not
+    output, so the crux fields stay `none` — the §9 "Localized" terminal state, RH OPEN. -/
+example :
+    (∀ (E : Analysis.StieltjesEta) (ι : Square.AtlasRule) (D : Nat),
+        Square.GateA E ι D → Li.LiNonneg (Analysis.genuineLamSeq E.eta))
+    ∧ (∀ (ι : Square.AtlasRule) (D : Nat), Square.WeilPSD (Square.atlasPair ι D))
+    ∧ (¬ Square.WeilPSD Square.sigmaMetric)
+    ∧ f1SquareStatus.hodgeIndexHolds = none
+    ∧ f1SquareStatus.liPositivityHolds = none :=
+  ⟨Square.stageG_frontier_located.1, Square.stageG_frontier_located.2.1,
+   Square.sigmaMetric_not_psd, rfl, rfl⟩
 
 end UOR.Bridge.F1Square
