@@ -2280,3 +2280,9 @@ open UOR.Bridge.F1Square
 #print axioms Square.e8_is_cartan
 #print axioms Square.e8_target_diag_pos
 #print axioms Square.e8_diag_pos
+
+-- v0.21.0 stage G, bricks G2b.0/G2b.1 (the tower carries a form; infinite definiteness): the
+-- negative-diagonal obstruction, the gauge tower (E₈ inhabitant), and the hypothesized Σ indefinite.
+#print axioms Square.not_WeilPSD_of_neg_diag
+#print axioms Square.limit_indefinite_of_neg_signature
+#print axioms Square.sigmaMetric_not_psd
